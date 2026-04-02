@@ -1,0 +1,127 @@
+{% extends 'base.html.twig' %}
+{% block title %}PathFinder — Tableau de bord{% endblock %}
+
+{% block body %}
+
+<nav class="pf-nav">
+  <a href="{{ path('app_home') }}" class="pf-logo">
+    <div class="pf-logo-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6l-8-4z" fill="white" opacity="0.9"/>
+      </svg>
+    </div>
+    PathFinder
+  </a>
+  <div class="pf-nav-links">
+    <a href="{{ path('app_home') }}"  class="pf-nav-link active">Accueil</a>
+    <a href="{{ path('app_about') }}" class="pf-nav-link">À propos</a>
+  </div>
+  <div class="pf-nav-actions">
+    <a href="{{ path('auth_login') }}"    class="pf-btn-outline">Connexion</a>
+    <a href="{{ path('auth_register') }}" class="pf-btn-primary">S'inscrire</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="pf-hero">
+  <div class="pf-hero-bg"></div>
+  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge">
+      <div class="pf-hero-badge-dot"></div>
+      Plateforme RH · Symfony 6.4
+    </div>
+    <h1>Bienvenue sur<br><span>PathFinder</span></h1>
+    <p>Gérez vos offres d'emploi, candidatures et entretiens depuis un seul tableau de bord — rapide, clair, sans friction.</p>
+  </div>
+</div>
+
+<!-- DASHBOARD CONTENT -->
+<div class="pf-content">
+
+  <!-- Stat cards -->
+  <div class="pf-dash-grid">
+
+    <div class="pf-dash-card">
+      <div class="pf-dash-card-label">Offres actives</div>
+      <div class="pf-dash-card-value">—</div>
+      <div class="pf-dash-card-sub">Publiées ce mois</div>
+      <div class="pf-dash-card-glow" style="background:#6C63FF"></div>
+    </div>
+
+    <div class="pf-dash-card">
+      <div class="pf-dash-card-label">Candidatures</div>
+      <div class="pf-dash-card-value">—</div>
+      <div class="pf-dash-card-sub">Reçues au total</div>
+      <div class="pf-dash-card-glow" style="background:#4B8BF5"></div>
+    </div>
+
+    <div class="pf-dash-card">
+      <div class="pf-dash-card-label">Entretiens</div>
+      <div class="pf-dash-card-value">—</div>
+      <div class="pf-dash-card-sub">Planifiés</div>
+      <div class="pf-dash-card-glow" style="background:#9D6BFF"></div>
+    </div>
+
+    <div class="pf-dash-card">
+      <div class="pf-dash-card-label">Taux d'admission</div>
+      <div class="pf-dash-card-value">—</div>
+      <div class="pf-dash-card-sub">Score moyen quiz</div>
+      <div class="pf-dash-card-glow" style="background:#1D9E75"></div>
+    </div>
+
+  </div>
+
+  <!-- Activity + Quick links -->
+  <div class="pf-two-col">
+
+    <div class="pf-activity">
+      <div class="pf-activity-header">Activité récente</div>
+      <div class="pf-activity-item">
+        <div class="pf-activity-dot" style="background:#6C63FF"></div>
+        <div class="pf-activity-text">Nouvelle offre publiée — <em>Développeur Symfony</em></div>
+        <div class="pf-activity-time">À venir</div>
+      </div>
+      <div class="pf-activity-item">
+        <div class="pf-activity-dot" style="background:#4B8BF5"></div>
+        <div class="pf-activity-text">Candidature reçue — quiz complété</div>
+        <div class="pf-activity-time">À venir</div>
+      </div>
+      <div class="pf-activity-item">
+        <div class="pf-activity-dot" style="background:#1D9E75"></div>
+        <div class="pf-activity-text">Entretien confirmé</div>
+        <div class="pf-activity-time">À venir</div>
+      </div>
+      <div class="pf-activity-item">
+        <div class="pf-activity-dot" style="background:#9D6BFF"></div>
+        <div class="pf-activity-text">Candidature acceptée</div>
+        <div class="pf-activity-time">À venir</div>
+      </div>
+    </div>
+
+    <div class="pf-section" style="margin-bottom:0">
+      <div class="pf-section-label">Navigation rapide</div>
+      <h2 style="font-size:1.1rem;margin-bottom:1.2rem">Accès direct</h2>
+      <div class="pf-quick-links">
+        <a href="{{ path('auth_login') }}" class="pf-quick-link">
+          <span>🔐 Connexion</span>
+          <span class="pf-quick-link-arrow">→</span>
+        </a>
+        <a href="{{ path('auth_register') }}" class="pf-quick-link">
+          <span>✏️ Créer un compte</span>
+          <span class="pf-quick-link-arrow">→</span>
+        </a>
+        <a href="{{ path('app_about') }}" class="pf-quick-link">
+          <span>ℹ️ À propos de PathFinder</span>
+          <span class="pf-quick-link-arrow">→</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="pf-footer">© 2026 PathFinders · All rights reserved.</div>
+
+{% endblock %}

@@ -1,0 +1,19 @@
+/* PathFinder — base styles */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'DM Sans', sans-serif;
+    background: #09090f;
+    color: #e8e6f0;
+    min-height: 100vh;
+}
+
+.flash {
+    padding: 0.75rem 1.25rem;
+    margin: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 14px;
+}
+.flash-success { background: rgba(29,158,117,0.15); border: 1px solid rgba(29,158,117,0.3); color: #1D9E75; }
+.flash-error   { background: rgba(226,75,74,0.15);  border: 1px solid rgba(226,75,74,0.3);  color: #E24B4A; }
+.flash-warning { background: rgba(255,180,0,0.12);  border: 1px solid rgba(255,180,0,0.25); color: #FFB400; }

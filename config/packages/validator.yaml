@@ -1,0 +1,4 @@
+framework:
+    validation:
+        # auto_mapping:
+        #     App\Entity\: []
