@@ -1,0 +1,177 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Fiches de paiement — PathFinder{% endblock %}
+
+{% block body %}
+
+<h1 class="page-title">Fiches de paiement</h1>
+
+{% for message in app.flashes('success') %}
+  <div class="flash-success">{{ message }}</div>
+{% endfor %}
+
+<a href="{{ path('fiche_new') }}" class="btn-new">+ Nouvelle Fiche</a>
+
+<div class="table-container">
+  <table class="pf-table">
+    <thead>
+      <tr>
+        <th>Employé</th>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Taxe</th>
+        <th>Déduction</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for fiche in fiches %}
+        <tr class="row-animate">
+          <td>{{ fiche.employee.utilisateur.nom }} {{ fiche.employee.utilisateur.prenom }}</td>
+          <td>{{ fiche.datePaiement ? fiche.datePaiement|date('Y-m-d') : '-' }}</td>
+          <td>{{ fiche.typePaiement }}</td>
+          <td>{{ fiche.montantTaxe }}</td>
+          <td>{{ fiche.montantDeduction }}</td>
+          <td class="actions">
+            <a href="{{ path('fiche_edit', {id: fiche.idFichePaiement}) }}" class="btn-edit">Modifier</a>
+            <form method="post" action="{{ path('fiche_delete', {id: fiche.idFichePaiement}) }}" class="inline-form">
+              <button type="submit" class="btn-delete" onclick="return confirm('Supprimer ?')">Supprimer</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="6" class="empty-row">Aucune fiche disponible</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<style>
+/* Page Title */
+.page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #4A4A4A;
+  margin-bottom: 20px;
+}
+
+/* Table Container */
+.table-container {
+  overflow-x: auto;
+  margin-top: 20px;
+  border-radius: 10px;
+  background: white;
+  padding: 15px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* Table */
+.pf-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Arial', sans-serif;
+}
+
+.pf-table thead {
+  background: linear-gradient(90deg, #6C63FF, #8A84FF);
+  color: white;
+}
+
+.pf-table th, .pf-table td {
+  padding: 14px 18px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.pf-table tbody tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+.pf-table tbody tr:hover {
+  background-color: #f0edff;
+  transition: 0.2s ease-in-out;
+}
+
+/* Row animation */
+.row-animate {
+  animation: fadeIn 0.4s ease forwards;
+  opacity: 0;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+/* Buttons */
+.btn-new {
+  display: inline-block;
+  margin-bottom: 15px;
+  background-color: #6C63FF;
+  color: white;
+  padding: 10px 18px;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.btn-new:hover {
+  background-color: #5a54e6;
+}
+
+.btn-edit {
+  background-color: #4B8BF5;
+  color: white;
+  padding: 6px 12px;
+  text-decoration: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: 0.2s;
+}
+
+.btn-edit:hover {
+  background-color: #3a78e0;
+}
+
+.btn-delete {
+  background-color: #FF5C5C;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-delete:hover {
+  background-color: #e04a4a;
+}
+
+/* Flash message */
+.flash-success {
+  background-color: #DFF2BF;
+  color: #4F8A10;
+  padding: 12px 18px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  font-weight: bold;
+}
+
+/* Empty row */
+.empty-row {
+  text-align: center;
+  color: #777;
+  padding: 20px;
+  font-style: italic;
+}
+
+/* Inline form */
+.inline-form {
+  display: inline;
+}
+</style>
+
+{% endblock %}
