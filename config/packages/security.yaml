@@ -14,16 +14,6 @@ security:
             security: false
         main:
             lazy: true
-            provider: app_user_provider
-            form_login:
-                login_path: auth_login
-                check_path: auth_login_check
-                default_target_path: app_home
-            logout:
-                path: auth_logout
-                target: auth_login
+            security: false
 
     access_control: []
-    # Add your route restrictions here, e.g.:
-    # - { path: ^/admin, roles: ROLE_ADMIN }
-    # - { path: ^/dashboard, roles: ROLE_USER }

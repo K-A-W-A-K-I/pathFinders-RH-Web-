@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+{% block title %}Connexion{% endblock %}
+
+{% block body %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+
+        <div class="auth-header">
+            <div class="auth-logo">PF</div>
+            <h1 class="auth-title">Connexion</h1>
+            <p class="auth-subtitle">Accédez à votre espace Pathfinders</p>
+        </div>
+
+        {% if error %}
+            <div class="alert alert-error">
+                {{ error.messageKey|trans(error.messageData, 'security') }}
+            </div>
+        {% endif %}
+
+        <form method="post" action="{{ path('auth_login_check') }}" novalidate class="auth-form">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+            <div class="form-group">
+                <label for="email">Adresse email</label>
+                <input type="email" id="email" name="_username"
+                       value="{{ last_username }}"
+                       placeholder="exemple@email.com"
+                       autocomplete="email">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Mot de passe</label>
+                <input type="password" id="password" name="_password"
+                       placeholder="Votre mot de passe"
+                       autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="btn btn-auth-primary">
+                🔐 Se connecter
+            </button>
+        </form>
+
+        <div class="auth-footer">
+            Pas encore de compte ?
+            <a href="{{ path('auth_register') }}">S'inscrire</a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

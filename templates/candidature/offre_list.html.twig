@@ -1,0 +1,64 @@
+{% extends 'base.html.twig' %}
+{% block title %}Offres d'emploi{% endblock %}
+{% block hero_title %}Offres d'emploi{% endblock %}
+{% block hero_sub %}Découvrez les opportunités qui correspondent à votre profil{% endblock %}
+
+{% block body %}
+<div class="filter-bar">
+    <form method="get" class="filter-form">
+        <input type="text" name="search" value="{{ search }}" placeholder="Rechercher une offre..." class="filter-input">
+        <select name="domaine" class="filter-select">
+            <option value="">Domaine</option>
+            {% for d in ['IT','Finance','Marketing','RH','Vente','Production'] %}
+                <option value="{{ d }}" {{ domaine == d ? 'selected' : '' }}>{{ d }}</option>
+            {% endfor %}
+        </select>
+        <select name="contrat" class="filter-select">
+            <option value="">Contrat</option>
+            {% for c in ['CDI','CDD','Stage','Freelance'] %}
+                <option value="{{ c }}" {{ contrat == c ? 'selected' : '' }}>{{ c }}</option>
+            {% endfor %}
+        </select>
+        <select name="sort" class="filter-select">
+            <option value="">Trier par</option>
+            <option value="titre"   {{ sort == 'titre'   ? 'selected' : '' }}>Nom</option>
+            <option value="domaine" {{ sort == 'domaine' ? 'selected' : '' }}>Domaine</option>
+            <option value="salaire" {{ sort == 'salaire' ? 'selected' : '' }}>Salaire min</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Rechercher</button>
+        <a href="{{ path('offre_list') }}" class="btn btn-secondary">Réinitialiser</a>
+    </form>
+</div>
+
+{% if offres is empty %}
+    <div class="empty-state">
+        <div class="empty-icon">💼</div>
+        <p class="empty-title">Aucune offre disponible pour le moment</p>
+    </div>
+{% else %}
+<div class="cards-grid">
+    {% for offre in offres %}
+    <div class="offer-card">
+        <div class="card-badges">
+            <span class="badge badge-domain">{{ offre.domaine }}</span>
+            <span class="badge badge-contrat">{{ offre.typeContrat }}</span>
+        </div>
+        <h3 class="card-title">{{ offre.titre }}</h3>
+        <p class="card-desc">{{ offre.description|slice(0, 120) }}{% if offre.description|length > 120 %}…{% endif %}</p>
+        <div class="card-info-panel">
+            <div class="card-info-row">💰 {{ offre.salaireMin }} – {{ offre.salaireMax }} DT</div>
+            <div class="card-info-row">📊 Score minimum : {{ offre.scoreMinimum }}%</div>
+            <div class="card-info-row">⏱ Durée du test : {{ offre.dureeTestMinutes }} min</div>
+        </div>
+        <div class="card-actions">
+            {% if dejaPostule[offre.id] is defined %}
+                <button class="btn btn-applied" disabled>✅ Déjà postulé</button>
+            {% else %}
+                <a href="{{ path('quiz_start', {id: offre.id}) }}" class="btn btn-postuler">Postuler maintenant</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

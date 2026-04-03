@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin — PathFinder{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ 'now'|date('U') }}">
+    <link rel="stylesheet" href="{{ asset('css/admin.css') }}?v={{ 'now'|date('U') }}">
+    {% block stylesheets %}{% endblock %}
+</head>
+<body class="admin-body">
+
+<div class="admin-layout">
+
+    <!-- ── Sidebar ── -->
+    <aside class="admin-sidebar">
+        <div class="sidebar-logo">
+            <img src="{{ asset('logowhite.png') }}" alt="PathFinder" class="sidebar-logo-img">
+            <span class="sidebar-logo-text">PATHFINDER</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="sidebar-section-label">GESTION</div>
+            <a href="{{ path('offre_index') }}"
+               class="sidebar-link {{ app.request.attributes.get('_route') in ['offre_index','offre_new','offre_show','offre_edit','question_new','question_edit'] ? 'active' : '' }}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                Gestion des Offres
+            </a>
+            <a href="{{ path('admin_candidatures') }}"
+               class="sidebar-link {{ app.request.attributes.get('_route') == 'admin_candidatures' ? 'active' : '' }}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Candidatures
+            </a>
+            <a href="{{ path('entretien_admin') }}"
+               class="sidebar-link {{ app.request.attributes.get('_route') == 'entretien_admin' ? 'active' : '' }}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Entretiens
+            </a>
+
+            <div class="sidebar-section-label" style="margin-top:1.5rem">NAVIGATION</div>
+            <a href="{{ path('offre_list') }}" class="sidebar-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                Accueil
+            </a>
+            <a href="{{ path('candidature_mes') }}" class="sidebar-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Candidatures
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            {% if app.user %}
+                <div class="sidebar-user">
+                    <div class="sidebar-avatar">{{ app.user.fullName|slice(0,2)|upper }}</div>
+                    <span class="sidebar-username">{{ app.user.fullName }}</span>
+                </div>
+                <a href="{{ path('auth_logout') }}" class="sidebar-logout">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Déconnexion
+                </a>
+            {% endif %}
+        </div>
+    </aside>
+
+    <!-- ── Main ── -->
+    <main class="admin-main">
+        <div class="admin-topbar">
+            <div class="admin-topbar-left">
+                <div class="admin-page-icon">{% block page_icon %}📄{% endblock %}</div>
+                <h1 class="admin-page-title">{% block page_title %}{% endblock %}</h1>
+            </div>
+            <div class="admin-topbar-right">
+                {% block topbar_actions %}{% endblock %}
+            </div>
+        </div>
+
+        <div class="admin-content">
+            {% for type, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="pf-alert pf-alert-{{ type }}">{{ message }}</div>
+                {% endfor %}
+            {% endfor %}
+
+            {% block body %}{% endblock %}
+        </div>
+    </main>
+</div>
+
+{% block javascripts %}{% endblock %}
+
+<script>
+const saved = localStorage.getItem('pf-theme') || 'dark';
+document.documentElement.setAttribute('data-theme', saved);
+</script>
+</body>
+</html>

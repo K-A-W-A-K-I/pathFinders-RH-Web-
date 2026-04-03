@@ -1,0 +1,95 @@
+{% extends 'base.html.twig' %}
+{% block title %}Quiz — {{ offre.titre }}{% endblock %}
+
+{% block body %}
+<div class="quiz-root">
+    <div class="quiz-header">
+        <div class="quiz-header-left">
+            <h2 class="quiz-title">Quiz de Candidature</h2>
+            <p class="quiz-subtitle">{{ offre.domaine }} · {{ offre.typeContrat }}</p>
+        </div>
+        <div class="timer-box">
+            <div class="timer-label-title">⏱ Temps restant</div>
+            <div id="timerDisplay" class="timer-value" data-seconds="{{ offre.dureeTestMinutes * 60 }}">
+                {{ '%02d'|format(offre.dureeTestMinutes) }}:00
+            </div>
+        </div>
+    </div>
+
+    <div class="quiz-progress-row">
+        <span id="progressLabel" class="progress-label">Question 1 / {{ questions|length }}</span>
+        <div class="progress-bar-wrap">
+            <div id="progressBar" class="progress-bar" style="width: {{ (1 / questions|length * 100)|round }}%"></div>
+        </div>
+    </div>
+
+    <form id="quizForm" method="post" action="{{ path('quiz_submit', {id: offre.id}) }}">
+        {% for i, q in questions %}
+        <div class="question-card" id="q{{ i }}" style="{{ i > 0 ? 'display:none' : '' }}">
+            <div class="question-meta">
+                <span class="question-number">❓ Question {{ i + 1 }}</span>
+                <span class="question-points">Points : {{ q.points }}</span>
+            </div>
+            <p class="question-text">{{ q.question }}</p>
+            <div class="choices">
+                {% for idx, choice in q.choices %}
+                <label class="choice-btn">
+                    <input type="radio" name="answers[{{ q.id }}]" value="{{ idx }}">
+                    {{ choice }}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <div class="quiz-nav">
+            <button type="button" id="prevBtn" class="btn btn-secondary" onclick="navigate(-1)" disabled>← Précédent</button>
+            <button type="button" id="nextBtn" class="btn btn-primary" onclick="navigate(1)">Suivant →</button>
+            <button type="submit" id="submitBtn" class="btn btn-success" style="display:none">✓ Terminer</button>
+        </div>
+    </form>
+</div>
+
+<script>
+let current = 0;
+const total = {{ questions|length }};
+
+function navigate(dir) {
+    document.getElementById('q' + current).style.display = 'none';
+    current += dir;
+    document.getElementById('q' + current).style.display = 'block';
+    document.getElementById('prevBtn').disabled = current === 0;
+    document.getElementById('nextBtn').style.display = current === total - 1 ? 'none' : '';
+    document.getElementById('submitBtn').style.display = current === total - 1 ? '' : 'none';
+    document.getElementById('progressLabel').textContent = 'Question ' + (current + 1) + ' / ' + total;
+    document.getElementById('progressBar').style.width = ((current + 1) / total * 100) + '%';
+}
+
+// Timer
+const timerEl = document.getElementById('timerDisplay');
+let remaining = parseInt(timerEl.dataset.seconds);
+const interval = setInterval(() => {
+    remaining--;
+    const m = Math.floor(remaining / 60).toString().padStart(2, '0');
+    const s = (remaining % 60).toString().padStart(2, '0');
+    timerEl.textContent = m + ':' + s;
+    if (remaining <= 60) timerEl.className = 'timer-value timer-danger';
+    else if (remaining <= 300) timerEl.className = 'timer-value timer-warning';
+    if (remaining <= 0) { clearInterval(interval); document.getElementById('quizForm').submit(); }
+}, 1000);
+
+// Anti-cheat
+let violations = 0;
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        violations++;
+        if (violations >= 3) {
+            alert('🚨 Tricherie détectée. Soumission automatique.');
+            document.getElementById('quizForm').submit();
+        } else {
+            alert('⚠️ Avertissement ' + violations + '/3 — Ne quittez pas la fenêtre !');
+        }
+    }
+});
+</script>
+{% endblock %}

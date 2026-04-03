@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,19 +7,102 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ 'now'|date('U') }}">
     {% block stylesheets %}{% endblock %}
 </head>
-<body class="pf-page">
+<body class="pf-body">
 
+<!-- ── Background ── -->
+<div class="pf-bg" aria-hidden="true">
+    <div class="pf-bg-grid"></div>
+    <div class="pf-bg-glow pf-bg-glow-1"></div>
+    <div class="pf-bg-glow pf-bg-glow-2"></div>
+    <div class="pf-bg-glow pf-bg-glow-3"></div>
+</div>
+
+<!-- ── Main navbar ── -->
+<nav class="pf-nav">
+    <a href="{{ path('offre_list') }}" class="pf-logo">
+        <img src="{{ asset('logowhite.png') }}" alt="PathFinder" class="pf-logo-img">
+        <span class="pf-logo-text">PathFinder</span>
+    </a>
+
+    <div class="pf-nav-links">
+        <a href="{{ path('offre_list') }}"
+           class="pf-nav-link {{ app.request.attributes.get('_route') == 'offre_list' ? 'active' : '' }}">
+            Offres d'emploi
+        </a>
+        <a href="{{ path('candidature_mes') }}"
+           class="pf-nav-link {{ app.request.attributes.get('_route') == 'candidature_mes' ? 'active' : '' }}">
+            Mes Candidatures
+        </a>
+    </div>
+
+    <div class="pf-nav-actions">
+        <button class="pf-theme-toggle" id="themeToggle" aria-label="Changer le thème" title="Changer le thème">
+            <span class="theme-icon-dark">🌙</span>
+            <span class="theme-icon-light">☀️</span>
+        </button>
+        {% if app.user %}
+            <span class="pf-nav-username">{{ app.user.fullName }}</span>
+            <a href="{{ path('auth_logout') }}" class="pf-btn-outline">Déconnexion</a>
+        {% else %}
+            <a href="{{ path('auth_login') }}" class="pf-btn-outline">Connexion</a>
+            <a href="{{ path('auth_register') }}" class="pf-btn-filled">S'inscrire</a>
+        {% endif %}
+    </div>
+</nav>
+
+{% block hero %}
+<div class="pf-hero">
+    <div class="pf-hero-inner">
+        <h1 class="pf-hero-title">{% block hero_title %}{% endblock %}</h1>
+        <p class="pf-hero-sub">{% block hero_sub %}{% endblock %}</p>
+    </div>
+</div>
+{% endblock %}
+
+<div class="pf-container">
     {% for type, messages in app.flashes %}
         {% for message in messages %}
-            <div class="flash flash-{{ type }}">{{ message }}</div>
+            <div class="pf-alert pf-alert-{{ type }}">{{ message }}</div>
         {% endfor %}
     {% endfor %}
 
     {% block body %}{% endblock %}
+</div>
 
-    {% block javascripts %}{% endblock %}
+<footer class="pf-footer">© 2026 PathFinders · All rights reserved.</footer>
+
+{% block javascripts %}{% endblock %}
+
+<script>
+// ── Theme toggle ──
+const html = document.documentElement;
+const saved = localStorage.getItem('pf-theme') || 'dark';
+html.setAttribute('data-theme', saved);
+
+document.getElementById('themeToggle').addEventListener('click', function() {
+    const current = html.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('pf-theme', next);
+});
+
+// ── Dropdown ──
+document.querySelectorAll('.nav-dropdown-trigger').forEach(function(trigger) {
+    trigger.addEventListener('click', function(e) {
+        e.stopPropagation();
+        this.classList.toggle('open');
+    });
+});
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.nav-dropdown-trigger')) {
+        document.querySelectorAll('.nav-dropdown-trigger.open').forEach(function(el) {
+            el.classList.remove('open');
+        });
+    }
+});
+</script>
 </body>
 </html>

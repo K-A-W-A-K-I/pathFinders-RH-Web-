@@ -1,0 +1,127 @@
+{% extends 'admin_base.html.twig' %}
+{% block title %}{{ offre.titre }}{% endblock %}
+{% block page_icon %}📋{% endblock %}
+{% block page_title %}{{ offre.titre }}{% endblock %}
+
+{% block topbar_actions %}
+    <a href="{{ path('offre_edit', {id: offre.id}) }}" class="btn btn-edit">✏️ Modifier</a>
+    <form method="post" action="{{ path('offre_delete', {id: offre.id}) }}" onsubmit="return confirm('Supprimer ?')" style="display:inline">
+        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ offre.id) }}">
+        <button type="submit" class="btn btn-danger">🗑 Supprimer</button>
+    </form>
+    <a href="{{ path('offre_index') }}" class="btn btn-secondary">← Retour</a>
+{% endblock %}
+
+{% block body %}
+
+<div class="tabs" id="tabs">
+    <button class="tab-btn tab-active" onclick="showTab('infos', this)">ℹ️ Informations</button>
+    <button class="tab-btn" onclick="showTab('candidatures', this)">👥 Candidatures ({{ candidatures|length }})</button>
+    <button class="tab-btn" onclick="showTab('questions', this)" id="questions">❓ Questions ({{ questions|length }})</button>
+    <button class="tab-btn" onclick="showTab('entretiens', this)">📅 Entretiens ({{ entretiens|length }})</button>
+</div>
+
+{# ── Informations ── #}
+<div id="tab-infos" class="tab-content">
+    <div class="info-grid">
+        <div class="info-item"><span class="info-label">Salaire</span><span>{{ offre.salaireMin }} – {{ offre.salaireMax }} DT</span></div>
+        <div class="info-item"><span class="info-label">Contrat</span><span>{{ offre.typeContrat }}</span></div>
+        <div class="info-item"><span class="info-label">Score minimum</span><span>{{ offre.scoreMinimum }}%</span></div>
+        <div class="info-item"><span class="info-label">Durée du test</span><span>{{ offre.dureeTestMinutes }} min</span></div>
+        <div class="info-item info-full"><span class="info-label">Description</span><p>{{ offre.description }}</p></div>
+    </div>
+</div>
+
+{# ── Candidatures ── #}
+<div id="tab-candidatures" class="tab-content" style="display:none">
+    {% if candidatures is empty %}
+        <p class="empty-sub">Aucune candidature pour cette offre.</p>
+    {% else %}
+    <table class="data-table">
+        <thead><tr><th>#</th><th>Candidat</th><th>Score Quiz</th><th>Score CV IA</th><th>Statut</th><th>Actions</th></tr></thead>
+        <tbody>
+        {% for i, c in candidatures %}
+        <tr>
+            <td>{{ i == 0 ? '🥇' : (i == 1 ? '🥈' : (i == 2 ? '🥉' : i+1)) }}</td>
+            <td>{{ c.candidat.fullName }}</td>
+            <td><strong>{{ c.score }}%</strong></td>
+            <td>{{ c.cvScoreIa ?? '—' }}</td>
+            <td><span class="badge {{ c.statutClass }}">{{ c.statutLabel }}</span></td>
+            <td>
+                <form method="post" action="{{ path('candidature_statut', {id: c.id, statut: 1}) }}" style="display:inline">
+                    <button class="btn btn-sm btn-success" {{ c.statutAdmin == 1 ? 'disabled' : '' }}>✅</button>
+                </form>
+                <form method="post" action="{{ path('candidature_statut', {id: c.id, statut: -1}) }}" style="display:inline">
+                    <button class="btn btn-sm btn-danger" {{ c.statutAdmin == -1 ? 'disabled' : '' }}>❌</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+
+{# ── Questions ── #}
+<div id="tab-questions" class="tab-content" style="display:none">
+    <div class="section-actions">
+        <a href="{{ path('question_new', {id: offre.id}) }}" class="btn btn-primary">＋ Ajouter une question</a>
+    </div>
+    {% if questions is empty %}
+        <p class="empty-sub">Aucune question pour cette offre.</p>
+    {% else %}
+    {% for q in questions %}
+    <div class="question-item">
+        <div class="question-item-header">
+            <span class="question-text-preview">{{ q.question }}</span>
+            <span class="badge badge-points">{{ q.points }} pt(s)</span>
+        </div>
+        <div class="choices-preview">
+            {% for idx, choice in q.choices %}
+                <span class="choice-preview {{ idx == q.bonneReponse ? 'choice-correct' : '' }}">{{ choice }}</span>
+            {% endfor %}
+        </div>
+        <div class="question-item-actions">
+            <a href="{{ path('question_edit', {id: q.id}) }}" class="btn btn-sm btn-edit">✏️</a>
+            <form method="post" action="{{ path('question_delete', {id: q.id}) }}" onsubmit="return confirm('Supprimer ?')" style="display:inline">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete_q' ~ q.id) }}">
+                <button class="btn btn-sm btn-danger">🗑</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+</div>
+
+{# ── Entretiens ── #}
+<div id="tab-entretiens" class="tab-content" style="display:none">
+    {% if entretiens is empty %}
+        <p class="empty-sub">Aucun entretien pour cette offre.</p>
+    {% else %}
+    <table class="data-table">
+        <thead><tr><th>Candidat</th><th>Date</th><th>Statut</th><th>Notes</th></tr></thead>
+        <tbody>
+        {% for e in entretiens %}
+        <tr>
+            <td>{{ e.candidat.fullName }}</td>
+            <td>{{ e.dateEntretien|date('d/m/Y H:i') }}</td>
+            <td><span class="badge {{ e.statutClass }}">{{ e.statutLabel }}</span></td>
+            <td>{{ e.notes ?? '—' }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+
+<script>
+function showTab(name, btn) {
+    document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('tab-active'));
+    document.getElementById('tab-' + name).style.display = '';
+    btn.classList.add('tab-active');
+}
+// Auto-open questions tab if fragment
+if (location.hash === '#questions') showTab('questions', document.querySelector('[onclick*="questions"]'));
+</script>
+{% endblock %}
