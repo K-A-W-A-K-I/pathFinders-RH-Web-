@@ -1,0 +1,18 @@
+parameters:
+    images_categories_directory: '%kernel.project_dir%/public/uploads/categories'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    App\Service\FileUploader:
+        arguments:
+            $targetDirectory: '%images_categories_directory%'
