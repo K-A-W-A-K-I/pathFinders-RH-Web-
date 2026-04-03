@@ -1,0 +1,141 @@
+{% extends 'admin_base.html.twig' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_icon %}📝{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block topbar_actions %}
+    <a href="{{ path('offre_index') }}" class="btn btn-secondary">← Retour</a>
+{% endblock %}
+
+{% block body %}
+<div class="form-card">
+    <h2 class="form-title">{{ title }}</h2>
+
+    {{ form_start(form, {attr: {class: 'symfony-form', id: 'offreForm'}}) }}
+
+        {# Erreurs globales du formulaire #}
+        {% if not form.vars.valid and form.vars.submitted %}
+        <div class="form-errors-summary">
+            ⚠️ Veuillez corriger les erreurs ci-dessous avant de continuer.
+        </div>
+        {% endif %}
+
+        <div class="form-grid">
+
+            <div class="form-group form-full">
+                {{ form_label(form.titre) }}
+                {{ form_widget(form.titre, {attr: {class: form.titre.vars.errors|length > 0 ? 'input-error' : ''}}) }}
+                {{ form_errors(form.titre) }}
+            </div>
+
+            <div class="form-group form-full">
+                {{ form_label(form.description) }}
+                {{ form_widget(form.description, {attr: {class: form.description.vars.errors|length > 0 ? 'input-error' : ''}}) }}
+                {{ form_errors(form.description) }}
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.domaine) }}
+                {{ form_widget(form.domaine, {attr: {class: form.domaine.vars.errors|length > 0 ? 'input-error' : ''}}) }}
+                {{ form_errors(form.domaine) }}
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.typeContrat) }}
+                {{ form_widget(form.typeContrat, {attr: {class: form.typeContrat.vars.errors|length > 0 ? 'input-error' : ''}}) }}
+                {{ form_errors(form.typeContrat) }}
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.salaireMin) }}
+                {{ form_widget(form.salaireMin, {attr: {class: form.salaireMin.vars.errors|length > 0 ? 'input-error' : ''}}) }}
+                {{ form_errors(form.salaireMin) }}
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.salaireMax) }}
+                {{ form_widget(form.salaireMax, {attr: {class: form.salaireMax.vars.errors|length > 0 ? 'input-error' : ''}}) }}
+                {{ form_errors(form.salaireMax) }}
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.scoreMinimum) }}
+                {{ form_widget(form.scoreMinimum, {attr: {class: form.scoreMinimum.vars.errors|length > 0 ? 'input-error' : ''}}) }}
+                {{ form_errors(form.scoreMinimum) }}
+                <span class="field-hint">Entre 0 et 100</span>
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.dureeTestMinutes) }}
+                {{ form_widget(form.dureeTestMinutes, {attr: {class: form.dureeTestMinutes.vars.errors|length > 0 ? 'input-error' : ''}}) }}
+                {{ form_errors(form.dureeTestMinutes) }}
+                <span class="field-hint">Entre 5 et 180 minutes</span>
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.statut) }}
+                {{ form_widget(form.statut) }}
+                {{ form_errors(form.statut) }}
+            </div>
+
+        </div>
+
+        <div class="form-actions">
+            <a href="{{ path('offre_index') }}" class="btn btn-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
+        </div>
+
+    {{ form_end(form) }}
+</div>
+
+<script>
+document.getElementById('offreForm').addEventListener('submit', function(e) {
+    let valid = true;
+
+    // Clear previous client errors
+    this.querySelectorAll('.client-error').forEach(el => el.remove());
+    this.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+
+    function showError(input, msg) {
+        input.classList.add('input-error');
+        const err = document.createElement('span');
+        err.className = 'form-error client-error';
+        err.textContent = msg;
+        input.parentNode.appendChild(err);
+        valid = false;
+    }
+
+    const titre = this.querySelector('[name$="[titre]"]');
+    if (titre && titre.value.trim().length < 3) showError(titre, 'Le titre doit contenir au moins 3 caractères.');
+
+    const desc = this.querySelector('[name$="[description]"]');
+    if (desc && desc.value.trim().length < 10) showError(desc, 'La description doit contenir au moins 10 caractères.');
+
+    const domaine = this.querySelector('[name$="[domaine]"]');
+    if (domaine && !domaine.value) showError(domaine, 'Veuillez choisir un domaine.');
+
+    const contrat = this.querySelector('[name$="[typeContrat]"]');
+    if (contrat && !contrat.value) showError(contrat, 'Veuillez choisir un type de contrat.');
+
+    const sMin = this.querySelector('[name$="[salaireMin]"]');
+    const sMax = this.querySelector('[name$="[salaireMax]"]');
+    if (sMin && (sMin.value === '' || parseInt(sMin.value) < 0)) showError(sMin, 'Salaire minimum invalide.');
+    if (sMax && (sMax.value === '' || parseInt(sMax.value) < 0)) showError(sMax, 'Salaire maximum invalide.');
+    if (sMin && sMax && sMin.value !== '' && sMax.value !== '' && parseInt(sMax.value) < parseInt(sMin.value)) {
+        showError(sMax, 'Le salaire maximum doit être supérieur au minimum.');
+    }
+
+    const score = this.querySelector('[name$="[scoreMinimum]"]');
+    if (score && (score.value === '' || parseInt(score.value) < 0 || parseInt(score.value) > 100)) {
+        showError(score, 'Le score doit être entre 0 et 100.');
+    }
+
+    const duree = this.querySelector('[name$="[dureeTestMinutes]"]');
+    if (duree && (duree.value === '' || parseInt(duree.value) < 5 || parseInt(duree.value) > 180)) {
+        showError(duree, 'La durée doit être entre 5 et 180 minutes.');
+    }
+
+    if (!valid) e.preventDefault();
+});
+</script>
+{% endblock %}

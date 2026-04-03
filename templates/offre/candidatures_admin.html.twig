@@ -1,0 +1,87 @@
+{% extends 'admin_base.html.twig' %}
+{% block title %}Candidatures — Admin{% endblock %}
+{% block page_icon %}📁{% endblock %}
+{% block page_title %}Toutes les Candidatures{% endblock %}
+
+{% block topbar_actions %}
+    <a href="{{ path('offre_index') }}" class="btn btn-secondary">← Retour aux offres</a>
+{% endblock %}
+
+{% block body %}
+
+<div class="admin-table-section">
+    <div class="admin-table-header">
+        <div class="admin-table-title">
+            Candidatures reçues
+            <span class="admin-count-badge">{{ candidatures|length }}</span>
+        </div>
+        <div class="admin-table-actions">
+            <input type="text" placeholder="Rechercher..." class="admin-search-input" id="candidatSearch">
+        </div>
+    </div>
+
+    {% if candidatures is empty %}
+        <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <p class="empty-title">Aucune candidature reçue</p>
+        </div>
+    {% else %}
+    <table class="admin-table" id="candidatTable">
+        <thead>
+            <tr>
+                <th>CANDIDAT</th>
+                <th>OFFRE</th>
+                <th>SCORE</th>
+                <th>DATE</th>
+                <th>STATUT</th>
+                <th>ACTIONS</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for c in candidatures %}
+        <tr>
+            <td class="admin-table-name">{{ c.candidat.fullName ?: 'Candidat #' ~ c.candidat.id }}</td>
+            <td><span class="admin-badge admin-badge-blue">{{ c.offre.titre }}</span></td>
+            <td>
+                <div class="admin-score-bar">
+                    <div class="admin-score-fill" style="width:{{ c.score }}%"></div>
+                </div>
+                {{ c.score }}%
+            </td>
+            <td class="admin-table-muted">
+                {{ c.datePassage ? c.datePassage|date('d/m/Y H:i') : '—' }}
+            </td>
+            <td>
+                <span class="admin-status-dot {{ c.statutAdmin == 1 ? 'dot-active' : (c.statutAdmin == -1 ? 'dot-refuse' : 'dot-pending') }}">
+                    ● {{ c.statutLabel }}
+                </span>
+            </td>
+            <td>
+                <div class="admin-row-actions">
+                    <form method="post" action="{{ path('candidature_statut', {id: c.id, statut: 1}) }}" style="display:inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token('statut' ~ c.id) }}">
+                        <button type="submit" class="admin-action-btn" title="Accepter" style="color:#4ade80">✓</button>
+                    </form>
+                    <form method="post" action="{{ path('candidature_statut', {id: c.id, statut: -1}) }}" style="display:inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token('statut' ~ c.id) }}">
+                        <button type="submit" class="admin-action-btn admin-action-delete" title="Refuser">✗</button>
+                    </form>
+                    <a href="{{ path('offre_show', {id: c.offre.id}) }}" class="admin-action-btn" title="Voir l'offre">→</a>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+
+<script>
+document.getElementById('candidatSearch')?.addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('#candidatTable tbody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}
