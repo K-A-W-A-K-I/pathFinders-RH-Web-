@@ -1,0 +1,81 @@
+{% extends 'dashboard/base_dashboard.html.twig' %}
+{% block title %}Formations — Dashboard{% endblock %}
+{% block nav_form %}active{% endblock %}
+
+{% block body %}
+<div class="topbar">
+  <div class="page-title"><span style="font-size:22px">🎓</span><h1>Gestion des Formations</h1></div>
+  <a href="{{ path('dash_formation_new') }}" class="btn-primary">+ Nouvelle formation</a>
+</div>
+
+<div class="table-section">
+  <div class="table-header">
+    <div class="table-title">
+      <h2>Liste des formations</h2>
+      <span class="count-badge">{{ formations|length }}</span>
+    </div>
+    <form method="get" class="table-actions">
+      <input type="text" name="q" value="{{ q }}" placeholder="Rechercher..." class="search-input">
+      <select name="categorie" class="pf-select">
+        <option value="">Toutes catégories</option>
+        {% for cat in categories %}
+          <option value="{{ cat.idCategorie }}" {% if catId == cat.idCategorie %}selected{% endif %}>{{ cat.nomCategorie }}</option>
+        {% endfor %}
+      </select>
+      <select name="sort" class="pf-select">
+        <option value="titre" {% if sort == 'titre' %}selected{% endif %}>Titre</option>
+        <option value="dureeHeures" {% if sort == 'dureeHeures' %}selected{% endif %}>Durée</option>
+        <option value="dateDebut" {% if sort == 'dateDebut' %}selected{% endif %}>Date début</option>
+        <option value="placeDisponible" {% if sort == 'placeDisponible' %}selected{% endif %}>Places</option>
+      </select>
+      <select name="dir" class="pf-select">
+        <option value="ASC" {% if dir == 'ASC' %}selected{% endif %}>↑ ASC</option>
+        <option value="DESC" {% if dir == 'DESC' %}selected{% endif %}>↓ DESC</option>
+      </select>
+      <button type="submit" class="btn-primary" style="padding:7px 16px;box-shadow:none">Filtrer</button>
+    </form>
+  </div>
+
+  {% if formations is empty %}
+    <p style="color:var(--text-light);text-align:center;padding:2rem">Aucune formation trouvée.</p>
+  {% else %}
+    <table>
+      <thead><tr>
+        <th>Titre</th><th>Catégorie</th><th>Formateur</th><th>Durée</th><th>Places</th><th>Dates</th><th style="text-align:right">Actions</th>
+      </tr></thead>
+      <tbody>
+        {% for f in formations %}
+          <tr>
+            <td><strong>{{ f.titre }}</strong></td>
+            <td><span class="tag tag-purple">{{ f.categorie.nomCategorie }}</span></td>
+            <td style="color:var(--text-light);font-size:13px">{{ f.formateur ?? '—' }}</td>
+            <td style="color:var(--text-light);font-size:13px">{{ f.dureeHeures ? f.dureeHeures ~ 'h' : '—' }}</td>
+            <td>
+              {% if f.placeDisponible > 0 %}
+                <span class="tag tag-green">{{ f.placeDisponible }}/{{ f.capaciteMax }}</span>
+              {% else %}
+                <span class="tag tag-red">Complet</span>
+              {% endif %}
+            </td>
+            <td style="color:var(--text-light);font-size:12px">
+              {{ f.dateDebut ? f.dateDebut|date('d/m/Y') : '—' }}<br>
+              {{ f.dateFin ? f.dateFin|date('d/m/Y') : '—' }}
+            </td>
+            <td>
+              <div class="action-btns">
+                <a href="{{ path('dash_formation_inscriptions', {id: f.idFormation}) }}" class="btn-action" title="Inscriptions">👥</a>
+                <a href="{{ path('dash_contenu_new_for_formation', {formationId: f.idFormation}) }}" class="btn-action" title="Ajouter module">📄</a>
+                <a href="{{ path('dash_formation_edit', {id: f.idFormation}) }}" class="btn-action" title="Modifier">✏️</a>
+                <form method="post" action="{{ path('dash_formation_delete', {id: f.idFormation}) }}" onsubmit="return confirm('Supprimer cette formation ?')">
+                  <input type="hidden" name="_token" value="{{ csrf_token('delete_form_' ~ f.idFormation) }}">
+                  <button type="submit" class="btn-action danger" title="Supprimer">🗑</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+{% endblock %}

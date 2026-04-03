@@ -1,0 +1,129 @@
+{% extends 'dashboard/base_dashboard.html.twig' %}
+{% block title %}{{ title }} — Dashboard{% endblock %}
+
+{% block body %}
+<div class="topbar">
+  <div class="page-title"><span style="font-size:22px">🎓</span><h1>{{ title }}</h1></div>
+  <a href="{{ path('dashboard_home') }}" class="btn-secondary">← Retour</a>
+</div>
+
+<div class="form-section" style="max-width:820px">
+  {% form_theme form _self %}
+  {{ form_start(form, {attr: {novalidate: 'novalidate', id: 'formation-form'}}) }}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.2rem">
+
+      <div class="form-group" style="grid-column:1/-1">
+        {{ form_label(form.titre) }}
+        {{ form_widget(form.titre, {attr: {class: form.titre.vars.valid is defined and not form.titre.vars.valid ? 'is-invalid' : (form.titre.vars.errors|length ? 'is-invalid' : '')}}) }}
+        {% for error in form.titre.vars.errors %}
+          <div class="form-errors">{{ error.message }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group" style="grid-column:1/-1">
+        {{ form_label(form.description) }}
+        {{ form_widget(form.description, {attr: {class: form.description.vars.errors|length ? 'is-invalid' : ''}}) }}
+        {% for error in form.description.vars.errors %}
+          <div class="form-errors">{{ error.message }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        {{ form_label(form.categorie) }}
+        {{ form_widget(form.categorie, {attr: {class: form.categorie.vars.errors|length ? 'is-invalid' : ''}}) }}
+        {% for error in form.categorie.vars.errors %}
+          <div class="form-errors">{{ error.message }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        {{ form_label(form.formateur) }}
+        {{ form_widget(form.formateur, {attr: {class: form.formateur.vars.errors|length ? 'is-invalid' : ''}}) }}
+        {% for error in form.formateur.vars.errors %}
+          <div class="form-errors">{{ error.message }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        {{ form_label(form.dureeHeures) }}
+        {{ form_widget(form.dureeHeures, {attr: {class: form.dureeHeures.vars.errors|length ? 'is-invalid' : ''}}) }}
+        {% for error in form.dureeHeures.vars.errors %}
+          <div class="form-errors">{{ error.message }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        {{ form_label(form.capaciteMax) }}
+        {{ form_widget(form.capaciteMax, {attr: {class: form.capaciteMax.vars.errors|length ? 'is-invalid' : '', id: 'capacite_max'}}) }}
+        {% for error in form.capaciteMax.vars.errors %}
+          <div class="form-errors">{{ error.message }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        {{ form_label(form.placeDisponible) }}
+        {{ form_widget(form.placeDisponible, {attr: {class: form.placeDisponible.vars.errors|length ? 'is-invalid' : '', id: 'place_dispo'}}) }}
+        {% for error in form.placeDisponible.vars.errors %}
+          <div class="form-errors">{{ error.message }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        {{ form_label(form.dateDebut) }}
+        {{ form_widget(form.dateDebut, {attr: {class: form.dateDebut.vars.errors|length ? 'is-invalid' : '', id: 'date_debut'}}) }}
+        {% for error in form.dateDebut.vars.errors %}
+          <div class="form-errors">{{ error.message }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        {{ form_label(form.dateFin) }}
+        {{ form_widget(form.dateFin, {attr: {class: form.dateFin.vars.errors|length ? 'is-invalid' : '', id: 'date_fin'}}) }}
+        {% for error in form.dateFin.vars.errors %}
+          <div class="form-errors">{{ error.message }}</div>
+        {% endfor %}
+      </div>
+
+    </div>
+
+    <div style="display:flex;gap:.8rem;margin-top:1.8rem;padding-top:1.2rem;border-top:1px solid var(--border)">
+      <button type="submit" class="btn-primary">💾 Enregistrer</button>
+      <a href="{{ path('dashboard_home') }}" class="btn-secondary">Annuler</a>
+    </div>
+  {{ form_end(form) }}
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+const capaciteInput = document.getElementById('capacite_max');
+const placesInput   = document.getElementById('place_dispo');
+const dateDebut     = document.getElementById('date_debut');
+const dateFin       = document.getElementById('date_fin');
+
+function checkPlaces() {
+  if (!capaciteInput || !placesInput) return;
+  const cap = parseInt(capaciteInput.value) || 0;
+  const pl  = parseInt(placesInput.value) || 0;
+  if (pl > cap && cap > 0) {
+    placesInput.style.borderColor = '#ef4444';
+  } else {
+    placesInput.style.borderColor = '';
+  }
+}
+
+function checkDates() {
+  if (!dateDebut || !dateFin || !dateDebut.value || !dateFin.value) return;
+  if (dateFin.value <= dateDebut.value) {
+    dateFin.style.borderColor = '#ef4444';
+  } else {
+    dateFin.style.borderColor = '';
+  }
+}
+
+if (capaciteInput) capaciteInput.addEventListener('input', checkPlaces);
+if (placesInput)   placesInput.addEventListener('input', checkPlaces);
+if (dateDebut)     dateDebut.addEventListener('change', checkDates);
+if (dateFin)       dateFin.addEventListener('change', checkDates);
+</script>
+{% endblock %}

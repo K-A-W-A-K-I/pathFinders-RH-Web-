@@ -1,0 +1,102 @@
+{% extends 'dashboard/base_dashboard.html.twig' %}
+{% block title %}{{ title }} — Dashboard{% endblock %}
+
+{% block body %}
+<div class="topbar">
+  <div class="page-title"><span style="font-size:22px">📂</span><h1>{{ title }}</h1></div>
+  <a href="{{ path('dashboard_home') }}" class="btn-secondary">← Retour</a>
+</div>
+
+<div class="form-section">
+  {{ form_start(form, {attr: {novalidate: 'novalidate', enctype: 'multipart/form-data'}}) }}
+
+    <div class="form-group">
+      {{ form_label(form.nomCategorie) }}
+      {{ form_widget(form.nomCategorie, {attr: {class: form.nomCategorie.vars.errors|length ? 'is-invalid' : ''}}) }}
+      {% for error in form.nomCategorie.vars.errors %}
+        <div class="form-errors">{{ error.message }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="form-group">
+      {{ form_label(form.description) }}
+      {{ form_widget(form.description, {attr: {class: form.description.vars.errors|length ? 'is-invalid' : ''}}) }}
+      {% for error in form.description.vars.errors %}
+        <div class="form-errors">{{ error.message }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="form-group">
+      {{ form_label(form.imageFile) }}
+      
+      {% if categorie.image %}
+        <div style="margin-bottom:1rem;padding:.8rem;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px">
+          <div style="display:flex;align-items:center;gap:1rem">
+            <img src="{{ asset('uploads/categories/' ~ categorie.image) }}" alt="Image actuelle" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #ddd">
+            <div>
+              <div style="font-size:.85rem;font-weight:600;color:#0369a1">Image actuelle</div>
+              <div style="font-size:.75rem;color:#64748b;margin-top:.2rem">Choisissez un nouveau fichier pour la remplacer</div>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
+      {{ form_widget(form.imageFile, {attr: {class: form.imageFile.vars.errors|length ? 'is-invalid' : '', id: 'image-file-input'}}) }}
+      {% for error in form.imageFile.vars.errors %}
+        <div class="form-errors">{{ error.message }}</div>
+      {% endfor %}
+      
+      <div id="image-preview" style="display:none;margin-top:1rem;padding:.8rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px">
+        <div style="display:flex;align-items:center;gap:1rem">
+          <img id="preview-img" src="" alt="Aperçu" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #ddd">
+          <div>
+            <div style="font-size:.85rem;font-weight:600;color:#15803d" id="preview-name"></div>
+            <div style="font-size:.75rem;color:#64748b;margin-top:.2rem" id="preview-size"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:.8rem;margin-top:1.8rem;padding-top:1.2rem;border-top:1px solid var(--border)">
+      <button type="submit" class="btn-primary">💾 Enregistrer</button>
+      <a href="{{ path('dashboard_home') }}" class="btn-secondary">Annuler</a>
+    </div>
+  {{ form_end(form) }}
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+// Aperçu de l'image sélectionnée
+const fileInput = document.getElementById('image-file-input');
+const preview = document.getElementById('image-preview');
+const previewImg = document.getElementById('preview-img');
+const previewName = document.getElementById('preview-name');
+const previewSize = document.getElementById('preview-size');
+
+if (fileInput) {
+  fileInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      // Afficher l'aperçu
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        previewImg.src = e.target.result;
+        previewName.textContent = file.name;
+        previewSize.textContent = formatFileSize(file.size);
+        preview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    } else {
+      preview.style.display = 'none';
+    }
+  });
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' octets';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' Ko';
+  return (bytes / (1024 * 1024)).toFixed(2) + ' Mo';
+}
+</script>
+{% endblock %}
