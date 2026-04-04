@@ -2,20 +2,72 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
-use Doctrine\ORM\Mapping as ORM;
+use App\Repository\FichesPaiementRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use App\Repository\FichesPaiementRepository;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[ORM\Entity(repositoryClass: FichesPaiementRepository::class)]
 #[ORM\Table(name: 'fiches_paiement')]
+#[Assert\Callback('validateDateCurrentMonth')]
 class FichesPaiement
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
     private ?int $id_fiche_paiement = null;
+
+    #[ORM\ManyToOne(targetEntity: Employee::class, inversedBy: 'fichesPaiements')]
+    #[ORM\JoinColumn(name: 'id_employe', referencedColumnName: 'id_employee')]
+    #[Assert\NotNull(message: "L'employé est obligatoire")]
+    private ?Employee $employee = null;
+
+    #[ORM\Column(type: 'decimal', nullable: true)]
+    #[Assert\PositiveOrZero(message: 'La déduction ne peut pas être négative')]
+    private ?float $montant_deduction = null;
+
+    #[ORM\Column(type: 'decimal', nullable: true)]
+    #[Assert\NotBlank(message: 'Le montant de taxe est obligatoire')]
+    #[Assert\PositiveOrZero(message: 'La taxe ne peut pas être négative')]
+    #[Assert\LessThan(value: 100000, message: 'Le montant ne peut pas dépasser 100 000')]
+    private ?float $montant_taxe = null;
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\NotBlank(message: 'Le type de paiement est obligatoire')]
+    #[Assert\Choice(
+        choices: ['virement', 'cheque', 'especes'],
+        message: 'Type de paiement invalide'
+    )]
+    private ?string $type_paiement = null;
+
+    #[ORM\Column(type: 'date', nullable: true)]
+    #[Assert\NotBlank(message: 'La date de paiement est obligatoire')]
+    
+    // AFTER
+    //////////////////
+    private ?\DateTimeInterface $date_paiement = null;
+
+    #[ORM\OneToMany(targetEntity: Prime::class, mappedBy: 'fichesPaiement')]
+    private Collection $primes;
+
+    public function __construct()
+    {
+        $this->primes = new ArrayCollection();
+    }
+
+    // ── getters / setters ──────────────────────────────────────────
+
+    public function getId(): ?int
+    {
+        return $this->id_fiche_paiement;
+    }
+
+    public function getIdFichePaiement(): ?int
+    {
+        return $this->id_fiche_paiement;
+    }
 
     public function getId_fiche_paiement(): ?int
     {
@@ -28,10 +80,6 @@ class FichesPaiement
         return $this;
     }
 
-    #[ORM\ManyToOne(targetEntity: Employee::class, inversedBy: 'fichesPaiements')]
-    #[ORM\JoinColumn(name: 'id_employe', referencedColumnName: 'id_employee')]
-    private ?Employee $employee = null;
-
     public function getEmployee(): ?Employee
     {
         return $this->employee;
@@ -43,8 +91,16 @@ class FichesPaiement
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: true)]
-    private ?float $montant_deduction = null;
+    public function getMontantDeduction(): ?float
+    {
+        return $this->montant_deduction;
+    }
+
+    public function setMontantDeduction(?float $montant_deduction): self
+    {
+        $this->montant_deduction = $montant_deduction;
+        return $this;
+    }
 
     public function getMontant_deduction(): ?float
     {
@@ -57,10 +113,16 @@ class FichesPaiement
         return $this;
     }
 
-    // ← $primes float column REMOVED (name conflict with the relation below)
+    public function getMontantTaxe(): ?float
+    {
+        return $this->montant_taxe;
+    }
 
-    #[ORM\Column(type: 'decimal', nullable: true)]
-    private ?float $montant_taxe = null;
+    public function setMontantTaxe(?float $montant_taxe): self
+    {
+        $this->montant_taxe = $montant_taxe;
+        return $this;
+    }
 
     public function getMontant_taxe(): ?float
     {
@@ -73,8 +135,16 @@ class FichesPaiement
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $type_paiement = null;
+    public function getTypePaiement(): ?string
+    {
+        return $this->type_paiement;
+    }
+
+    public function setTypePaiement(?string $type_paiement): self
+    {
+        $this->type_paiement = $type_paiement;
+        return $this;
+    }
 
     public function getType_paiement(): ?string
     {
@@ -87,8 +157,16 @@ class FichesPaiement
         return $this;
     }
 
-    #[ORM\Column(type: 'date', nullable: true)]
-    private ?\DateTimeInterface $date_paiement = null;
+    public function getDatePaiement(): ?\DateTimeInterface
+    {
+        return $this->date_paiement;
+    }
+
+    public function setDatePaiement(?\DateTimeInterface $date_paiement): self
+    {
+        $this->date_paiement = $date_paiement;
+        return $this;
+    }
 
     public function getDate_paiement(): ?\DateTimeInterface
     {
@@ -99,14 +177,6 @@ class FichesPaiement
     {
         $this->date_paiement = $date_paiement;
         return $this;
-    }
-
-    #[ORM\OneToMany(targetEntity: Prime::class, mappedBy: 'fichesPaiement')]
-    private Collection $primes;
-
-    public function __construct()
-    {
-        $this->primes = new ArrayCollection();
     }
 
     public function getPrimes(): Collection
@@ -127,57 +197,21 @@ class FichesPaiement
         $this->primes->removeElement($prime);
         return $this;
     }
+    public function validateDateCurrentMonth(ExecutionContextInterface $context): void
+{
+    $date = $this->getDatePaiement();
+    if (!$date) return;
 
-    public function getIdFichePaiement(): ?int
-    {
-        return $this->id_fiche_paiement;
+    $now = new \DateTime();
+    $currentMonth = (int) $now->format('m');
+    $currentYear  = (int) $now->format('Y');
+    $dateMonth    = (int) $date->format('m');
+    $dateYear     = (int) $date->format('Y');
+
+    if ($dateMonth !== $currentMonth || $dateYear !== $currentYear) {
+        $context->buildViolation('La date doit être dans le mois en cours')
+            ->atPath('date_paiement')
+            ->addViolation();
     }
-
-    public function getMontantDeduction(): ?string
-    {
-        return $this->montant_deduction;
-    }
-
-    public function setMontantDeduction(?string $montant_deduction): static
-    {
-        $this->montant_deduction = $montant_deduction;
-
-        return $this;
-    }
-
-    public function getMontantTaxe(): ?string
-    {
-        return $this->montant_taxe;
-    }
-
-    public function setMontantTaxe(?string $montant_taxe): static
-    {
-        $this->montant_taxe = $montant_taxe;
-
-        return $this;
-    }
-
-    public function getTypePaiement(): ?string
-    {
-        return $this->type_paiement;
-    }
-
-    public function setTypePaiement(?string $type_paiement): static
-    {
-        $this->type_paiement = $type_paiement;
-
-        return $this;
-    }
-
-    public function getDatePaiement(): ?\DateTime
-    {
-        return $this->date_paiement;
-    }
-
-    public function setDatePaiement(?\DateTime $date_paiement): static
-    {
-        $this->date_paiement = $date_paiement;
-
-        return $this;
-    }
+}
 }

@@ -3,8 +3,8 @@
 namespace App\Controller;
 
 use App\Entity\Prime;
+use App\Form\PrimeType;
 use App\Repository\PrimeRepository;
-use App\Repository\FichesPaiementRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,104 +22,69 @@ class PrimeController extends AbstractController
     }
 
     #[Route('/primes/new', name: 'prime_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $em, FichesPaiementRepository $ficheRepo): Response
+    public function new(Request $request, EntityManagerInterface $em): Response
     {
-        $fiches = $ficheRepo->findAll();
-        $error = null;
+        $prime = new Prime();
+        $form = $this->createForm(PrimeType::class, $prime);
+        $form->handleRequest($request);
 
-        if ($request->isMethod('POST')) {
-            $fiche = $ficheRepo->find($request->request->get('fiche'));
-            $date = \DateTime::createFromFormat('Y-m-d', $request->request->get('date_attribution'));
+        if ($form->isSubmitted() && $form->isValid()) {
 
-            // ✅ Check: no duplicate prime on same day for same fiche
+            // duplicate check
             $existing = $em->getRepository(Prime::class)->createQueryBuilder('p')
                 ->where('p.fichesPaiement = :fiche')
                 ->andWhere('p.dateAttribution = :date')
-                ->setParameter('fiche', $fiche)
-                ->setParameter('date', $date)
+                ->setParameter('fiche', $prime->getFichesPaiement())
+                ->setParameter('date', $prime->getDateAttribution())
                 ->getQuery()
                 ->getResult();
 
             if (count($existing) > 0) {
-                $error = "Une prime existe déjà pour cette fiche à cette date.";
+                $this->addFlash('error', 'Une prime existe déjà pour cette fiche à cette date.');
             } else {
-                $prime = new Prime();
-                $prime->setLibelle($request->request->get('libelle'));
-                $prime->setMontant($request->request->get('montant'));
-                $prime->setTypePrime($request->request->get('type_prime'));
-                $prime->setDateAttribution($date);
-                $prime->setFichesPaiement($fiche);
-
                 $em->persist($prime);
                 $em->flush();
-
-                // ✅ Recalculate total primes on the fiche after adding
-                $this->recalculerPrimesFiche($fiche, $em);
-
+                $this->addFlash('success', 'Prime créée avec succès !');
                 return $this->redirectToRoute('prime_index');
             }
         }
 
         return $this->render('prime/new.html.twig', [
-            'fiches' => $fiches,
-            'error' => $error
+            'form' => $form->createView(),
         ]);
     }
 
     #[Route('/primes/{id}/edit', name: 'prime_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Prime $prime, EntityManagerInterface $em, FichesPaiementRepository $ficheRepo): Response
+    public function edit(Request $request, Prime $prime, EntityManagerInterface $em): Response
     {
-        $fiches = $ficheRepo->findAll();
+        $form = $this->createForm(PrimeType::class, $prime);
+        $form->handleRequest($request);
 
-        if ($request->isMethod('POST')) {
-            $fiche = $ficheRepo->find($request->request->get('fiche'));
-            $date = \DateTime::createFromFormat('Y-m-d', $request->request->get('date_attribution'));
-
-            $prime->setLibelle($request->request->get('libelle'));
-            $prime->setMontant($request->request->get('montant'));
-            $prime->setTypePrime($request->request->get('type_prime'));
-            $prime->setDateAttribution($date);
-            $prime->setFichesPaiement($fiche);
-
+        if ($form->isSubmitted() && $form->isValid()) {
             $em->flush();
-
-            // ✅ Recalculate after edit too
-            $this->recalculerPrimesFiche($fiche, $em);
-
+            $this->addFlash('success', 'Prime modifiée avec succès !');
             return $this->redirectToRoute('prime_index');
         }
 
         return $this->render('prime/edit.html.twig', [
+            'form' => $form->createView(),
             'prime' => $prime,
-            'fiches' => $fiches
         ]);
     }
 
     #[Route('/primes/{id}/delete', name: 'prime_delete', methods: ['POST'])]
     public function delete(Prime $prime, EntityManagerInterface $em): Response
     {
-        $fiche = $prime->getFichesPaiement();
-
         $em->remove($prime);
         $em->flush();
-
-        // ✅ Recalculate after delete too
-        if ($fiche) {
-            $this->recalculerPrimesFiche($fiche, $em);
-        }
-
+        $this->addFlash('success', 'Prime supprimée.');
         return $this->redirectToRoute('prime_index');
     }
-
-    // ✅ Equivalent of calculerPrimesParId() from Java
-    private function recalculerPrimesFiche($fiche, EntityManagerInterface $em): void
-    {
-        $total = 0;
-        foreach ($fiche->getPrimes() as $p) {
-            $total += $p->getMontant();
-        }
-        // if you restore the primes float column later, set it here
-        // $fiche->setPrimesTotal($total);
-        // $em->flush();
-    }
+    #[Route('/mes-primes', name: 'worker_primes')]
+public function workerIndex(PrimeRepository $repo): Response
+{
+    return $this->render('worker/primes.html.twig', [
+        'primes' => $repo->findAll()
+    ]);
+}
 }
