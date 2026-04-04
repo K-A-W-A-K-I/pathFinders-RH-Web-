@@ -29,16 +29,19 @@
       <thead>
         <tr style="border-bottom:1px solid var(--border);">
           <th style="padding:12px 10px;text-align:left;color:var(--text-muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase;">Employé</th>
-          <th style="padding:12px 10px;text-align:left;color:var(--text-muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase;">Date Paiement</th>
-          <th style="padding:12px 10px;text-align:left;color:var(--text-muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase;">Type Paiement</th>
-          <th style="padding:12px 10px;text-align:left;color:var(--text-muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase;">Déduction</th>
+          <th style="padding:12px 10px;text-align:left;color:var(--text-muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase;">Date</th>
+          <th style="padding:12px 10px;text-align:left;color:var(--text-muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase;">Type</th>
+          <th style="padding:12px 10px;text-align:left;color:var(--text-muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase;">Salaire Base</th>
           <th style="padding:12px 10px;text-align:left;color:var(--text-muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase;">Taxe</th>
+          <th style="padding:12px 10px;text-align:left;color:var(--text-muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase;">Déduction</th>
+          <th style="padding:12px 10px;text-align:left;color:var(--text-muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase;">Primes</th>
+          <th style="padding:12px 10px;text-align:left;color:var(--primary);font-size:11px;letter-spacing:.08em;text-transform:uppercase;">💰 Salaire Final</th>
         </tr>
       </thead>
       <tbody>
         {% for fiche in fiches %}
-        <tr style="border-bottom:.5px solid var(--border);transition:background .15s;" 
-            onmouseover="this.style.background='var(--surface-hover)'" 
+        <tr style="border-bottom:.5px solid var(--border);transition:background .15s;"
+            onmouseover="this.style.background='var(--surface-hover)'"
             onmouseout="this.style.background='transparent'">
           <td style="padding:14px 10px;color:var(--text);font-weight:500;">
             {{ fiche.employee.utilisateur.nom }} {{ fiche.employee.utilisateur.prenom }}
@@ -51,16 +54,25 @@
               {{ fiche.typePaiement }}
             </span>
           </td>
-          <td style="padding:14px 10px;color:var(--red);">
-            - {{ fiche.montantDeduction }} DT
+          <td style="padding:14px 10px;color:var(--text);">
+            {{ fiche.employee.salaire }} DT
           </td>
-          <td style="padding:14px 10px;color:var(--text-muted);">
-            {{ fiche.montantTaxe }} DT
+          <td style="padding:14px 10px;color:var(--red);">
+            - {{ fiche.montantTaxe }} DT
+          </td>
+          <td style="padding:14px 10px;color:var(--red);">
+            - {{ fiche.montantDeduction|abs }} DT
+          </td>
+          <td style="padding:14px 10px;color:#22c55e;">
+            + {{ fiche.primes|reduce((carry, p) => carry + p.montant, 0) }} DT
+          </td>
+          <td style="padding:14px 10px;font-weight:700;color:var(--primary);font-size:1rem;">
+            {{ fiche.salaireNet }} DT
           </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="5" style="padding:40px;text-align:center;color:var(--text-dim);">
+          <td colspan="8" style="padding:40px;text-align:center;color:var(--text-dim);">
             Aucune fiche disponible.
           </td>
         </tr>
@@ -69,6 +81,7 @@
     </table>
   </div>
 
+  {# ── STATS ── #}
   <div class="pf-stats">
     <div class="pf-stat">
       <div class="pf-stat-num">{{ fiches|length }}<span></span></div>
@@ -78,7 +91,7 @@
       <div class="pf-stat-num">
         {% set totalDed = 0 %}
         {% for fiche in fiches %}
-          {% set totalDed = totalDed + fiche.montantDeduction %}
+          {% set totalDed = totalDed + fiche.montantDeduction|abs %}
         {% endfor %}
         {{ totalDed }}<span> DT</span>
       </div>
@@ -93,6 +106,16 @@
         {{ totalTaxe }}<span> DT</span>
       </div>
       <div class="pf-stat-label">Total taxes</div>
+    </div>
+    <div class="pf-stat">
+      <div class="pf-stat-num">
+        {% set totalNet = 0 %}
+        {% for fiche in fiches %}
+          {% set totalNet = totalNet + fiche.salaireNet %}
+        {% endfor %}
+        {{ totalNet }}<span> DT</span>
+      </div>
+      <div class="pf-stat-label">Total salaire net</div>
     </div>
   </div>
 

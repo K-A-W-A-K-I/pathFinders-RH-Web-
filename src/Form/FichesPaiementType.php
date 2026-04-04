@@ -36,10 +36,9 @@ class FichesPaiementType extends AbstractType
                     'Espèces'  => 'especes',
                 ],
             ])
-            ->add('montant_taxe', NumberType::class, [
-                'label' => 'Montant Taxe',
-                'scale' => 2,
-            ])
+
+                // montant_deduction is auto-calculated, so we don't include it in the form
+                // montant_taxe is auto-calculated, so we don't include it in the form  
         ;
         // NOTE: montant_deduction is NOT here because it's auto-calculated
     }
