@@ -44,9 +44,12 @@ class PrimeType extends AbstractType
                     'Exceptionnelle'=> 'exceptionnelle',
                 ],
             ])
-            ->add('date_attribution', DateType::class, [
-                'widget' => 'single_text',
-                'label' => "Date d'attribution",
+           ->add('date_attribution', DateType::class, [
+            'widget' => 'single_text',
+            'label' => "Date d'attribution",
+            'attr' => [
+                'max' => (new \DateTime())->format('Y-m-d'), // ← blocks future dates in browser
+             ],
             ])
         ;
     }

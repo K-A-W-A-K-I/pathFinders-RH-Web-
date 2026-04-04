@@ -28,11 +28,11 @@ class FichesPaiement
     #[Assert\PositiveOrZero(message: 'La déduction ne peut pas être négative')]
     private ?float $montant_deduction = null;
 
-    #[ORM\Column(type: 'decimal', nullable: true)]
-    #[Assert\NotBlank(message: 'Le montant de taxe est obligatoire')]
-    #[Assert\PositiveOrZero(message: 'La taxe ne peut pas être négative')]
-    #[Assert\LessThan(value: 100000, message: 'Le montant ne peut pas dépasser 100 000')]
-    private ?float $montant_taxe = null;
+   
+// AFTER
+#[ORM\Column(type: 'decimal', nullable: true)]
+#[Assert\PositiveOrZero(message: 'La taxe ne peut pas être négative')]
+private ?float $montant_taxe = null;
 
     #[ORM\Column(type: 'string', nullable: true)]
     #[Assert\NotBlank(message: 'Le type de paiement est obligatoire')]
@@ -225,5 +225,24 @@ public function getSalaireNet(): float
     }
 
     return $salaire - $deduction + $totalPrimes;
+}
+public static function calculerTaxe(float $salaireAnnuel): float
+{
+    if ($salaireAnnuel <= 5000) {
+        $taux = 0.0;
+    } elseif ($salaireAnnuel <= 10000) {
+        $taux = 0.15;
+    } elseif ($salaireAnnuel <= 20000) {
+        $taux = 0.25;
+    } elseif ($salaireAnnuel <= 35000) {
+        $taux = 0.30;
+    } elseif ($salaireAnnuel <= 50000) {
+        $taux = 0.33;
+    } else {
+        $taux = 0.35;
+    }
+
+    // return monthly tax amount
+    return round(($salaireAnnuel * $taux) / 12, 2);
 }
 }

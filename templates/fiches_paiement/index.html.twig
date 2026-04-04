@@ -9,9 +9,40 @@
   <a href="{{ path('fiche_new') }}" class="btn-new">+ Nouvelle Fiche</a>
   <a href="{{ path('fiche_print_all') }}" class="btn-print" target="_blank">🖨 Imprimer tout</a>
 </div>
+{# ── SEARCH + SORT BAR ── #}
+<div style="display:flex; gap:10px; margin-bottom:16px; align-items:center;">
+  <input 
+    type="text" 
+    id="searchInput"
+    placeholder="🔍 Rechercher par nom..."
+    style="padding:9px 14px; border:1.5px solid #e5e7ef; border-radius:8px; font-size:14px; width:250px; outline:none; font-family:'DM Sans',sans-serif;"
+    oninput="filterTable()"
+  />
+  <select 
+    id="sortSelect" 
+    onchange="sortTable()"
+    style="padding:9px 14px; border:1.5px solid #e5e7ef; border-radius:8px; font-size:14px; font-family:'DM Sans',sans-serif; outline:none; cursor:pointer;"
+  >
+    <option value="">⇅ Trier par...</option>
+    <option value="0">Nom (A → Z)</option>
+    <option value="0-desc">Nom (Z → A)</option>
+    <option value="1">Salaire Base ↑</option>
+    <option value="1-desc">Salaire Base ↓</option>
+    <option value="2">Date ↑</option>
+    <option value="2-desc">Date ↓</option>
+    <option value="7">Salaire Final ↑</option>
+    <option value="7-desc">Salaire Final ↓</option>
+  </select>
+  <button 
+    onclick="resetTable()"
+    style="padding:9px 14px; border:1.5px solid #e5e7ef; border-radius:8px; font-size:14px; background:white; cursor:pointer; font-family:'DM Sans',sans-serif;"
+  >
+    ✕ Reset
+  </button>
+</div>
 
 <div class="table-container">
-  <table class="pf-table">
+  <table class="pf-table" id="fichesTable">
     <thead>
       <tr>
         <th>Employé</th>
@@ -27,7 +58,7 @@
     </thead>
     <tbody>
       {% for fiche in fiches %}
-        <tr class="row-animate">
+        <tr class="row-animate" onclick="window.location='{{ path('fiche_show', {id: fiche.idFichePaiement}) }}'" style="cursor:pointer">
           <td>{{ fiche.employee.utilisateur.nom }} {{ fiche.employee.utilisateur.prenom }}</td>
           <td>{{ fiche.employee.salaire }} DT</td>
           <td>{{ fiche.datePaiement ? fiche.datePaiement|date('Y-m-d') : '-' }}</td>
@@ -57,7 +88,54 @@
     </tbody>
   </table>
 </div>
+<script>
+function filterTable() {
+    const input = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#fichesTable tbody tr.row-animate');
+    
+    rows.forEach(row => {
+        const name = row.cells[0].innerText.toLowerCase();
+        row.style.display = name.includes(input) ? '' : 'none';
+    });
+}
 
+function sortTable() {
+    const select = document.getElementById('sortSelect').value;
+    if (!select) return;
+
+    const [colIndex, direction] = select.split('-');
+    const col = parseInt(colIndex);
+    const desc = direction === 'desc';
+
+    const tbody = document.querySelector('#fichesTable tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr.row-animate'));
+
+    rows.sort((a, b) => {
+        let aVal = a.cells[col]?.innerText.replace(' DT', '').replace('-', '').trim() || '';
+        let bVal = b.cells[col]?.innerText.replace(' DT', '').replace('-', '').trim() || '';
+
+        // try numeric sort first
+        const aNum = parseFloat(aVal);
+        const bNum = parseFloat(bVal);
+
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+            return desc ? bNum - aNum : aNum - bNum;
+        }
+
+        // otherwise alphabetical
+        return desc ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+    });
+
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+function resetTable() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('sortSelect').value = '';
+    const rows = document.querySelectorAll('#fichesTable tbody tr.row-animate');
+    rows.forEach(row => row.style.display = '');
+}
+</script>
 <style>
 .page-title { font-size: 2rem; font-weight: 700; color: #4A4A4A; margin-bottom: 20px; }
 .table-container { overflow-x: auto; margin-top: 20px; border-radius: 10px; background: white; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
