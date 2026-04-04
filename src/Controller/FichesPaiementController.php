@@ -11,6 +11,9 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+// add these imports at the top
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
 class FichesPaiementController extends AbstractController
 {
@@ -29,14 +32,19 @@ class FichesPaiementController extends AbstractController
         $form = $this->createForm(FichesPaiementType::class, $fiche);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $em->persist($fiche);
-            $em->flush();
+       if ($form->isSubmitted() && $form->isValid()) {
+    // calculate deduction BEFORE persist
+    $score = $fiche->getEmployee()->getScore() ?? 0;
+    $salaire = $fiche->getEmployee()->getSalaire() ?? 0;
+    $deduction = ((100 - $score) / 100) * $salaire * 0.1;
+    $fiche->setMontantDeduction(round($deduction, 2));
 
-            $this->addFlash('success', 'Fiche de paiement créée avec succès !');
+    $em->persist($fiche);
+    $em->flush();
 
-            return $this->redirectToRoute('fiche_index');
-        }
+    $this->addFlash('success', 'Fiche de paiement créée avec succès !');
+    return $this->redirectToRoute('fiche_index');
+}
 
         return $this->render('fiches_paiement/new.html.twig', [
             'form' => $form->createView(),
@@ -81,4 +89,59 @@ public function workerIndex(FichesPaiementRepository $repo): Response
         'fiches' => $repo->findAll()
     ]);
 }
+// ── PRINT ALL ──────────────────────────────────────────
+#[Route('/fiches/print', name: 'fiche_print_all')]
+public function printAll(FichesPaiementRepository $repo): Response
+{
+    $fiches = $repo->findAll();
+
+    $html = $this->renderView('fiches_paiement/pdf_all.html.twig', [
+        'fiches' => $fiches
+    ]);
+
+    $options = new Options();
+    $options->set('defaultFont', 'Arial');
+
+    $dompdf = new Dompdf($options);
+    $dompdf->loadHtml($html);
+    $dompdf->setPaper('A4', 'landscape');
+    $dompdf->render();
+
+    return new Response(
+        $dompdf->output(),
+        200,
+        [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="fiches_paiement.pdf"',
+        ]
+    );
+}
+
+// ── PRINT ONE ──────────────────────────────────────────
+#[Route('/fiches/{id}/print', name: 'fiche_print_one')]
+public function printOne(FichesPaiement $fiche): Response
+{
+    $html = $this->renderView('fiches_paiement/pdf_one.html.twig', [
+        'fiche' => $fiche
+    ]);
+
+    $options = new Options();
+    $options->set('defaultFont', 'Arial');
+
+    $dompdf = new Dompdf($options);
+    $dompdf->loadHtml($html);
+    $dompdf->setPaper('A4', 'portrait');
+    $dompdf->render();
+
+    return new Response(
+        $dompdf->output(),
+        200,
+        [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="fiche_' . $fiche->getId() . '.pdf"',
+        ]
+    );
+}
+
+
 }

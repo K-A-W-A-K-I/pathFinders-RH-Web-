@@ -10,7 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-
+use App\Entity\FichesPaiement;
 class PrimeController extends AbstractController
 {
     #[Route('/primes', name: 'prime_index')]
@@ -85,6 +85,43 @@ public function workerIndex(PrimeRepository $repo): Response
 {
     return $this->render('worker/primes.html.twig', [
         'primes' => $repo->findAll()
+    ]);
+}
+#[Route('/primes/new-for-fiche/{id}', name: 'prime_new_for_fiche', methods: ['GET', 'POST'])]
+public function newForFiche(
+    Request $request, 
+    FichesPaiement $fiche, 
+    EntityManagerInterface $em
+): Response {
+    $prime = new Prime();
+    $prime->setFichesPaiement($fiche); // ← pre-fill the fiche
+
+    $form = $this->createForm(PrimeType::class, $prime);
+    $form->handleRequest($request);
+
+    if ($form->isSubmitted() && $form->isValid()) {
+
+        // duplicate check
+        $existing = $em->getRepository(Prime::class)->createQueryBuilder('p')
+            ->where('p.fichesPaiement = :fiche')
+            ->andWhere('p.dateAttribution = :date')
+            ->setParameter('fiche', $prime->getFichesPaiement())
+            ->setParameter('date', $prime->getDateAttribution())
+            ->getQuery()
+            ->getResult();
+
+        if (count($existing) > 0) {
+            $this->addFlash('error', 'Une prime existe déjà pour cette fiche à cette date.');
+        } else {
+            $em->persist($prime);
+            $em->flush();
+            $this->addFlash('success', 'Prime ajoutée avec succès !');
+            return $this->redirectToRoute('fiche_index'); // ← goes back to fiches
+        }
+    }
+
+    return $this->render('prime/new.html.twig', [
+        'form' => $form->createView(),
     ]);
 }
 }

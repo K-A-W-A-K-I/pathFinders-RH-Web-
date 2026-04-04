@@ -214,4 +214,16 @@ class FichesPaiement
             ->addViolation();
     }
 }
+public function getSalaireNet(): float
+{
+    $salaire = $this->employee?->getSalaire() ?? 0;
+    $deduction = $this->montant_deduction ?? 0;
+    
+    $totalPrimes = 0;
+    foreach ($this->primes as $prime) {
+        $totalPrimes += $prime->getMontant() ?? 0;
+    }
+
+    return $salaire - $deduction + $totalPrimes;
+}
 }

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 13px; color: #1a1d2e; }
+    h1 { color: #6C63FF; font-size: 20px; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #6C63FF; color: white; padding: 10px; text-align: left; font-size: 12px; }
+    td { padding: 9px 10px; border-bottom: 1px solid #eee; font-size: 12px; }
+    tr:nth-child(even) { background: #f8f7ff; }
+    .footer { margin-top: 30px; font-size: 11px; color: #999; text-align: right; }
+  </style>
+</head>
+<body>
+  <h1>📋 Liste des Fiches de Paiement</h1>
+  <p style="color:#999; margin-bottom:16px">Généré le {{ "now"|date("d/m/Y") }}</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Employé</th>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Montant Taxe</th>
+        <th>Déduction</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for fiche in fiches %}
+      <tr>
+        <td>{{ fiche.employee.utilisateur.nom }} {{ fiche.employee.utilisateur.prenom }}</td>
+        <td>{{ fiche.datePaiement ? fiche.datePaiement|date('d/m/Y') : '-' }}</td>
+        <td>{{ fiche.typePaiement }}</td>
+        <td>{{ fiche.montantTaxe }} DT</td>
+        <td>{{ fiche.montantDeduction }} DT</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="footer">PathFinder RH — Confidentiel</div>
+</body>
+</html>
