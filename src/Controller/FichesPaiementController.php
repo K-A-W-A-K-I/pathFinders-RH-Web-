@@ -74,4 +74,11 @@ public function edit(Request $request, FichesPaiement $fiche, EntityManagerInter
 
         return $this->redirectToRoute('fiche_index');
     }
+    #[Route('/mes-fiches', name: 'worker_fiches')]
+public function workerIndex(FichesPaiementRepository $repo): Response
+{
+    return $this->render('worker/fiches.html.twig', [
+        'fiches' => $repo->findAll()
+    ]);
+}
 }

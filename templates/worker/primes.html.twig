@@ -1,0 +1,100 @@
+{% extends 'base_public.html.twig' %}
+
+{% block title %}Mes Primes — PathFinder{% endblock %}
+
+{% block nav_primes %}active{% endblock %}
+
+{% block content %}
+
+<div class="pf-hero">
+  <div class="pf-hero-bg"></div>
+  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge">
+      <div class="pf-hero-badge-dot"></div>
+      Espace Employé
+    </div>
+    <h1>Mes<br><span>Primes</span></h1>
+    <p>Consultez toutes vos primes et bonus attribués.</p>
+  </div>
+</div>
+
+<div class="pf-content">
+  <div class="pf-section">
+    <div class="pf-section-label">Primes</div>
+    <h2>Historique de vos primes</h2>
+    <div class="pf-divider"></div>
+
+    <table style="width:100%;border-collapse:collapse;margin-top:1rem;">
+      <thead>
+        <tr style="border-bottom:1px solid var(--border);">
+          <th style="padding:12px 10px;text-align:left;color:var(--text-muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase;">Libellé</th>
+          <th style="padding:12px 10px;text-align:left;color:var(--text-muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase;">Type</th>
+          <th style="padding:12px 10px;text-align:left;color:var(--text-muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase;">Montant</th>
+          <th style="padding:12px 10px;text-align:left;color:var(--text-muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase;">Date</th>
+          <th style="padding:12px 10px;text-align:left;color:var(--text-muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase;">Employé</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for prime in primes %}
+        <tr style="border-bottom:.5px solid var(--border);transition:background .15s;"
+            onmouseover="this.style.background='var(--surface-hover)'"
+            onmouseout="this.style.background='transparent'">
+          <td style="padding:14px 10px;color:var(--text);font-weight:500;">
+            {{ prime.libelle }}
+          </td>
+          <td style="padding:14px 10px;">
+            <span style="background:rgba(108,99,255,.12);border:.5px solid rgba(108,99,255,.3);color:var(--primary);padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">
+              {{ prime.typePrime }}
+            </span>
+          </td>
+          <td style="padding:14px 10px;color:var(--teal);font-weight:700;font-size:15px;">
+            + {{ prime.montant }} DT
+          </td>
+          <td style="padding:14px 10px;color:var(--text-muted);">
+            {{ prime.dateAttribution ? prime.dateAttribution|date('d/m/Y') : '—' }}
+          </td>
+          <td style="padding:14px 10px;color:var(--text-muted);">
+            {% if prime.fichesPaiement and prime.fichesPaiement.employee and prime.fichesPaiement.employee.utilisateur %}
+              {{ prime.fichesPaiement.employee.utilisateur.nom }} {{ prime.fichesPaiement.employee.utilisateur.prenom }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" style="padding:40px;text-align:center;color:var(--text-dim);">
+            Aucune prime disponible.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pf-stats">
+    <div class="pf-stat">
+      <div class="pf-stat-num">{{ primes|length }}<span></span></div>
+      <div class="pf-stat-label">Primes au total</div>
+    </div>
+    <div class="pf-stat">
+      <div class="pf-stat-num">
+        {% set totalPrimes = 0 %}
+        {% for prime in primes %}
+          {% set totalPrimes = totalPrimes + prime.montant %}
+        {% endfor %}
+        {{ totalPrimes }}<span> DT</span>
+      </div>
+      <div class="pf-stat-label">Total primes reçues</div>
+    </div>
+    <div class="pf-stat">
+      <div class="pf-stat-num">
+        {{ primes|length > 0 ? (totalPrimes / primes|length)|round : 0 }}<span> DT</span>
+      </div>
+      <div class="pf-stat-label">Moyenne par prime</div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
