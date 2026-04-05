@@ -1,6 +1,7 @@
-{% extends 'user_event/base.html.twig' %}
+{% extends 'client/base_client.html.twig' %}
 
 {% block title %}Événements — PathFinder{% endblock %}
+{% block nav_evenements %}active{% endblock %}
 {% block page_title %}{% endblock %}
 {% block page_subtitle %}{% endblock %}
 
@@ -144,32 +145,15 @@
     }
 </style>
 
-<section class="evl-hero">
-    <div class="evl-hero-blob evl-hero-blob-1"></div>
-    <div class="evl-hero-blob evl-hero-blob-2"></div>
-    <div class="evl-hero-blob evl-hero-blob-3"></div>
-    <div class="evl-hero-grid"></div>
-    <div class="evl-hero-inner">
-        <div>
-            <div class="evl-hero-eyebrow">
-                <div class="evl-eyebrow-pulse"></div>
-                Espace utilisateur · Événements
-            </div>
-            <h1>Explorez les<br><em>événements</em></h1>
-            <p class="evl-hero-sub">Découvrez les événements actifs, ajoutez vos favoris et inscrivez-vous directement depuis votre espace.</p>
-        </div>
-        <div class="evl-hero-stats">
-            <div class="evl-stat-bubble">
-                <div class="evl-stat-num">{{ evenements|length }}<sup>+</sup></div>
-                <div class="evl-stat-label">Résultats</div>
-            </div>
-            <div class="evl-stat-bubble">
-                <div class="evl-stat-num">{{ favoriteCount }}</div>
-                <div class="evl-stat-label">Favoris</div>
-            </div>
-        </div>
-    </div>
-</section>
+<div class="pf-hero">
+  <div class="pf-hero-bg"></div>
+  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>Espace utilisateur</div>
+    <h1>Explorez les <span>événements</span></h1>
+    <p>Découvrez les événements actifs, ajoutez vos favoris et inscrivez-vous directement depuis votre espace.</p>
+  </div>
+</div>
 
 <div class="evl-body">
     <form method="get" action="{{ path('user_evenement_index') }}" class="evl-filter-wrap" id="evlFilterForm">

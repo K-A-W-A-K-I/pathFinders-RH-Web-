@@ -7,6 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ 'now'|date('U') }}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <style>
     :root{--primary:#6C63FF;--accent:#9D6BFF;--blue:#4B8BF5;--teal:#1D9E75;--red:#E24B4A}
     [data-theme="dark"]{--bg:#09090f;--bg2:#0e0e18;--surface:rgba(255,255,255,0.03);--surface-hover:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.08);--border-hover:rgba(255,255,255,0.14);--text:#e8e6f0;--text-muted:rgba(232,230,240,0.55);--text-dim:rgba(232,230,240,0.35);--nav-bg:rgba(9,9,15,0.85);--hero-h1:#ffffff;--stat-num:#ffffff}
@@ -81,23 +83,45 @@
 
 <nav class="pf-nav">
   <a href="{{ path('app_home') }}" class="pf-logo">
-    <div class="pf-logo-icon">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6l-8-4z" fill="white" opacity="0.9"/>
-      </svg>
-    </div>
-    PathFinder
+    <img src="{{ asset('logowhite.png') }}" alt="PathFinder" style="height:32px;">
   </a>
   <div class="pf-nav-center">
-    <a href="{{ path('client_categories') }}" class="pf-nav-link {% block nav_categories %}{% endblock %}">Formations</a>
-    <a href="{{ path('client_mes_inscriptions') }}" class="pf-nav-link {% block nav_inscriptions %}{% endblock %}">Mes inscriptions</a>
     <a href="{{ path('app_about') }}" class="pf-nav-link {% block nav_about %}{% endblock %}">À propos</a>
+    <a href="{{ path('offre_list') }}" class="pf-nav-link {% block nav_offres %}{% endblock %}">Offres</a>
+    <a href="{{ path('client_categories') }}" class="pf-nav-link {% block nav_categories %}{% endblock %}">Formations</a>
+    <a href="{{ path('user_evenement_index') }}" class="pf-nav-link {% block nav_evenements %}{% endblock %}">Événements</a>
+    <a href="{{ path('candidature_mes') }}" class="pf-nav-link {% block nav_candidatures %}{% endblock %}">Mes candidatures</a>
   </div>
   <div class="pf-nav-right">
     <button class="pf-theme-btn" id="themeToggle" title="Changer le thème">🌙</button>
-    <a href="{{ path('app_home') }}" class="pf-btn-ghost">Accueil</a>
+    <a href="{{ path('auth_login') }}" class="pf-btn-ghost">Connexion</a>
   </div>
 </nav>
+
+{% block hero %}
+{% if block('hero_title') is defined and block('hero_title') is not empty %}
+<div style="position:relative;padding:5.5rem 2.5rem 4rem;overflow:hidden;background:linear-gradient(160deg,#070710 0%,#0d0d1a 40%,var(--bg) 100%);">
+  <div style="position:absolute;width:560px;height:560px;border-radius:50%;filter:blur(80px);pointer-events:none;background:radial-gradient(circle,rgba(108,99,255,.22) 0%,transparent 70%);top:-180px;left:-100px;"></div>
+  <div style="position:absolute;width:420px;height:420px;border-radius:50%;filter:blur(80px);pointer-events:none;background:radial-gradient(circle,rgba(157,107,255,.16) 0%,transparent 70%);bottom:-120px;right:5%;"></div>
+  <div style="position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);background-size:52px 52px;mask-image:linear-gradient(to bottom,transparent 0%,black 15%,black 85%,transparent 100%);"></div>
+  <div style="position:relative;max-width:760px;">
+    <div style="display:inline-flex;align-items:center;gap:8px;padding:5px 16px 5px 9px;border-radius:100px;border:.5px solid rgba(108,99,255,.35);background:rgba(108,99,255,.08);font-size:12px;font-weight:600;color:#6C63FF;font-family:'Sora',sans-serif;letter-spacing:.03em;margin-bottom:1.4rem;">
+      <div style="width:7px;height:7px;border-radius:50%;background:#6C63FF;box-shadow:0 0 0 0 rgba(108,99,255,.7);animation:pulseRing 2s ease-in-out infinite;"></div>
+      PathFinder
+    </div>
+    <h1 style="font-family:'Sora',sans-serif;font-size:clamp(2.2rem,4.5vw,3.4rem);font-weight:700;line-height:1.1;letter-spacing:-.03em;color:#fff;margin-bottom:.9rem;">
+      {% block hero_title %}{% endblock %}
+    </h1>
+    <p style="font-size:15.5px;line-height:1.7;color:rgba(232,230,240,0.55);max-width:480px;font-weight:300;">
+      {% block hero_sub %}{% endblock %}
+    </p>
+  </div>
+</div>
+<style>
+@keyframes pulseRing{0%,100%{box-shadow:0 0 0 0 rgba(108,99,255,.7)}50%{box-shadow:0 0 0 6px rgba(108,99,255,0)}}
+</style>
+{% endif %}
+{% endblock %}
 
 {% block body %}{% endblock %}
 

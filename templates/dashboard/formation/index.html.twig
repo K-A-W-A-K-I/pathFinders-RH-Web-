@@ -1,74 +1,68 @@
-{% extends 'dashboard/base_dashboard.html.twig' %}
+{% extends 'admin_base.html.twig' %}
 {% block title %}Formations — Dashboard{% endblock %}
-{% block nav_form %}active{% endblock %}
+{% block page_icon %}🎓{% endblock %}
+{% block page_title %}Gestion des Formations{% endblock %}
+{% block topbar_actions %}
+    <a href="{{ path('dash_formation_new') }}" class="btn btn-primary" style="background:linear-gradient(135deg,#6C63FF,#9D6BFF);border:none;border-radius:10px;padding:10px 20px;font-weight:600;text-decoration:none;color:#fff;">+ Nouvelle Formation</a>
+{% endblock %}
 
 {% block body %}
-<div class="topbar">
-  <div class="page-title"><span style="font-size:22px">🎓</span><h1>Gestion des Formations</h1></div>
-  <a href="{{ path('dash_formation_new') }}" class="btn-primary">+ Nouvelle formation</a>
-</div>
-
-<div class="table-section">
-  <div class="table-header">
-    <div class="table-title">
-      <h2>Liste des formations</h2>
-      <span class="count-badge">{{ formations|length }}</span>
+<div class="admin-table-section">
+  <div class="admin-table-header">
+    <div class="admin-table-title">
+      Liste des formations
+      <span class="admin-count-badge">{{ formations|length }}</span>
     </div>
-    <form method="get" class="table-actions">
-      <input type="text" name="q" value="{{ q }}" placeholder="Rechercher..." class="search-input">
-      <select name="categorie" class="pf-select">
+    <form method="get" class="admin-table-actions">
+      <input type="text" name="q" value="{{ q }}" placeholder="Rechercher..." class="admin-search-input">
+      <select name="categorie" class="admin-search-input" style="width:auto">
         <option value="">Toutes catégories</option>
         {% for cat in categories %}
           <option value="{{ cat.idCategorie }}" {% if catId == cat.idCategorie %}selected{% endif %}>{{ cat.nomCategorie }}</option>
         {% endfor %}
       </select>
-      <select name="sort" class="pf-select">
+      <select name="sort" class="admin-search-input" style="width:auto">
         <option value="titre" {% if sort == 'titre' %}selected{% endif %}>Titre</option>
         <option value="dureeHeures" {% if sort == 'dureeHeures' %}selected{% endif %}>Durée</option>
         <option value="dateDebut" {% if sort == 'dateDebut' %}selected{% endif %}>Date début</option>
-        <option value="placeDisponible" {% if sort == 'placeDisponible' %}selected{% endif %}>Places</option>
       </select>
-      <select name="dir" class="pf-select">
-        <option value="ASC" {% if dir == 'ASC' %}selected{% endif %}>↑ ASC</option>
-        <option value="DESC" {% if dir == 'DESC' %}selected{% endif %}>↓ DESC</option>
-      </select>
-      <button type="submit" class="btn-primary" style="padding:7px 16px;box-shadow:none">Filtrer</button>
+      <button type="submit" class="admin-tool-btn">Filtrer</button>
     </form>
   </div>
 
   {% if formations is empty %}
-    <p style="color:var(--text-light);text-align:center;padding:2rem">Aucune formation trouvée.</p>
+    <p style="color:#9999b8;text-align:center;padding:2rem">Aucune formation trouvée.</p>
   {% else %}
-    <table>
+    <table class="admin-table">
       <thead><tr>
         <th>Titre</th><th>Catégorie</th><th>Formateur</th><th>Durée</th><th>Places</th><th>Dates</th><th style="text-align:right">Actions</th>
       </tr></thead>
       <tbody>
         {% for f in formations %}
           <tr>
-            <td><strong>{{ f.titre }}</strong></td>
-            <td><span class="tag tag-purple">{{ f.categorie.nomCategorie }}</span></td>
-            <td style="color:var(--text-light);font-size:13px">{{ f.formateur ?? '—' }}</td>
-            <td style="color:var(--text-light);font-size:13px">{{ f.dureeHeures ? f.dureeHeures ~ 'h' : '—' }}</td>
+            <td class="admin-table-name">{{ f.titre }}</td>
+            <td><span class="admin-badge admin-badge-blue">{{ f.categorie.nomCategorie }}</span></td>
+            <td class="admin-table-muted">{{ f.formateur ?? '—' }}</td>
+            <td class="admin-table-muted">{{ f.dureeHeures ? f.dureeHeures ~ 'h' : '—' }}</td>
             <td>
               {% if f.placeDisponible > 0 %}
-                <span class="tag tag-green">{{ f.placeDisponible }}/{{ f.capaciteMax }}</span>
+                <span class="admin-badge admin-badge-green">{{ f.placeDisponible }}/{{ f.capaciteMax }}</span>
               {% else %}
-                <span class="tag tag-red">Complet</span>
+                <span class="admin-badge" style="background:rgba(239,68,68,.1);color:#dc2626">Complet</span>
               {% endif %}
             </td>
-            <td style="color:var(--text-light);font-size:12px">
+            <td class="admin-table-muted" style="font-size:12px">
               {{ f.dateDebut ? f.dateDebut|date('d/m/Y') : '—' }}<br>
               {{ f.dateFin ? f.dateFin|date('d/m/Y') : '—' }}
             </td>
             <td>
-              <div class="action-btns">
-                <a href="{{ path('dash_formation_inscriptions', {id: f.idFormation}) }}" class="btn-action" title="Inscriptions">👥</a>
-                <a href="{{ path('dash_contenu_new_for_formation', {formationId: f.idFormation}) }}" class="btn-action" title="Ajouter module">📄</a>
-                <a href="{{ path('dash_formation_edit', {id: f.idFormation}) }}" class="btn-action" title="Modifier">✏️</a>
-                <form method="post" action="{{ path('dash_formation_delete', {id: f.idFormation}) }}" onsubmit="return confirm('Supprimer cette formation ?')">
+              <div class="admin-row-actions" style="justify-content:flex-end">
+                <a href="{{ path('dash_formation_inscriptions', {id: f.idFormation}) }}" class="admin-action-btn" title="Inscriptions">👥</a>
+                <a href="{{ path('dash_contenu_new_for_formation', {formationId: f.idFormation}) }}" class="admin-action-btn" title="Ajouter module">📄</a>
+                <a href="{{ path('dash_formation_edit', {id: f.idFormation}) }}" class="admin-action-btn" title="Modifier">✏️</a>
+                <form method="post" action="{{ path('dash_formation_delete', {id: f.idFormation}) }}" onsubmit="return confirm('Supprimer ?')" style="display:inline">
                   <input type="hidden" name="_token" value="{{ csrf_token('delete_form_' ~ f.idFormation) }}">
-                  <button type="submit" class="btn-action danger" title="Supprimer">🗑</button>
+                  <button type="submit" class="admin-action-btn admin-action-delete">🗑</button>
                 </form>
               </div>
             </td>

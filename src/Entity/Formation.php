@@ -17,7 +17,7 @@ class Formation
     #[ORM\Column(name: 'id_formation')]
     private ?int $idFormation = null;
 
-    #[ORM\Column(length: 200)]
+    #[ORM\Column(length: 200, nullable: true)]
     private ?string $titre = null;
 
     #[ORM\Column(type: 'text', nullable: true)]

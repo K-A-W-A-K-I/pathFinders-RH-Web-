@@ -26,6 +26,7 @@ class FormationType extends AbstractType
             ->add('titre', TextType::class, [
                 'label' => 'Titre de la formation',
                 'attr'  => ['placeholder' => 'Ex: Développement Web avec Symfony'],
+                'empty_data' => '',
                 'constraints' => [
                     new Assert\NotBlank(message: 'Le titre est obligatoire.'),
                     new Assert\Length(
@@ -36,9 +37,10 @@ class FormationType extends AbstractType
                 ],
             ])
             ->add('description', TextareaType::class, [
-                'label'    => 'Description',
-                'required' => true,
-                'attr'     => ['rows' => 4, 'placeholder' => 'Décrivez le contenu et les objectifs de la formation...'],
+                'label'      => 'Description',
+                'required'   => true,
+                'empty_data' => '',
+                'attr'       => ['rows' => 4, 'placeholder' => 'Décrivez le contenu et les objectifs de la formation...'],
                 'constraints' => [
                     new Assert\NotBlank(message: 'La description est obligatoire.'),
                     new Assert\Length(max: 2000, maxMessage: 'La description ne peut pas dépasser 2000 caractères.'),
@@ -54,9 +56,10 @@ class FormationType extends AbstractType
                 ],
             ])
             ->add('formateur', TextType::class, [
-                'label'    => 'Nom du formateur',
-                'required' => true,
-                'attr'     => ['placeholder' => 'Prénom Nom'],
+                'label'      => 'Nom du formateur',
+                'required'   => true,
+                'empty_data' => '',
+                'attr'       => ['placeholder' => 'Prénom Nom'],
                 'constraints' => [
                     new Assert\NotBlank(message: 'Le nom du formateur est obligatoire.'),
                     new Assert\Length(max: 150, maxMessage: 'Le nom du formateur ne peut pas dépasser 150 caractères.'),
