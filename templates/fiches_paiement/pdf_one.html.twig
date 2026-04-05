@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 13px; color: #1a1d2e; }
+    h1 { color: #6C63FF; font-size: 22px; margin-bottom: 6px; }
+    .subtitle { color: #999; font-size: 12px; margin-bottom: 30px; }
+    .card { background: #f8f7ff; border-radius: 8px; padding: 24px; border: 1px solid #e5e7ef; }
+    .row { display: flex; justify-content: space-between; margin-bottom: 14px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+    .label { font-weight: bold; color: #6C63FF; font-size: 12px; }
+    .value { color: #1a1d2e; font-size: 13px; }
+    .footer { margin-top: 40px; font-size: 11px; color: #999; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>Fiche de Paiement</h1>
+  <div class="subtitle">Généré le {{ "now"|date("d/m/Y H:i") }}</div>
+
+  <div class="card">
+    <div class="row">
+      <span class="label">Employé</span>
+      <span class="value">{{ fiche.employee.utilisateur.nom }} {{ fiche.employee.utilisateur.prenom }}</span>
+    </div>
+    <div class="row">
+      <span class="label">Date de paiement</span>
+      <span class="value">{{ fiche.datePaiement ? fiche.datePaiement|date('d/m/Y') : '-' }}</span>
+    </div>
+    <div class="row">
+      <span class="label">Type de paiement</span>
+      <span class="value">{{ fiche.typePaiement }}</span>
+    </div>
+    <div class="row">
+      <span class="label">Montant Taxe</span>
+      <span class="value">{{ fiche.montantTaxe }} DT</span>
+    </div>
+    <div class="row">
+      <span class="label">Déduction</span>
+      <span class="value">{{ fiche.montantDeduction }} DT</span>
+    </div>
+  </div>
+
+  <div class="footer">PathFinder RH — Document Confidentiel</div>
+</body>
+</html>

@@ -1,0 +1,63 @@
+{% extends 'base.html.twig' %}
+{% block title %}Nouvelle Prime — PathFinder{% endblock %}
+
+{% block body %}
+
+<h1 class="section-title">Nouvelle Prime</h1>
+
+<div class="form-card">
+  {{ form_start(form) }}
+
+    <div class="form-group">
+      {{ form_label(form.fichesPaiement) }}
+      {{ form_widget(form.fichesPaiement) }}
+      {{ form_errors(form.fichesPaiement) }}
+    </div>
+
+    <div class="form-group">
+      {{ form_label(form.libelle) }}
+      {{ form_widget(form.libelle) }}
+      {{ form_errors(form.libelle) }}
+    </div>
+
+    <div class="form-group">
+      {{ form_label(form.montant) }}
+      {{ form_widget(form.montant) }}
+      {{ form_errors(form.montant) }}
+    </div>
+
+    <div class="form-group">
+      {{ form_label(form.type_prime) }}
+      {{ form_widget(form.type_prime) }}
+      {{ form_errors(form.type_prime) }}
+    </div>
+
+    <div class="form-group">
+      {{ form_label(form.date_attribution) }}
+      {{ form_widget(form.date_attribution) }}
+      {{ form_errors(form.date_attribution) }}
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-new">Créer la prime</button>
+      <a href="{{ path('prime_index') }}" class="btn-cancel">Annuler</a>
+    </div>
+
+  {{ form_end(form) }}
+</div>
+
+<style>
+.section-title { font-size: 2rem; font-weight: 700; color: #4A4A4A; margin-bottom: 24px; }
+.form-card { background: white; border-radius: 10px; padding: 32px; max-width: 580px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; font-weight: 600; color: #4A4A4A; margin-bottom: 7px; font-size: 0.9rem; }
+.form-group input, .form-group select { width: 100%; padding: 10px 14px; border: 1.5px solid #e5e7ef; border-radius: 8px; font-size: 14px; font-family: 'DM Sans', sans-serif; color: #1a1d2e; background: #fafbff; outline: none; transition: border-color 0.15s; }
+.form-group input:focus, .form-group select:focus { border-color: #6C63FF; }
+.form-actions { display: flex; gap: 12px; margin-top: 28px; }
+.btn-new { display: inline-block; background-color: #6C63FF; color: white; padding: 10px 22px; border: none; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; text-decoration: none; transition: 0.2s; }
+.btn-new:hover { background-color: #5a54e6; }
+.btn-cancel { display: inline-block; background-color: #f1f1f1; color: #4A4A4A; padding: 10px 22px; border-radius: 6px; font-weight: bold; font-size: 14px; text-decoration: none; transition: 0.2s; }
+.btn-cancel:hover { background-color: #e0e0e0; }
+</style>
+
+{% endblock %}
