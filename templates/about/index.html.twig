@@ -1,116 +1,40 @@
-{% extends 'base.html.twig' %}
+{% extends 'client/base_client.html.twig' %}
 {% block title %}À propos — PathFinder{% endblock %}
+{% block nav_about %}active{% endblock %}
 
 {% block body %}
-
-<nav class="pf-nav">
-  <a href="{{ path('app_home') }}" class="pf-logo">
-    <div class="pf-logo-icon">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6l-8-4z" fill="white" opacity="0.9"/>
-      </svg>
-    </div>
-    PathFinder
-  </a>
-  <div class="pf-nav-links">
-    <a href="{{ path('app_home') }}"  class="pf-nav-link">Accueil</a>
-    <a href="{{ path('app_about') }}" class="pf-nav-link active">À propos</a>
-    <a href="{{ path('user_evenement_index') }}" class="pf-nav-link">Événements</a>
-  </div>
-  <div class="pf-nav-actions">
-    <a href="{{ path('auth_login') }}"    class="pf-btn-outline">Connexion</a>
-    <a href="{{ path('auth_register') }}" class="pf-btn-primary">S'inscrire</a>
-  </div>
-</nav>
-
-<!-- HERO -->
 <div class="pf-hero">
-  <div class="pf-hero-bg"></div>
-  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-bg"></div><div class="pf-hero-grid"></div>
   <div class="pf-hero-inner">
-    <div class="pf-hero-badge">
-      <div class="pf-hero-badge-dot"></div>
-      Plateforme RH de nouvelle génération
-    </div>
+    <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>Plateforme de formation</div>
     <h1>À propos de<br><span>PathFinder</span></h1>
-    <p>La solution qui digitalise et accélère chaque étape de votre cycle de recrutement — de la publication d'offre à l'intégration complète.</p>
+    <p>La solution qui digitalise et accélère chaque étape de votre parcours de formation professionnelle.</p>
   </div>
 </div>
-
-<!-- CONTENT -->
 <div class="pf-content">
-
-  <!-- Who are we -->
   <div class="pf-section">
     <div class="pf-section-label">Qui sommes-nous ?</div>
-    <h2>Une plateforme pensée pour les équipes RH</h2>
+    <h2>Une plateforme pensée pour la formation</h2>
     <div class="pf-divider"></div>
-    <p>PathFinder est une solution de recrutement et de gestion des ressources humaines de nouvelle génération, conçue pour digitaliser et accélérer chaque étape du cycle de recrutement.</p>
-    <p>Grâce à un tableau de bord centralisé et intelligent, nos utilisateurs pilotent en temps réel leurs offres d'emploi, candidatures, entretiens et indicateurs RH clés — sans friction, sans perte d'information.</p>
-
-    <div class="pf-stats">
-      <div class="pf-stat">
-        <div class="pf-stat-num">98<span>%</span></div>
-        <div class="pf-stat-label">Taux de satisfaction</div>
-      </div>
-      <div class="pf-stat">
-        <div class="pf-stat-num">2<span>×</span></div>
-        <div class="pf-stat-label">Plus rapide à recruter</div>
-      </div>
-      <div class="pf-stat">
-        <div class="pf-stat-num">500<span>+</span></div>
-        <div class="pf-stat-label">Entreprises clientes</div>
-      </div>
-    </div>
+    <p>PathFinder est une solution de gestion des formations professionnelles, conçue pour digitaliser et accélérer chaque étape du parcours d'apprentissage.</p>
+    <p>Grâce à un catalogue centralisé, les apprenants trouvent facilement les formations adaptées à leurs besoins et s'y inscrivent en quelques clics.</p>
   </div>
-
-  <!-- Mission / Vision / Values -->
   <div class="pf-cards">
-
-    <div class="pf-card">
-      <div class="pf-card-icon purple">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="#8B82FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
+    <div class="pf-card" style="display:block">
+      <div style="font-size:2rem;margin-bottom:1rem">⚡</div>
       <h3>Notre Mission</h3>
-      <p>Réduire le temps de recrutement et maximiser la qualité des embauches grâce à des outils intelligents et intuitifs.</p>
-      <span class="pf-card-tag">Mission</span>
+      <p>Faciliter l'accès à la formation professionnelle et maximiser la qualité des apprentissages.</p>
     </div>
-
-    <div class="pf-card featured">
-      <div class="pf-card-glow"></div>
-      <div class="pf-card-icon purple" style="background:rgba(108,99,255,.25);border-color:rgba(108,99,255,.5)">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="3" stroke="#A89BFF" stroke-width="1.8"/>
-          <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12" stroke="#A89BFF" stroke-width="1.8" stroke-linecap="round"/>
-        </svg>
-      </div>
+    <div class="pf-card" style="display:block">
+      <div style="font-size:2rem;margin-bottom:1rem">🎯</div>
       <h3>Notre Vision</h3>
-      <p>S'imposer comme le standard de référence en gestion RH, reconnu pour sa robustesse et son expérience utilisateur.</p>
-      <span class="pf-card-tag">Vision</span>
+      <p>Devenir la référence en gestion de formations, reconnue pour sa simplicité et son efficacité.</p>
     </div>
-
-    <div class="pf-card">
-      <div class="pf-card-icon teal">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#1D9E75" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
+    <div class="pf-card" style="display:block">
+      <div style="font-size:2rem;margin-bottom:1rem">🛡</div>
       <h3>Nos Valeurs</h3>
-      <p>Des principes fondamentaux qui guident chaque décision.</p>
-      <div class="pf-values">
-        <div class="pf-value-chip"><div class="pf-value-dot" style="background:#6C63FF"></div>Excellence</div>
-        <div class="pf-value-chip"><div class="pf-value-dot" style="background:#4B8BF5"></div>Transparence</div>
-        <div class="pf-value-chip"><div class="pf-value-dot" style="background:#9D6BFF"></div>Innovation</div>
-        <div class="pf-value-chip"><div class="pf-value-dot" style="background:#1D9E75"></div>Sécurité</div>
-      </div>
+      <p>Excellence, transparence, innovation et accessibilité guident chaque décision.</p>
     </div>
-
   </div>
-
 </div>
-
-<div class="pf-footer">© 2026 PathFinders · All rights reserved.</div>
-
 {% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'client/base_client.html.twig' %}
+{% block title %}Mes inscriptions — PathFinder{% endblock %}
+{% block nav_inscriptions %}active{% endblock %}
+
+{% block body %}
+<div class="pf-hero">
+  <div class="pf-hero-bg"></div>
+  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>Mon parcours</div>
+    <h1>Mes <span>inscriptions</span></h1>
+    <p>Retrouvez toutes les formations auxquelles vous êtes inscrit et accédez à leur contenu.</p>
+  </div>
+</div>
+
+<div class="pf-content">
+  {% if inscriptions is empty %}
+    <div class="pf-section" style="text-align:center;padding:3rem">
+      <p style="color:var(--text-muted);font-size:16px;margin-bottom:1.5rem">Vous n'êtes inscrit à aucune formation pour le moment.</p>
+      <a href="{{ path('client_categories') }}" class="pf-btn-details">📚 Découvrir les formations</a>
+    </div>
+  {% else %}
+    <div class="pf-cards">
+      {% for inscription in inscriptions %}
+        {% set formation = inscription.formation %}
+        <div class="pf-card">
+          <div class="pf-card-img-placeholder">🎓</div>
+          <h3>{{ formation.titre }}</h3>
+          {% if formation.description %}
+            <p>{{ formation.description|slice(0, 90) }}{% if formation.description|length > 90 %}...{% endif %}</p>
+          {% endif %}
+          <div style="margin-top:.8rem;display:flex;flex-wrap:wrap;gap:.4rem">
+            <span class="pf-badge pf-badge-green">✓ Inscrit</span>
+            {% if formation.formateur %}
+              <span class="pf-badge pf-badge-purple">👤 {{ formation.formateur }}</span>
+            {% endif %}
+            {% if formation.dureeHeures %}
+              <span class="pf-badge pf-badge-purple">⏱ {{ formation.dureeHeures }}h</span>
+            {% endif %}
+          </div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:.8rem">
+            Inscrit le {{ inscription.dateInscription|date('d/m/Y à H:i') }}
+          </div>
+          <a href="{{ path('client_formation_detail', {id: formation.idFormation}) }}" class="pf-btn-details">📋 Accéder à la formation</a>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'client/base_client.html.twig' %}
+{% block title %}{{ module.nom }} — PathFinder{% endblock %}
+{% block nav_categories %}active{% endblock %}
+
+{% block body %}
+<div class="pf-hero">
+  <div class="pf-hero-bg"></div><div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>{{ formation.titre }}</div>
+    <h1><span>{{ module.nom }}</span></h1>
+    <p>Module {{ module.ordre ?? 'N/A' }} de la formation</p>
+  </div>
+</div>
+
+<div class="pf-content">
+  <div style="margin-bottom:1rem">
+    <a href="{{ path('client_formation_detail', {id: formation.idFormation}) }}" style="color:var(--text-muted);text-decoration:none;font-size:14px">← Retour à la formation</a>
+  </div>
+
+  <div style="display:grid;grid-template-columns:3fr 1fr;gap:1.5rem;align-items:start">
+    <div class="pf-section">
+      <div class="pf-section-label">Contenu du module</div>
+      <h2>{{ module.nom }}</h2>
+      <div class="pf-divider"></div>
+      
+      {% if module.contenu %}
+        <div style="line-height:1.8;color:var(--text);white-space:pre-wrap;font-size:15px">{{ module.contenu }}</div>
+      {% else %}
+        <p style="color:var(--text-muted)">Aucun contenu disponible pour ce module.</p>
+      {% endif %}
+    </div>
+
+    <div>
+      <div class="pf-section" style="position:sticky;top:80px">
+        <div class="pf-section-label">Informations</div>
+        <h3 style="font-family:'Sora',sans-serif;margin-bottom:1rem;font-size:1rem">Détails du module</h3>
+        
+        <div style="margin-bottom:1rem">
+          <span style="color:var(--text-dim);font-size:12px;text-transform:uppercase;letter-spacing:.08em">Ordre</span>
+          <p style="margin-top:.3rem;font-weight:500">Module {{ module.ordre ?? 'N/A' }}</p>
+        </div>
+
+        <div style="margin-bottom:1rem">
+          <span style="color:var(--text-dim);font-size:12px;text-transform:uppercase;letter-spacing:.08em">Formation</span>
+          <p style="margin-top:.3rem;font-weight:500">{{ formation.titre }}</p>
+        </div>
+
+        {% if formation.formateur %}
+        <div style="margin-bottom:1rem">
+          <span style="color:var(--text-dim);font-size:12px;text-transform:uppercase;letter-spacing:.08em">Formateur</span>
+          <p style="margin-top:.3rem;font-weight:500">{{ formation.formateur }}</p>
+        </div>
+        {% endif %}
+
+        <a href="{{ path('client_formation_detail', {id: formation.idFormation}) }}" style="display:block;width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);text-align:center;text-decoration:none;font-size:13px;font-weight:600;margin-top:1.5rem;transition:background .2s">
+          📚 Tous les modules
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
