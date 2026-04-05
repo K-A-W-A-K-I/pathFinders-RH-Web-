@@ -95,13 +95,11 @@ class OffreController extends AbstractController
     }
 
     #[Route('/{id}/delete', name: 'offre_delete', methods: ['POST'])]
-    public function delete(Request $request, Offre $offre, EntityManagerInterface $em): Response
+    public function delete(Offre $offre, EntityManagerInterface $em): Response
     {
-        if ($this->isCsrfTokenValid('delete' . $offre->getId(), $request->request->get('_token'))) {
-            $em->remove($offre);
-            $em->flush();
-            $this->addFlash('success', 'Offre supprimée.');
-        }
+        $em->remove($offre);
+        $em->flush();
+        $this->addFlash('success', 'Offre supprimée.');
         return $this->redirectToRoute('offre_index');
     }
 
@@ -149,14 +147,12 @@ class OffreController extends AbstractController
     }
 
     #[Route('/questions/{id}/delete', name: 'question_delete', methods: ['POST'])]
-    public function deleteQuestion(Request $request, Question $question, EntityManagerInterface $em): Response
+    public function deleteQuestion(Question $question, EntityManagerInterface $em): Response
     {
         $offreId = $question->getOffre()->getId();
-        if ($this->isCsrfTokenValid('delete_q' . $question->getId(), $request->request->get('_token'))) {
-            $em->remove($question);
-            $em->flush();
-            $this->addFlash('success', 'Question supprimée.');
-        }
+        $em->remove($question);
+        $em->flush();
+        $this->addFlash('success', 'Question supprimée.');
         return $this->redirectToRoute('offre_show', ['id' => $offreId, '_fragment' => 'questions']);
     }
 

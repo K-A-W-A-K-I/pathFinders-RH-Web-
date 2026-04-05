@@ -96,7 +96,6 @@
                 <div class="admin-row-actions">
                     <a href="{{ path('offre_show', {id: offre.id}) }}" class="admin-action-btn" title="Voir">—</a>
                     <form method="post" action="{{ path('offre_delete', {id: offre.id}) }}" onsubmit="return confirm('Supprimer ?')" style="display:inline">
-                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ offre.id) }}">
                         <button type="submit" class="admin-action-btn admin-action-delete" title="Supprimer">🗑</button>
                     </form>
                 </div>

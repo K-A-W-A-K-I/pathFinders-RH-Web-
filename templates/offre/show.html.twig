@@ -6,7 +6,6 @@
 {% block topbar_actions %}
     <a href="{{ path('offre_edit', {id: offre.id}) }}" class="btn btn-edit">✏️ Modifier</a>
     <form method="post" action="{{ path('offre_delete', {id: offre.id}) }}" onsubmit="return confirm('Supprimer ?')" style="display:inline">
-        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ offre.id) }}">
         <button type="submit" class="btn btn-danger">🗑 Supprimer</button>
     </form>
     <a href="{{ path('offre_index') }}" class="btn btn-secondary">← Retour</a>
@@ -84,7 +83,6 @@
         <div class="question-item-actions">
             <a href="{{ path('question_edit', {id: q.id}) }}" class="btn btn-sm btn-edit">✏️</a>
             <form method="post" action="{{ path('question_delete', {id: q.id}) }}" onsubmit="return confirm('Supprimer ?')" style="display:inline">
-                <input type="hidden" name="_token" value="{{ csrf_token('delete_q' ~ q.id) }}">
                 <button class="btn btn-sm btn-danger">🗑</button>
             </form>
         </div>
