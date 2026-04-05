@@ -1,0 +1,162 @@
+{% extends 'base_public.html.twig' %}
+{% block title %}Détection Faciale — PathFinder{% endblock %}
+
+{% block content %}
+
+<div class="pf-hero">
+  <div class="pf-hero-bg"></div>
+  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge">
+      <div class="pf-hero-badge-dot"></div>
+      Espace Employé
+    </div>
+    <h1>Détection<br><span>Faciale</span></h1>
+    <p>Votre présence est vérifiée en temps réel.</p>
+  </div>
+</div>
+
+<div class="pf-content">
+  <div class="pf-section" style="text-align:center">
+
+    <div id="videoContainer" style="display:inline-block;margin-bottom:24px">
+      <video id="video" width="480" height="360" autoplay muted
+             style="border-radius:16px;box-shadow:0 8px 30px rgba(108,99,255,0.2)"></video>
+    </div>
+
+    <div style="display:flex;justify-content:center;gap:20px;margin-bottom:24px">
+
+      <div class="pf-stat" style="background:white;border-radius:12px;padding:20px 32px;box-shadow:0 4px 15px rgba(0,0,0,0.08)">
+        <div class="pf-stat-num" id="faceCount">0<span></span></div>
+        <div class="pf-stat-label">Visages détectés</div>
+      </div>
+
+      <div class="pf-stat" style="background:white;border-radius:12px;padding:20px 32px;box-shadow:0 4px 15px rgba(0,0,0,0.08)">
+        <div class="pf-stat-num" id="totalCount">0<span></span></div>
+        <div class="pf-stat-label">Total détections</div>
+      </div>
+
+      <div class="pf-stat" style="background:white;border-radius:12px;padding:20px 32px;box-shadow:0 4px 15px rgba(0,0,0,0.08)">
+        <div class="pf-stat-num" id="statusDot">⏸<span></span></div>
+        <div class="pf-stat-label">Statut</div>
+      </div>
+
+    </div>
+
+    <div style="display:flex;justify-content:center;gap:12px;margin-bottom:24px">
+      <button onclick="startDetection()"
+              style="background:#6C63FF;color:white;border:none;padding:12px 28px;border-radius:8px;font-size:15px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600">
+        ▶ Démarrer
+      </button>
+      <button onclick="stopDetection()"
+              style="background:#ef4444;color:white;border:none;padding:12px 28px;border-radius:8px;font-size:15px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600">
+        ⏹ Arrêter
+      </button>
+    </div>
+
+    <div id="log"
+         style="background:white;border-radius:10px;padding:16px 20px;max-width:500px;margin:0 auto;max-height:180px;overflow-y:auto;text-align:left;font-size:13px;color:#4b5563;box-shadow:0 4px 15px rgba(0,0,0,0.08)">
+      <strong>Log:</strong><br>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const API_KEY    = 'acB4gzdSkyKuZZVz2U6R-8t6Q7VBXdL5';
+  const API_SECRET = 'IG6fJ4EjqbSd479zhDyo28A2OFMQn2E6';
+  const API_URL    = 'https://api-us.faceplusplus.com/facepp/v3/detect';
+  const SYMFONY_URL = '{{ path("face_detection") }}';
+
+  let video = document.getElementById('video');
+  let intervalId = null;
+  let totalDetections = 0;
+  let isRunning = false;
+
+  async function startWebcam() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      video.srcObject = stream;
+      addLog('✅ Webcam démarrée');
+    } catch (err) {
+      addLog('❌ Erreur webcam: ' + err.message);
+    }
+  }
+
+  function captureFrame() {
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    return canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+  }
+
+  async function detectFaces() {
+    if (!isRunning) return;
+    try {
+      const base64Image = captureFrame();
+
+      const formData = new FormData();
+      formData.append('api_key', API_KEY);
+      formData.append('api_secret', API_SECRET);
+      formData.append('image_base64', base64Image);
+
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+      const faceCount = data.faces ? data.faces.length : 0;
+
+      document.getElementById('faceCount').textContent = faceCount;
+
+      if (faceCount > 0) {
+        totalDetections++;
+        document.getElementById('totalCount').textContent = totalDetections;
+        addLog(`👤 ${faceCount} visage(s) — ${new Date().toLocaleTimeString()}`);
+      } else {
+        addLog(`⚠️ Aucun visage — ${new Date().toLocaleTimeString()}`);
+      }
+
+      // send to Symfony
+      await fetch(SYMFONY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          face_count: faceCount,
+          total: totalDetections,
+          timestamp: new Date().toISOString()
+        })
+      });
+
+    } catch (err) {
+      addLog('❌ Erreur: ' + err.message);
+    }
+  }
+
+  function startDetection() {
+    if (isRunning) return;
+    isRunning = true;
+    document.getElementById('statusDot').textContent = '▶';
+    addLog('▶ Détection démarrée');
+    intervalId = setInterval(detectFaces, 3000);
+  }
+
+  function stopDetection() {
+    isRunning = false;
+    clearInterval(intervalId);
+    document.getElementById('statusDot').textContent = '⏸';
+    addLog('⏹ Arrêtée — Total: ' + totalDetections + ' détections');
+  }
+
+  function addLog(msg) {
+    const log = document.getElementById('log');
+    log.innerHTML += msg + '<br>';
+    log.scrollTop = log.scrollHeight;
+  }
+
+  startWebcam();
+</script>
+
+{% endblock %}

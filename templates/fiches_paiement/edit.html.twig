@@ -1,0 +1,60 @@
+{% extends 'base.html.twig' %}
+{% block title %}Modifier Fiche — PathFinder{% endblock %}
+
+{% block body %}
+
+<h1 class="section-title">Modifier la Fiche de Paiement</h1>
+
+<div class="form-card">
+
+  {{ form_start(form) }}
+
+    <div class="form-group">
+      {{ form_label(form.employee) }}
+      {{ form_widget(form.employee) }}
+      {{ form_errors(form.employee) }}
+    </div>
+
+    <div class="form-group">
+      {{ form_label(form.date_paiement) }}
+      {{ form_widget(form.date_paiement) }}
+      {{ form_errors(form.date_paiement) }}
+    </div>
+
+    <div class="form-group">
+      {{ form_label(form.type_paiement) }}
+      {{ form_widget(form.type_paiement) }}
+      {{ form_errors(form.type_paiement) }}
+    </div>
+
+    <div class="form-group">
+      {{ form_label(form.montant_taxe) }}
+      {{ form_widget(form.montant_taxe) }}
+      {{ form_errors(form.montant_taxe) }}
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn-new">Enregistrer</button>
+      <a href="{{ path('fiche_index') }}" class="btn-cancel">Annuler</a>
+    </div>
+
+  {{ form_end(form) }}
+
+</div>
+
+{# same <style> block as new.html.twig #}
+<style>
+.section-title { font-size: 2rem; font-weight: 700; color: #4A4A4A; margin-bottom: 24px; }
+.form-card { background: white; border-radius: 10px; padding: 32px; max-width: 580px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; font-weight: 600; color: #4A4A4A; margin-bottom: 7px; font-size: 0.9rem; }
+.form-group input, .form-group select { width: 100%; padding: 10px 14px; border: 1.5px solid #e5e7ef; border-radius: 8px; font-size: 14px; font-family: 'DM Sans', sans-serif; color: #1a1d2e; background: #fafbff; outline: none; transition: border-color 0.15s; }
+.form-group input:focus, .form-group select:focus { border-color: #6C63FF; }
+.form-actions { display: flex; gap: 12px; margin-top: 28px; }
+.btn-new { display: inline-block; background-color: #6C63FF; color: white; padding: 10px 22px; border: none; border-radius: 6px; font-weight: bold; font-size: 14px; cursor: pointer; text-decoration: none; transition: 0.2s; }
+.btn-new:hover { background-color: #5a54e6; }
+.btn-cancel { display: inline-block; background-color: #f1f1f1; color: #4A4A4A; padding: 10px 22px; border-radius: 6px; font-weight: bold; font-size: 14px; text-decoration: none; transition: 0.2s; }
+.btn-cancel:hover { background-color: #e0e0e0; }
+</style>
+
+{% endblock %}

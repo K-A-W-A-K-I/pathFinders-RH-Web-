@@ -1,0 +1,163 @@
+{% extends 'base.html.twig' %}
+{% block title %}Détails Fiche — PathFinder{% endblock %}
+
+{% block body %}
+
+<div style="display:flex; align-items:center; gap:12px; margin-bottom:24px">
+  <a href="{{ path('fiche_index') }}" class="btn-back">← Retour</a>
+  <h1 class="page-title" style="margin:0">Détails de la Fiche</h1>
+</div>
+
+{# ── FICHE CARD ── #}
+<div class="detail-card">
+  <div class="detail-card-header">
+    <div>
+      <div class="detail-name">
+        {{ fiche.employee.utilisateur.nom }} {{ fiche.employee.utilisateur.prenom }}
+      </div>
+      <div class="detail-sub">Fiche #{{ fiche.idFichePaiement }}</div>
+    </div>
+    <div style="display:flex; gap:8px">
+      <a href="{{ path('fiche_edit', {id: fiche.idFichePaiement}) }}" class="btn-edit">✏️ Modifier</a>
+      <a href="{{ path('fiche_print_one', {id: fiche.idFichePaiement}) }}" class="btn-print" target="_blank">🖨 Imprimer</a>
+      <a href="{{ path('prime_new_for_fiche', {id: fiche.idFichePaiement}) }}" class="btn-prime">⭐ Ajouter Prime</a>
+    </div>
+  </div>
+
+  <div class="detail-grid">
+    <div class="detail-item">
+      <span class="detail-label">Date de paiement</span>
+      <span class="detail-value">{{ fiche.datePaiement ? fiche.datePaiement|date('d/m/Y') : '-' }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">Type de paiement</span>
+      <span class="detail-value">{{ fiche.typePaiement }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">Salaire de base</span>
+      <span class="detail-value">{{ fiche.employee.salaire }} DT</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">Montant Taxe</span>
+      <span class="detail-value" style="color:#ef4444">{{ fiche.montantTaxe }} DT</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">Déduction (score: {{ fiche.employee.score }})</span>
+      <span class="detail-value" style="color:#ef4444">- {{ fiche.montantDeduction }} DT</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">💰 Salaire Final</span>
+      <span class="detail-value" style="color:#6C63FF; font-weight:700; font-size:1.1rem">{{ fiche.salaireNet }} DT</span>
+    </div>
+  </div>
+</div>
+
+{# ── PRIMES TABLE ── #}
+<div class="section-title-row">
+  <h2 class="section-subtitle">Primes associées</h2>
+  <span class="count-badge">{{ fiche.primes|length }} prime(s)</span>
+</div>
+
+<div class="table-container">
+  <table class="pf-table">
+    <thead>
+      <tr>
+        <th>Libellé</th>
+        <th>Montant</th>
+        <th>Type</th>
+        <th>Date</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for prime in fiche.primes %}
+        <tr class="row-animate">
+          <td>{{ prime.libelle }}</td>
+          <td style="color:#22c55e; font-weight:600">+ {{ prime.montant }} DT</td>
+          <td>{{ prime.typePrime }}</td>
+          <td>{{ prime.dateAttribution ? prime.dateAttribution|date('d/m/Y') : '-' }}</td>
+          <td class="actions">
+            <a href="{{ path('prime_edit', {id: prime.id}) }}" class="btn-edit">Modifier</a>
+            <form method="post" action="{{ path('prime_delete', {id: prime.id}) }}" class="inline-form">
+              <button type="submit" class="btn-delete" onclick="return confirm('Supprimer cette prime ?')">Supprimer</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="5" class="empty-row">Aucune prime pour cette fiche</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{# ── SALARY SUMMARY ── #}
+<div class="salary-summary">
+  <div class="salary-row">
+    <span>Salaire de base</span>
+    <span>{{ fiche.employee.salaire }} DT</span>
+  </div>
+  <div class="salary-row" style="color:#ef4444">
+    <span>Déduction</span>
+    <span>- {{ fiche.montantDeduction }} DT</span>
+  </div>
+  <div class="salary-row" style="color:#22c55e">
+    <span>Total Primes ({{ fiche.primes|length }})</span>
+    <span>+ {{ fiche.primes|reduce((carry, p) => carry + p.montant, 0) }} DT</span>
+  </div>
+  <div class="salary-row salary-total">
+    <span>💰 Salaire Net Final</span>
+    <span>{{ fiche.salaireNet }} DT</span>
+  </div>
+</div>
+
+<style>
+.page-title { font-size: 2rem; font-weight: 700; color: #4A4A4A; }
+.btn-back { background: #f1f1f1; color: #4A4A4A; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; transition: 0.2s; }
+.btn-back:hover { background: #e0e0e0; }
+
+/* Detail card */
+.detail-card { background: white; border-radius: 12px; padding: 28px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin-bottom: 28px; border: 1px solid #e5e7ef; }
+.detail-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #e5e7ef; }
+.detail-name { font-size: 1.4rem; font-weight: 700; color: #1a1d2e; }
+.detail-sub { font-size: 0.85rem; color: #9ca3af; margin-top: 4px; }
+.detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.detail-item { display: flex; flex-direction: column; gap: 5px; }
+.detail-label { font-size: 0.8rem; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; }
+.detail-value { font-size: 1rem; font-weight: 500; color: #1a1d2e; }
+
+/* Section */
+.section-title-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.section-subtitle { font-size: 1.2rem; font-weight: 700; color: #4A4A4A; }
+.count-badge { background: #ede9ff; color: #6C63FF; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+
+/* Table */
+.table-container { overflow-x: auto; border-radius: 10px; background: white; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin-bottom: 28px; }
+.pf-table { width: 100%; border-collapse: collapse; }
+.pf-table thead { background: linear-gradient(90deg, #6C63FF, #8A84FF); color: white; }
+.pf-table th, .pf-table td { padding: 13px 18px; text-align: left; border-bottom: 1px solid #eee; }
+.pf-table tbody tr:hover { background-color: #f0edff; }
+.row-animate { animation: fadeIn 0.4s ease forwards; opacity: 0; }
+@keyframes fadeIn { to { opacity: 1; } }
+.actions { display: flex; gap: 6px; align-items: center; }
+.empty-row { text-align: center; color: #777; padding: 20px; font-style: italic; }
+.inline-form { display: inline; }
+
+/* Salary summary */
+.salary-summary { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); max-width: 400px; border: 1px solid #e5e7ef; }
+.salary-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 15px; }
+.salary-total { font-size: 1.1rem; font-weight: 700; color: #6C63FF; border-bottom: none; padding-top: 14px; margin-top: 4px; border-top: 2px solid #6C63FF; }
+
+/* Buttons */
+.btn-edit { background-color: #4B8BF5; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 0.9rem; transition: 0.2s; }
+.btn-edit:hover { background-color: #3a78e0; }
+.btn-delete { background-color: #FF5C5C; color: white; padding: 6px 12px; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer; transition: 0.2s; }
+.btn-delete:hover { background-color: #e04a4a; }
+.btn-print { background-color: #22c55e; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 0.9rem; transition: 0.2s; display: inline-block; }
+.btn-print:hover { background-color: #16a34a; }
+.btn-prime { background-color: #f97316; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 0.9rem; transition: 0.2s; display: inline-block; }
+.btn-prime:hover { background-color: #ea6d0e; }
+</style>
+
+{% endblock %}
