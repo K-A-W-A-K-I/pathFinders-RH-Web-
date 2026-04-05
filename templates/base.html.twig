@@ -9,6 +9,36 @@
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ 'now'|date('U') }}">
     {% block stylesheets %}{% endblock %}
+    <script>
+        (function() {
+            const saved = localStorage.getItem('pf-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
+    <style>
+        #themeToggle {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid var(--border, #e5e7ef);
+            background: var(--white, #fff);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: transform .2s, box-shadow .2s;
+        }
+        #themeToggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(108,99,255,0.25);
+        }
+    </style>
 </head>
 <body class="pf-body">
 
