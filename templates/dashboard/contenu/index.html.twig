@@ -1,116 +1,82 @@
-{% extends 'dashboard/base_dashboard.html.twig' %}
+{% extends 'admin_base.html.twig' %}
 {% block title %}Modules de {{ formation.titre }} — Dashboard{% endblock %}
-
-{% block body %}
-<div class="topbar">
-  <div class="page-title">
-    <span style="font-size:22px">📄</span>
-    <h1>Modules de la formation</h1>
-  </div>
-  <a href="{{ path('dashboard_home') }}" class="btn-secondary">← Retour</a>
-</div>
-
-<div style="background:var(--surface);border:.5px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1.5rem">
-  <div style="display:flex;align-items:center;gap:1rem">
-    <div style="background:linear-gradient(135deg,var(--primary),var(--accent));width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0">🎓</div>
-    <div>
-      <h2 style="font-family:'Sora',sans-serif;font-size:1.1rem;margin-bottom:.2rem">{{ formation.titre }}</h2>
-      <p style="color:var(--text-light);font-size:13px">{{ formation.categorie.nomCategorie }}</p>
-    </div>
-  </div>
-</div>
-
-<div class="table-section">
-  <div class="table-header">
-    <div class="table-title">
-      <h2>Modules de contenu</h2>
-      <span class="count-badge">{{ modules|length }}</span>
-    </div>
-    <div class="table-actions">
-      <input type="text" id="search-modules" placeholder="Rechercher..." class="search-input" oninput="filterModules(this.value)">
-      <select id="sort-modules" class="pf-select" onchange="sortModules(this.value)">
-        <option value="ordre-asc">Ordre (croissant)</option>
-        <option value="ordre-desc">Ordre (décroissant)</option>
-        <option value="nom-asc">Nom (A-Z)</option>
-        <option value="nom-desc">Nom (Z-A)</option>
-      </select>
-      <a href="{{ path('dash_contenu_new_for_formation', {formationId: formation.idFormation}) }}" class="btn-primary" style="padding:8px 18px">+ Nouveau module</a>
-    </div>
-  </div>
-
-  {% if modules is empty %}
-    <p style="color:var(--text-light);text-align:center;padding:2rem">
-      Aucun module pour cette formation. 
-      <a href="{{ path('dash_contenu_new_for_formation', {formationId: formation.idFormation}) }}" style="color:var(--primary)">Créer le premier →</a>
-    </p>
-  {% else %}
-    <table>
-      <thead>
-        <tr>
-          <th style="width:80px">Ordre</th>
-          <th>Nom du module</th>
-          <th>Contenu</th>
-          <th style="text-align:right;width:200px">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for module in modules %}
-          <tr>
-            <td>
-              <span style="background:var(--primary);color:#fff;width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">{{ module.ordre ?? '—' }}</span>
-            </td>
-            <td><strong>{{ module.nom }}</strong></td>
-            <td style="color:var(--text-light);font-size:13px;max-width:300px">
-              {{ module.contenu ? (module.contenu|slice(0,80) ~ (module.contenu|length > 80 ? '...' : '')) : '—' }}
-            </td>
-            <td>
-              <div class="action-btns">
-                <a href="{{ path('dash_contenu_edit', {id: module.idContenu}) }}" class="btn-action">✏️ Modifier</a>
-                <form method="post" action="{{ path('dash_contenu_delete', {id: module.idContenu}) }}" onsubmit="return confirm('Supprimer ce module ?')" style="display:inline">
-                  <input type="hidden" name="_token" value="{{ csrf_token('delete_contenu_' ~ module.idContenu) }}">
-                  <button type="submit" class="btn-action danger">🗑 Supprimer</button>
-                </form>
-              </div>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% endif %}
-</div>
+{% block page_icon %}📄{% endblock %}
+{% block page_title %}Modules — {{ formation.titre }}{% endblock %}
+{% block topbar_actions %}
+    <a href="{{ path('dash_contenu_new_for_formation', {formationId: formation.idFormation}) }}" class="btn btn-primary" style="background:linear-gradient(135deg,#6C63FF,#9D6BFF);border:none;border-radius:10px;padding:10px 20px;font-weight:600;text-decoration:none;color:#fff;">+ Nouveau module</a>
+    <a href="{{ path('dash_formation_index') }}" class="admin-tool-btn">← Retour</a>
 {% endblock %}
 
+{% block body %}
+<div class="admin-table-section">
+    <div class="admin-table-header">
+        <div class="admin-table-title">
+            Modules de contenu
+            <span class="admin-count-badge">{{ modules|length }}</span>
+        </div>
+        <div class="admin-table-actions">
+            <input type="text" id="search-modules" placeholder="Rechercher..." class="admin-search-input" oninput="filterModules(this.value)">
+            <select id="sort-modules" class="admin-search-input" style="width:auto" onchange="sortModules(this.value)">
+                <option value="ordre-asc">Ordre ↑</option>
+                <option value="ordre-desc">Ordre ↓</option>
+                <option value="nom-asc">Nom A→Z</option>
+                <option value="nom-desc">Nom Z→A</option>
+            </select>
+        </div>
+    </div>
+
+    {% if modules is empty %}
+        <div style="text-align:center;color:#9999b8;padding:2rem">
+            Aucun module. <a href="{{ path('dash_contenu_new_for_formation', {formationId: formation.idFormation}) }}" style="color:#6C63FF">Créer le premier →</a>
+        </div>
+    {% else %}
+    <table class="admin-table">
+        <thead><tr>
+            <th style="width:70px">Ordre</th><th>Nom du module</th><th>Contenu</th><th style="text-align:right">Actions</th>
+        </tr></thead>
+        <tbody>
+        {% for module in modules %}
+        <tr>
+            <td>
+                <span style="background:#6C63FF;color:#fff;width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">{{ module.ordre ?? '—' }}</span>
+            </td>
+            <td class="admin-table-name">{{ module.nom }}</td>
+            <td class="admin-table-muted" style="max-width:300px;font-size:13px">{{ module.contenu ? module.contenu|slice(0,80) ~ (module.contenu|length > 80 ? '...' : '') : '—' }}</td>
+            <td>
+                <div class="admin-row-actions" style="justify-content:flex-end">
+                    <a href="{{ path('dash_contenu_edit', {id: module.idContenu}) }}" class="admin-action-btn">✏️ Modifier</a>
+                    <form method="post" action="{{ path('dash_contenu_delete', {id: module.idContenu}) }}" onsubmit="return confirm('Supprimer ?')" style="display:inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete_contenu_' ~ module.idContenu) }}">
+                        <button type="submit" class="admin-action-btn admin-action-delete">🗑</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endblock %}
 
 {% block javascripts %}
 <script>
 function filterModules(q) {
-  const query = q.toLowerCase();
-  document.querySelectorAll('table tbody tr').forEach(row => {
-    const text = row.textContent.toLowerCase();
-    row.style.display = text.includes(query) ? '' : 'none';
-  });
+    const query = q.toLowerCase();
+    document.querySelectorAll('.admin-table tbody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
+    });
 }
-
-function sortModules(sortValue) {
-  const [field, dir] = sortValue.split('-');
-  const tbody = document.querySelector('table tbody');
-  const rows = Array.from(tbody.querySelectorAll('tr'));
-  
-  rows.sort((a, b) => {
-    let valA, valB;
-    if (field === 'ordre') {
-      valA = parseInt(a.cells[0].textContent.trim()) || 0;
-      valB = parseInt(b.cells[0].textContent.trim()) || 0;
-    } else if (field === 'nom') {
-      valA = a.cells[1].textContent.trim().toLowerCase();
-      valB = b.cells[1].textContent.trim().toLowerCase();
-    }
-    
-    if (dir === 'asc') return valA > valB ? 1 : -1;
-    return valA < valB ? 1 : -1;
-  });
-  
-  rows.forEach(row => tbody.appendChild(row));
+function sortModules(val) {
+    const [field, dir] = val.split('-');
+    const tbody = document.querySelector('.admin-table tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((a, b) => {
+        let av = field === 'ordre' ? parseInt(a.cells[0].textContent) || 0 : a.cells[1].textContent.trim().toLowerCase();
+        let bv = field === 'ordre' ? parseInt(b.cells[0].textContent) || 0 : b.cells[1].textContent.trim().toLowerCase();
+        return dir === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
+    });
+    rows.forEach(r => tbody.appendChild(r));
 }
 </script>
 {% endblock %}

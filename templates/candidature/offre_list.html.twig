@@ -1,10 +1,20 @@
-{% extends 'base.html.twig' %}
+{% extends 'client/base_client.html.twig' %}
 {% block title %}Offres d'emploi{% endblock %}
-{% block hero_title %}Offres d'emploi{% endblock %}
-{% block hero_sub %}Découvrez les opportunités qui correspondent à votre profil{% endblock %}
+{% block nav_offres %}active{% endblock %}
 
 {% block body %}
-<div class="filter-bar">
+<div class="pf-hero">
+  <div class="pf-hero-bg"></div>
+  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>Espace candidat</div>
+    <h1>Offres <span>d'emploi</span></h1>
+    <p>Découvrez les opportunités qui correspondent à votre profil</p>
+  </div>
+</div>
+
+<div class="pf-content">
+  <div class="pf-section">
     <form method="get" class="filter-form">
         <input type="text" name="search" value="{{ search }}" placeholder="Rechercher une offre..." class="filter-input">
         <select name="domaine" class="filter-select">
@@ -28,7 +38,7 @@
         <button type="submit" class="btn btn-primary">Rechercher</button>
         <a href="{{ path('offre_list') }}" class="btn btn-secondary">Réinitialiser</a>
     </form>
-</div>
+  </div>
 
 {% if offres is empty %}
     <div class="empty-state">
@@ -61,4 +71,5 @@
     {% endfor %}
 </div>
 {% endif %}
+</div>{# end pf-content #}
 {% endblock %}

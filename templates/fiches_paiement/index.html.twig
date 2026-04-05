@@ -1,165 +1,95 @@
-{% extends 'base.html.twig' %}
-{% block title %}Fiches de paiement — PathFinder{% endblock %}
+{% extends 'admin_base.html.twig' %}
+{% block title %}Fiches de Paie — PathFinder{% endblock %}
+{% block page_icon %}💶{% endblock %}
+{% block page_title %}Gestion des Fiches de Paie{% endblock %}
+{% block topbar_actions %}
+    <a href="{{ path('fiche_print_all') }}" class="admin-tool-btn" target="_blank">🖨 Imprimer tout</a>
+    <a href="{{ path('fiche_new') }}" class="btn btn-primary" style="background:linear-gradient(135deg,#6C63FF,#9D6BFF);border:none;border-radius:10px;padding:10px 20px;font-weight:600;text-decoration:none;color:#fff;">+ Nouvelle Fiche</a>
+{% endblock %}
 
 {% block body %}
-
-<h1 class="page-title">Fiches de paiement</h1>
-
-<div style="display:flex; gap:10px; margin-bottom:15px">
-  <a href="{{ path('fiche_new') }}" class="btn-new">+ Nouvelle Fiche</a>
-  <a href="{{ path('fiche_print_all') }}" class="btn-print" target="_blank">🖨 Imprimer tout</a>
-</div>
-{# ── SEARCH + SORT BAR ── #}
-<div style="display:flex; gap:10px; margin-bottom:16px; align-items:center;">
-  <input 
-    type="text" 
-    id="searchInput"
-    placeholder="🔍 Rechercher par nom..."
-    style="padding:9px 14px; border:1.5px solid #e5e7ef; border-radius:8px; font-size:14px; width:250px; outline:none; font-family:'DM Sans',sans-serif;"
-    oninput="filterTable()"
-  />
-  <select 
-    id="sortSelect" 
-    onchange="sortTable()"
-    style="padding:9px 14px; border:1.5px solid #e5e7ef; border-radius:8px; font-size:14px; font-family:'DM Sans',sans-serif; outline:none; cursor:pointer;"
-  >
-    <option value="">⇅ Trier par...</option>
-    <option value="0">Nom (A → Z)</option>
-    <option value="0-desc">Nom (Z → A)</option>
-    <option value="1">Salaire Base ↑</option>
-    <option value="1-desc">Salaire Base ↓</option>
-    <option value="2">Date ↑</option>
-    <option value="2-desc">Date ↓</option>
-    <option value="7">Salaire Final ↑</option>
-    <option value="7-desc">Salaire Final ↓</option>
-  </select>
-  <button 
-    onclick="resetTable()"
-    style="padding:9px 14px; border:1.5px solid #e5e7ef; border-radius:8px; font-size:14px; background:white; cursor:pointer; font-family:'DM Sans',sans-serif;"
-  >
-    ✕ Reset
-  </button>
-</div>
-
-<div class="table-container">
-  <table class="pf-table" id="fichesTable">
-    <thead>
-      <tr>
-        <th>Employé</th>
-        <th>Salaire Base</th>
-        <th>Date</th>
-        <th>Type</th>
-        <th>Taxe</th>
-        <th>Déduction</th>
-        <th>Primes</th>
-        <th style="color:#fff">💰 Salaire Final</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for fiche in fiches %}
+<div class="admin-table-section">
+    <div class="admin-table-header">
+        <div class="admin-table-title">
+            Liste des Fiches
+            <span class="admin-count-badge">{{ fiches|length }}</span>
+        </div>
+        <div class="admin-table-actions">
+            <input type="text" id="searchInput" placeholder="Rechercher par nom..." class="admin-search-input" oninput="filterTable()">
+            <select id="sortSelect" class="admin-search-input" style="width:auto" onchange="sortTable()">
+                <option value="">⇅ Trier par...</option>
+                <option value="0">Nom A→Z</option>
+                <option value="0-desc">Nom Z→A</option>
+                <option value="1">Salaire ↑</option>
+                <option value="1-desc">Salaire ↓</option>
+                <option value="7">Salaire Final ↑</option>
+                <option value="7-desc">Salaire Final ↓</option>
+            </select>
+            <button onclick="resetTable()" class="admin-tool-btn">✕ Reset</button>
+        </div>
+    </div>
+    <table class="admin-table" id="fichesTable">
+        <thead><tr>
+            <th>Employé</th><th>Salaire Base</th><th>Date</th><th>Type</th>
+            <th>Taxe</th><th>Déduction</th><th>Primes</th><th>💰 Salaire Final</th><th style="text-align:right">Actions</th>
+        </tr></thead>
+        <tbody>
+        {% for fiche in fiches %}
         <tr class="row-animate" onclick="window.location='{{ path('fiche_show', {id: fiche.idFichePaiement}) }}'" style="cursor:pointer">
-          <td>{{ fiche.employee.utilisateur.nom }} {{ fiche.employee.utilisateur.prenom }}</td>
-          <td>{{ fiche.employee.salaire }} DT</td>
-          <td>{{ fiche.datePaiement ? fiche.datePaiement|date('Y-m-d') : '-' }}</td>
-          <td>{{ fiche.typePaiement }}</td>
-          <td>{{ fiche.montantTaxe }} DT</td>
-          <td style="color:#ef4444">- {{ fiche.montantDeduction }} DT</td>
-          <td style="color:#22c55e">
-            + {{ fiche.primes|reduce((carry, p) => carry + p.montant, 0) }} DT
-          </td>
-          <td style="font-weight:700; color:#6C63FF">
-            {{ fiche.salaireNet }} DT
-          </td>
-          <td class="actions">
-            <a href="{{ path('fiche_edit', {id: fiche.idFichePaiement}) }}" class="btn-edit">Modifier</a>
-             <a href="{{ path('prime_new_for_fiche', {id: fiche.idFichePaiement}) }}" class="btn-prime" title="Ajouter une prime">⭐ Prime</a>
-            <a href="{{ path('fiche_print_one', {id: fiche.idFichePaiement}) }}" class="btn-print" target="_blank">🖨</a>
-            <form method="post" action="{{ path('fiche_delete', {id: fiche.idFichePaiement}) }}" class="inline-form">
-              <button type="submit" class="btn-delete" onclick="return confirm('Supprimer ?')">Supprimer</button>
-            </form>
-          </td>
+            <td class="admin-table-name">{{ fiche.employee.utilisateur.nom }} {{ fiche.employee.utilisateur.prenom }}</td>
+            <td>{{ fiche.employee.salaire }} DT</td>
+            <td class="admin-table-muted">{{ fiche.datePaiement ? fiche.datePaiement|date('d/m/Y') : '—' }}</td>
+            <td><span class="admin-badge admin-badge-blue">{{ fiche.typePaiement }}</span></td>
+            <td class="admin-table-muted">{{ fiche.montantTaxe }} DT</td>
+            <td style="color:#dc2626">- {{ fiche.montantDeduction }} DT</td>
+            <td style="color:#16a34a">+ {{ fiche.primes|reduce((carry, p) => carry + p.montant, 0) }} DT</td>
+            <td style="font-weight:700;color:#6C63FF">{{ fiche.salaireNet }} DT</td>
+            <td onclick="event.stopPropagation()">
+                <div class="admin-row-actions" style="justify-content:flex-end">
+                    <a href="{{ path('fiche_edit', {id: fiche.idFichePaiement}) }}" class="admin-action-btn">✏️</a>
+                    <a href="{{ path('prime_new_for_fiche', {id: fiche.idFichePaiement}) }}" class="admin-action-btn" style="color:#d97706">⭐</a>
+                    <a href="{{ path('fiche_print_one', {id: fiche.idFichePaiement}) }}" class="admin-action-btn" target="_blank">🖨</a>
+                    <form method="post" action="{{ path('fiche_delete', {id: fiche.idFichePaiement}) }}" onsubmit="return confirm('Supprimer ?')" style="display:inline">
+                        <button type="submit" class="admin-action-btn admin-action-delete">🗑</button>
+                    </form>
+                </div>
+            </td>
         </tr>
-      {% else %}
-        <tr>
-          <td colspan="9" class="empty-row">Aucune fiche disponible</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+        {% else %}
+        <tr><td colspan="9" style="text-align:center;color:#9999b8;padding:2rem">Aucune fiche disponible</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
 </div>
+{% endblock %}
+
+{% block javascripts %}
 <script>
 function filterTable() {
-    const input = document.getElementById('searchInput').value.toLowerCase();
-    const rows = document.querySelectorAll('#fichesTable tbody tr.row-animate');
-    
-    rows.forEach(row => {
-        const name = row.cells[0].innerText.toLowerCase();
-        row.style.display = name.includes(input) ? '' : 'none';
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('#fichesTable tbody tr.row-animate').forEach(r => {
+        r.style.display = r.cells[0].innerText.toLowerCase().includes(q) ? '' : 'none';
     });
 }
-
 function sortTable() {
-    const select = document.getElementById('sortSelect').value;
-    if (!select) return;
-
-    const [colIndex, direction] = select.split('-');
-    const col = parseInt(colIndex);
-    const desc = direction === 'desc';
-
+    const val = document.getElementById('sortSelect').value;
+    if (!val) return;
+    const [col, dir] = val.split('-');
     const tbody = document.querySelector('#fichesTable tbody');
     const rows = Array.from(tbody.querySelectorAll('tr.row-animate'));
-
     rows.sort((a, b) => {
-        let aVal = a.cells[col]?.innerText.replace(' DT', '').replace('-', '').trim() || '';
-        let bVal = b.cells[col]?.innerText.replace(' DT', '').replace('-', '').trim() || '';
-
-        // try numeric sort first
-        const aNum = parseFloat(aVal);
-        const bNum = parseFloat(bVal);
-
-        if (!isNaN(aNum) && !isNaN(bNum)) {
-            return desc ? bNum - aNum : aNum - bNum;
-        }
-
-        // otherwise alphabetical
-        return desc ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+        let av = a.cells[parseInt(col)]?.innerText.replace(/[^0-9.]/g,'') || '';
+        let bv = b.cells[parseInt(col)]?.innerText.replace(/[^0-9.]/g,'') || '';
+        const an = parseFloat(av), bn = parseFloat(bv);
+        if (!isNaN(an) && !isNaN(bn)) return dir === 'desc' ? bn - an : an - bn;
+        return dir === 'desc' ? bv.localeCompare(av) : av.localeCompare(bv);
     });
-
-    rows.forEach(row => tbody.appendChild(row));
+    rows.forEach(r => tbody.appendChild(r));
 }
-
 function resetTable() {
     document.getElementById('searchInput').value = '';
     document.getElementById('sortSelect').value = '';
-    const rows = document.querySelectorAll('#fichesTable tbody tr.row-animate');
-    rows.forEach(row => row.style.display = '');
+    document.querySelectorAll('#fichesTable tbody tr.row-animate').forEach(r => r.style.display = '');
 }
 </script>
-<style>
-.page-title { font-size: 2rem; font-weight: 700; color: #4A4A4A; margin-bottom: 20px; }
-.table-container { overflow-x: auto; margin-top: 20px; border-radius: 10px; background: white; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-.pf-table { width: 100%; border-collapse: collapse; font-family: 'Arial', sans-serif; }
-.pf-table thead { background: linear-gradient(90deg, #6C63FF, #8A84FF); color: white; }
-.pf-table th, .pf-table td { padding: 14px 18px; text-align: left; border-bottom: 1px solid #eee; }
-.pf-table tbody tr:nth-child(even) { background-color: #fafafa; }
-.pf-table tbody tr:hover { background-color: #f0edff; transition: 0.2s ease-in-out; }
-.row-animate { animation: fadeIn 0.4s ease forwards; opacity: 0; }
-@keyframes fadeIn { to { opacity: 1; } }
-.btn-new { display: inline-block; background-color: #6C63FF; color: white; padding: 10px 18px; text-decoration: none; border-radius: 6px; font-weight: bold; transition: 0.2s; }
-.btn-new:hover { background-color: #5a54e6; }
-.btn-edit { background-color: #4B8BF5; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 0.9rem; transition: 0.2s; }
-.btn-edit:hover { background-color: #3a78e0; }
-.btn-delete { background-color: #FF5C5C; color: white; padding: 6px 12px; border: none; border-radius: 4px; font-size: 0.9rem; cursor: pointer; transition: 0.2s; }
-.btn-delete:hover { background-color: #e04a4a; }
-.btn-print { background-color: #22c55e; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 0.9rem; transition: 0.2s; display: inline-block; }
-.btn-print:hover { background-color: #16a34a; }
-.flash-success { background-color: #DFF2BF; color: #4F8A10; padding: 12px 18px; border-radius: 5px; margin-bottom: 15px; font-weight: bold; }
-.empty-row { text-align: center; color: #777; padding: 20px; font-style: italic; }
-.inline-form { display: inline; }
-.actions { display: flex; gap: 6px; align-items: center; }
-.btn-prime { background-color: #f97316; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 0.9rem; transition: 0.2s; display: inline-block; }
-.btn-prime:hover { background-color: #ea6d0e; }
-</style>
-
 {% endblock %}

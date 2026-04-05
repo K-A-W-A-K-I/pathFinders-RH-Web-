@@ -1,4 +1,4 @@
-{% extends 'dashboard/base_dashboard.html.twig' %}
+{% extends 'admin_base.html.twig' %}
 {% block title %}Tableau de bord — PathFinder{% endblock %}
 
 {% block stylesheets %}
@@ -17,28 +17,21 @@
 {% endblock %}
 
 {% block body %}
-<div class="topbar">
-  <div class="page-title">
-    <span style="font-size:22px">📊</span>
-    <h1>Tableau de bord RH</h1>
+<div class="admin-quick-cards" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.5rem">
+  <div class="quick-card">
+    <div class="quick-card-icon" style="background:rgba(245,158,11,.1)">📂</div>
+    <div class="quick-card-title">Catégories</div>
+    <div style="font-size:1.8rem;font-weight:700;color:#1a1730">{{ nbCategories }}</div>
   </div>
-</div>
-
-<div class="stat-cards">
-  <div class="stat-card">
-    <div style="font-size:1.8rem;margin-bottom:.6rem">📂</div>
-    <div class="stat-num">{{ nbCategories }}</div>
-    <div class="stat-label">Catégories</div>
+  <div class="quick-card">
+    <div class="quick-card-icon" style="background:rgba(108,99,255,.1)">🎓</div>
+    <div class="quick-card-title">Formations</div>
+    <div style="font-size:1.8rem;font-weight:700;color:#1a1730">{{ nbFormations }}</div>
   </div>
-  <div class="stat-card" style="animation-delay:.08s">
-    <div style="font-size:1.8rem;margin-bottom:.6rem">🎓</div>
-    <div class="stat-num">{{ nbFormations }}</div>
-    <div class="stat-label">Formations</div>
-  </div>
-  <div class="stat-card" style="animation-delay:.16s">
-    <div style="font-size:1.8rem;margin-bottom:.6rem">✅</div>
-    <div class="stat-num">{{ nbInscriptions }}</div>
-    <div class="stat-label">Inscriptions</div>
+  <div class="quick-card">
+    <div class="quick-card-icon" style="background:rgba(34,197,94,.1)">✅</div>
+    <div class="quick-card-title">Inscriptions</div>
+    <div style="font-size:1.8rem;font-weight:700;color:#1a1730">{{ nbInscriptions }}</div>
   </div>
 </div>
 
@@ -51,48 +44,48 @@
 
 {# ── TAB CATÉGORIES ── #}
 <div id="tab-categories" class="tab-panel active">
-  <div class="table-section">
-    <div class="table-header">
-      <div class="table-title">
-        <h2>Catégories</h2>
-        <span class="count-badge">{{ categories|length }}</span>
+  <div class="admin-table-section">
+    <div class="admin-table-header">
+      <div class="admin-table-title">
+        Catégories
+        <span class="admin-count-badge">{{ categories|length }}</span>
       </div>
-      <div class="table-actions">
-        <input type="text" id="search-cat" placeholder="Rechercher..." class="search-input" oninput="filterTable('tbl-cat', this.value)">
-        <select id="sort-cat" class="pf-select" onchange="sortCategories(this.value)">
+      <div class="admin-table-actions">
+        <input type="text" id="search-cat" placeholder="Rechercher..." class="admin-search-input" oninput="filterTable('tbl-cat', this.value)">
+        <select id="sort-cat" class="admin-search-input" style="width:auto" onchange="sortCategories(this.value)">
           <option value="nom-asc">Nom (A-Z)</option>
           <option value="nom-desc">Nom (Z-A)</option>
-          <option value="formations-asc">Formations (croissant)</option>
-          <option value="formations-desc">Formations (décroissant)</option>
+          <option value="formations-asc">Formations ↑</option>
+          <option value="formations-desc">Formations ↓</option>
         </select>
-        <a href="{{ path('dash_categorie_new') }}" class="btn-primary" style="padding:8px 18px">+ Nouvelle</a>
+        <a href="{{ path('dash_categorie_new') }}" class="btn btn-primary" style="background:linear-gradient(135deg,#6C63FF,#9D6BFF);border:none;border-radius:10px;padding:8px 18px;font-weight:600;text-decoration:none;color:#fff;">+ Nouvelle</a>
       </div>
     </div>
     {% if categories is empty %}
-      <p style="color:var(--text-light);text-align:center;padding:2rem">Aucune catégorie. <a href="{{ path('dash_categorie_new') }}" style="color:var(--primary)">Créer la première →</a></p>
+      <p style="color:#9999b8;text-align:center;padding:2rem">Aucune catégorie. <a href="{{ path('dash_categorie_new') }}" style="color:#6C63FF">Créer la première →</a></p>
     {% else %}
-      <table id="tbl-cat">
+      <table class="admin-table" id="tbl-cat">
         <thead><tr>
           <th>Nom</th><th>Description</th><th>Image</th><th>Formations</th><th style="text-align:right">Actions</th>
         </tr></thead>
         <tbody>
           {% for cat in categories %}
             <tr>
-              <td><strong>{{ cat.nomCategorie }}</strong></td>
-              <td style="color:var(--text-light);font-size:13px;max-width:200px">{{ cat.description ? cat.description|slice(0,60) ~ '...' : '—' }}</td>
+              <td class="admin-table-name">{{ cat.nomCategorie }}</td>
+              <td class="admin-table-muted" style="max-width:200px;font-size:13px">{{ cat.description ? cat.description|slice(0,60) ~ '...' : '—' }}</td>
               <td>
                 {% if cat.image %}
-                  <img src="{{ cat.image }}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px" onerror="this.style.display='none'">
-                {% else %}—{% endif %}
+                  <img src="{{ asset('uploads/categories/' ~ cat.image) }}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px" onerror="this.style.display='none'">
+                {% else %}<span class="admin-table-muted">—</span>{% endif %}
               </td>
-              <td><span class="tag tag-purple">{{ cat.formations|length }}</span></td>
+              <td><span class="admin-badge admin-badge-blue">{{ cat.formations|length }}</span></td>
               <td>
-                <div class="action-btns">
-                  <button type="button" class="btn-action success btn-show-formations" data-catid="{{ cat.idCategorie }}">👁 Formations</button>
-                  <a href="{{ path('dash_categorie_edit', {id: cat.idCategorie}) }}" class="btn-action">✏️ Modifier</a>
-                  <form method="post" action="{{ path('dash_categorie_delete', {id: cat.idCategorie}) }}" onsubmit="return confirm('Supprimer cette catégorie ?')" style="display:inline">
+                <div class="admin-row-actions" style="justify-content:flex-end">
+                  <button type="button" class="admin-action-btn" style="color:#16a34a;border-color:rgba(34,197,94,.3)" data-catid="{{ cat.idCategorie }}">📋 Formations</button>
+                  <a href="{{ path('dash_categorie_edit', {id: cat.idCategorie}) }}" class="admin-action-btn">✏️ Modifier</a>
+                  <form method="post" action="{{ path('dash_categorie_delete', {id: cat.idCategorie}) }}" onsubmit="return confirm('Supprimer ?')" style="display:inline">
                     <input type="hidden" name="_token" value="{{ csrf_token('delete_cat_' ~ cat.idCategorie) }}">
-                    <button type="submit" class="btn-action danger">🗑 Supprimer</button>
+                    <button type="submit" class="admin-action-btn admin-action-delete">🗑 Supprimer</button>
                   </form>
                 </div>
               </td>
@@ -106,64 +99,63 @@
 
 {# ── TAB FORMATIONS ── #}
 <div id="tab-formations" class="tab-panel">
-  <div class="table-section">
-    <div class="table-header">
-      <div class="table-title">
-        <h2>Formations</h2>
-        <span class="count-badge">{{ formations|length }}</span>
+  <div class="admin-table-section">
+    <div class="admin-table-header">
+      <div class="admin-table-title">
+        Formations
+        <span class="admin-count-badge">{{ formations|length }}</span>
       </div>
-      <div class="table-actions">
-        <input type="text" id="search-form" placeholder="Rechercher..." class="search-input" oninput="filterTable('tbl-form', this.value)">
-        <select id="filter-cat" class="pf-select" onchange="filterByCat(this.value)">
+      <div class="admin-table-actions">
+        <input type="text" id="search-form" placeholder="Rechercher..." class="admin-search-input" oninput="filterTable('tbl-form', this.value)">
+        <select id="filter-cat" class="admin-search-input" style="width:auto" onchange="filterByCat(this.value)">
           <option value="">Toutes catégories</option>
           {% for cat in categories %}
             <option value="{{ cat.idCategorie }}">{{ cat.nomCategorie }}</option>
           {% endfor %}
         </select>
-        <select id="sort-form" class="pf-select" onchange="sortFormations(this.value)">
+        <select id="sort-form" class="admin-search-input" style="width:auto" onchange="sortFormations(this.value)">
           <option value="titre-asc">Titre (A-Z)</option>
           <option value="titre-desc">Titre (Z-A)</option>
-          <option value="duree-asc">Durée (croissant)</option>
-          <option value="duree-desc">Durée (décroissant)</option>
-          <option value="places-asc">Places (croissant)</option>
-          <option value="places-desc">Places (décroissant)</option>
+          <option value="duree-asc">Durée ↑</option>
+          <option value="duree-desc">Durée ↓</option>
+          <option value="places-asc">Places ↑</option>
+          <option value="places-desc">Places ↓</option>
         </select>
-        <a href="{{ path('dash_formation_new') }}" class="btn-primary" style="padding:8px 18px">+ Nouvelle</a>
+        <a href="{{ path('dash_formation_new') }}" class="btn btn-primary" style="background:linear-gradient(135deg,#6C63FF,#9D6BFF);border:none;border-radius:10px;padding:8px 18px;font-weight:600;text-decoration:none;color:#fff;">+ Nouvelle</a>
       </div>
     </div>
     {% if formations is empty %}
-      <p style="color:var(--text-light);text-align:center;padding:2rem">Aucune formation. <a href="{{ path('dash_formation_new') }}" style="color:var(--primary)">Créer la première →</a></p>
+      <p style="color:#9999b8;text-align:center;padding:2rem">Aucune formation. <a href="{{ path('dash_formation_new') }}" style="color:#6C63FF">Créer la première →</a></p>
     {% else %}
-      <table id="tbl-form">
+      <table class="admin-table" id="tbl-form">
         <thead><tr>
           <th>Titre</th><th>Catégorie</th><th>Formateur</th><th>Durée</th><th>Places</th><th>Dates</th><th style="text-align:right">Actions</th>
         </tr></thead>
         <tbody>
           {% for f in formations %}
             <tr data-catid="{{ f.categorie.idCategorie }}">
-              <td><strong>{{ f.titre }}</strong></td>
-              <td><span class="tag tag-purple">{{ f.categorie.nomCategorie }}</span></td>
-              <td style="color:var(--text-light);font-size:13px">{{ f.formateur ?? '—' }}</td>
-              <td style="color:var(--text-light);font-size:13px">{{ f.dureeHeures ? f.dureeHeures ~ 'h' : '—' }}</td>
+              <td class="admin-table-name">{{ f.titre }}</td>
+              <td><span class="admin-badge admin-badge-blue">{{ f.categorie.nomCategorie }}</span></td>
+              <td class="admin-table-muted">{{ f.formateur ?? '—' }}</td>
+              <td class="admin-table-muted">{{ f.dureeHeures ? f.dureeHeures ~ 'h' : '—' }}</td>
               <td>
                 {% if f.placeDisponible > 0 %}
-                  <span class="tag tag-green">{{ f.placeDisponible }}/{{ f.capaciteMax }}</span>
+                  <span class="admin-badge admin-badge-green">{{ f.placeDisponible }}/{{ f.capaciteMax }}</span>
                 {% else %}
-                  <span class="tag tag-red">Complet</span>
+                  <span class="admin-badge" style="background:rgba(239,68,68,.1);color:#dc2626">Complet</span>
                 {% endif %}
               </td>
-              <td style="color:var(--text-light);font-size:12px">
-                {{ f.dateDebut ? f.dateDebut|date('d/m/Y') : '—' }} →
-                {{ f.dateFin ? f.dateFin|date('d/m/Y') : '—' }}
+              <td class="admin-table-muted" style="font-size:12px">
+                {{ f.dateDebut ? f.dateDebut|date('d/m/Y') : '—' }} → {{ f.dateFin ? f.dateFin|date('d/m/Y') : '—' }}
               </td>
               <td>
-                <div class="action-btns">
-                  <a href="{{ path('dash_formation_inscriptions', {id: f.idFormation}) }}" class="btn-action success">👥 Inscrits</a>
-                  <a href="{{ path('dash_contenu_by_formation', {formationId: f.idFormation}) }}" class="btn-action">📄 Modules</a>
-                  <a href="{{ path('dash_formation_edit', {id: f.idFormation}) }}" class="btn-action">✏️ Modifier</a>
-                  <form method="post" action="{{ path('dash_formation_delete', {id: f.idFormation}) }}" onsubmit="return confirm('Supprimer cette formation ?')" style="display:inline">
+                <div class="admin-row-actions" style="justify-content:flex-end">
+                  <a href="{{ path('dash_formation_inscriptions', {id: f.idFormation}) }}" class="admin-action-btn" style="color:#16a34a;border-color:rgba(34,197,94,.3)">👥 Inscrits</a>
+                  <a href="{{ path('dash_contenu_by_formation', {formationId: f.idFormation}) }}" class="admin-action-btn">📄 Modules</a>
+                  <a href="{{ path('dash_formation_edit', {id: f.idFormation}) }}" class="admin-action-btn">✏️ Modifier</a>
+                  <form method="post" action="{{ path('dash_formation_delete', {id: f.idFormation}) }}" onsubmit="return confirm('Supprimer ?')" style="display:inline">
                     <input type="hidden" name="_token" value="{{ csrf_token('delete_form_' ~ f.idFormation) }}">
-                    <button type="submit" class="btn-action danger">🗑</button>
+                    <button type="submit" class="admin-action-btn admin-action-delete">🗑</button>
                   </form>
                 </div>
               </td>
@@ -177,31 +169,31 @@
 
 {# ── TAB INSCRIPTIONS ── #}
 <div id="tab-inscriptions" class="tab-panel">
-  <div class="table-section">
-    <div class="table-header">
-      <div class="table-title">
-        <h2>Toutes les inscriptions</h2>
-        <span class="count-badge">{{ nbInscriptions }}</span>
+  <div class="admin-table-section">
+    <div class="admin-table-header">
+      <div class="admin-table-title">
+        Toutes les inscriptions
+        <span class="admin-count-badge">{{ nbInscriptions }}</span>
       </div>
-      <div class="table-actions">
-        <input type="text" placeholder="Rechercher..." class="search-input" oninput="filterTable('tbl-insc', this.value)">
+      <div class="admin-table-actions">
+        <input type="text" placeholder="Rechercher..." class="admin-search-input" oninput="filterTable('tbl-insc', this.value)">
       </div>
     </div>
     {% if allInscriptions is empty %}
-      <p style="color:var(--text-light);text-align:center;padding:2rem">Aucune inscription pour le moment.</p>
+      <p style="color:#9999b8;text-align:center;padding:2rem">Aucune inscription pour le moment.</p>
     {% else %}
-      <table id="tbl-insc">
+      <table class="admin-table" id="tbl-insc">
         <thead><tr>
           <th>#</th><th>Participant</th><th>Email</th><th>Formation</th><th>Date</th>
         </tr></thead>
         <tbody>
           {% for insc in allInscriptions %}
             <tr>
-              <td style="color:var(--text-light);font-size:13px">{{ loop.index }}</td>
-              <td><strong>{{ insc.nomParticipant ?? '—' }}</strong></td>
-              <td style="color:var(--text-light);font-size:13px">{{ insc.emailParticipant ?? '—' }}</td>
-              <td><span class="tag tag-purple">{{ insc.formation.titre }}</span></td>
-              <td style="color:var(--text-light);font-size:13px">{{ insc.dateInscription|date('d/m/Y H:i') }}</td>
+              <td class="admin-table-muted">{{ loop.index }}</td>
+              <td class="admin-table-name">{{ insc.nomParticipant ?? '—' }}</td>
+              <td class="admin-table-muted">{{ insc.emailParticipant ?? '—' }}</td>
+              <td><span class="admin-badge admin-badge-blue">{{ insc.formation.titre }}</span></td>
+              <td class="admin-table-muted">{{ insc.dateInscription|date('d/m/Y H:i') }}</td>
             </tr>
           {% endfor %}
         </tbody>
@@ -287,7 +279,7 @@ function sortFormations(sortValue) {
 }
 
 // Boutons "Formations" dans l'onglet catégories
-document.querySelectorAll('.btn-show-formations').forEach(btn => {
+document.querySelectorAll('[data-catid]').forEach(btn => {
   btn.addEventListener('click', function() {
     const catId = this.dataset.catid;
     showTab('formations');

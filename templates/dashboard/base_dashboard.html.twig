@@ -76,15 +76,31 @@
     <div class="logo-icon">🧭</div>
     <span class="logo-text">PATHFINDER</span>
   </div>
-  <a class="nav-item active" href="{{ path('dashboard_home') }}">
-    <span class="nav-icon">📊</span> Tableau de bord
+  <div class="sidebar-divider"></div>
+  <a class="nav-item {{ app.request.attributes.get('_route') in ['offre_index','offre_new','offre_show','offre_edit','question_new','question_edit'] ? 'active' : '' }}" href="{{ path('offre_index') }}">
+    <span class="nav-icon">💼</span> Gestion des Offres
+  </a>
+  <a class="nav-item {{ app.request.attributes.get('_route') == 'admin_candidatures' ? 'active' : '' }}" href="{{ path('admin_candidatures') }}">
+    <span class="nav-icon">📄</span> Candidatures
+  </a>
+  <a class="nav-item {{ app.request.attributes.get('_route') == 'entretien_admin' ? 'active' : '' }}" href="{{ path('entretien_admin') }}">
+    <span class="nav-icon">👥</span> Entretiens
+  </a>
+  <a class="nav-item {{ app.request.attributes.get('_route') starts with 'evenement_' ? 'active' : '' }}" href="{{ path('evenement_index') }}">
+    <span class="nav-icon">📅</span> Événements
+  </a>
+  <a class="nav-item {{ app.request.attributes.get('_route') == 'dashboard_home' or app.request.attributes.get('_route') starts with 'dashboard_formation' or app.request.attributes.get('_route') starts with 'dashboard_categorie' or app.request.attributes.get('_route') starts with 'dashboard_contenu' ? 'active' : '' }}" href="{{ path('dashboard_home') }}">
+    <span class="nav-icon">🎓</span> Formations
+  </a>
+  <a class="nav-item {{ app.request.attributes.get('_route') starts with 'fiche_' ? 'active' : '' }}" href="{{ path('fiche_index') }}">
+    <span class="nav-icon">💶</span> Fiches de Paie
+  </a>
+  <a class="nav-item {{ app.request.attributes.get('_route') starts with 'prime_' ? 'active' : '' }}" href="{{ path('prime_index') }}">
+    <span class="nav-icon">🏆</span> Primes
   </a>
   <div class="sidebar-divider"></div>
-  <a class="nav-item" href="{{ path('app_home') }}">
-    <span class="nav-icon">🏠</span> Accueil
-  </a>
-  <a class="nav-item" href="{{ path('client_categories') }}">
-    <span class="nav-icon">👁</span> Vue Client
+  <a class="nav-item" href="{{ path('auth_logout') }}" style="color:rgba(239,68,68,0.8);margin-top:auto;margin-bottom:8px">
+    <span class="nav-icon">🚪</span> Déconnexion
   </a>
 </aside>
 <main class="main">

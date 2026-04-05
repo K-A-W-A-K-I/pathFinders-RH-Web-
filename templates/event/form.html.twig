@@ -1,357 +1,128 @@
-{% extends 'base_events.html.twig' %}
-
+{% extends 'admin_base.html.twig' %}
 {% block title %}{{ formTitle }}{% endblock %}
+{% block page_icon %}📅{% endblock %}
 {% block page_title %}{{ formTitle }}{% endblock %}
-{% block page_subtitle %}{% if isEdit %}Modification de l evenement{% else %}Creation d un nouvel evenement{% endif %}{% endblock %}
+{% block topbar_actions %}
+    <a href="{{ path('evenement_index') }}" class="admin-tool-btn">← Retour à la liste</a>
+{% endblock %}
 
 {% block body %}
-<div class="mb-4">
-    <a href="{{ path('evenement_index') }}" class="btn-back-pf">
-        <i class="bi bi-arrow-left"></i> Retour a la liste
-    </a>
-    {% if isEdit %}
-    <a href="{{ path('evenement_show', {id: evenement.id}) }}" class="btn-back-pf ms-1">
-        <i class="bi bi-eye"></i> Voir le detail
-    </a>
-    {% endif %}
-</div>
+{{ form_start(form, {attr: {id: 'evenement-form'}}) }}
+<div style="display:grid;grid-template-columns:1fr 320px;gap:1.5rem;max-width:1100px">
 
-{{ form_start(form, {attr: {class: 'needs-validation', id: 'evenement-form'}}) }}
+    {# Left #}
+    <div>
+        <div class="admin-table-section" style="padding:28px;margin-bottom:1.5rem">
+            <div style="font-size:13px;font-weight:700;color:#9999b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.2rem">ℹ Informations générales</div>
+            {% set inp = 'width:100%;padding:10px 14px;border:1.5px solid #e2e5ea;border-radius:9px;font-size:14px;font-family:DM Sans,sans-serif;outline:none;' %}
 
-<div class="row g-4">
-    <div class="col-lg-8">
-        <div class="form-section">
-            <div class="form-section-title">
-                <i class="bi bi-info-circle me-2" style="color:var(--clr-lavender);"></i>
-                Informations generales
+            <div style="margin-bottom:1rem">
+                {{ form_label(form.titre) }}
+                {{ form_widget(form.titre, {attr: {style: inp}}) }}
+                {% for e in form.titre.vars.errors %}<div style="color:#dc2626;font-size:12px;margin-top:3px">⚠ {{ e.message }}</div>{% endfor %}
             </div>
 
-            <div class="mb-3">
-                {{ form_label(form.titre, null, {label_attr: {class: 'form-label'}}) }}
-                {{ form_widget(form.titre) }}
-                <div class="form-help">Champ obligatoire, 100 caracteres maximum.</div>
-                <div class="form-error">{{ form_errors(form.titre) }}</div>
+            <div style="margin-bottom:1rem">
+                {{ form_label(form.description) }}
+                {{ form_widget(form.description, {attr: {rows: 4, style: inp ~ 'resize:vertical;'}}) }}
+                {% for e in form.description.vars.errors %}<div style="color:#dc2626;font-size:12px;margin-top:3px">⚠ {{ e.message }}</div>{% endfor %}
             </div>
 
-            <div class="mb-3">
-                {{ form_label(form.description, null, {label_attr: {class: 'form-label'}}) }}
-                {{ form_widget(form.description) }}
-                <div class="form-help">2000 caracteres maximum.</div>
-                <div class="form-error">{{ form_errors(form.description) }}</div>
-            </div>
-
-            <div class="row g-3">
-                <div class="col-md-6">
-                    {{ form_label(form.categorie, null, {label_attr: {class: 'form-label'}}) }}
-                    {{ form_widget(form.categorie) }}
-                    <div class="form-help">La categorie est obligatoire.</div>
-                    <div class="form-error">{{ form_errors(form.categorie) }}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+                <div>
+                    {{ form_label(form.categorie) }}
+                    {{ form_widget(form.categorie, {attr: {style: inp}}) }}
+                    {% for e in form.categorie.vars.errors %}<div style="color:#dc2626;font-size:12px;margin-top:3px">⚠ {{ e.message }}</div>{% endfor %}
                 </div>
-                <div class="col-md-6">
-                    {{ form_label(form.typeEvenement, null, {label_attr: {class: 'form-label'}}) }}
-                    {{ form_widget(form.typeEvenement) }}
-                    <div class="form-error">{{ form_errors(form.typeEvenement) }}</div>
+                <div>
+                    {{ form_label(form.typeEvenement) }}
+                    {{ form_widget(form.typeEvenement, {attr: {style: inp}}) }}
+                    {% for e in form.typeEvenement.vars.errors %}<div style="color:#dc2626;font-size:12px;margin-top:3px">⚠ {{ e.message }}</div>{% endfor %}
                 </div>
             </div>
         </div>
 
-        <div class="form-section">
-            <div class="form-section-title">
-                <i class="bi bi-calendar3 me-2" style="color:var(--clr-lavender);"></i>
-                Dates et lieu
-            </div>
-
-            <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                    {{ form_label(form.dateDebut, null, {label_attr: {class: 'form-label'}}) }}
-                    {{ form_widget(form.dateDebut) }}
-                    <div class="form-help">La date de debut doit etre aujourd hui ou plus tard.</div>
-                    <div class="form-error">{{ form_errors(form.dateDebut) }}</div>
+        <div class="admin-table-section" style="padding:28px;margin-bottom:1.5rem">
+            <div style="font-size:13px;font-weight:700;color:#9999b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.2rem">📅 Dates et lieu</div>
+            {% set inp = 'width:100%;padding:10px 14px;border:1.5px solid #e2e5ea;border-radius:9px;font-size:14px;font-family:DM Sans,sans-serif;outline:none;' %}
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+                <div>
+                    {{ form_label(form.dateDebut) }}
+                    {{ form_widget(form.dateDebut, {attr: {style: inp}}) }}
+                    {% for e in form.dateDebut.vars.errors %}<div style="color:#dc2626;font-size:12px;margin-top:3px">⚠ {{ e.message }}</div>{% endfor %}
                 </div>
-                <div class="col-md-6">
-                    {{ form_label(form.dateFin, null, {label_attr: {class: 'form-label'}}) }}
-                    {{ form_widget(form.dateFin) }}
-                    <div class="form-help">La date de fin doit etre egale ou apres la date de debut.</div>
-                    <div class="form-error">{{ form_errors(form.dateFin) }}</div>
+                <div>
+                    {{ form_label(form.dateFin) }}
+                    {{ form_widget(form.dateFin, {attr: {style: inp}}) }}
+                    {% for e in form.dateFin.vars.errors %}<div style="color:#dc2626;font-size:12px;margin-top:3px">⚠ {{ e.message }}</div>{% endfor %}
                 </div>
             </div>
-
-            <div class="mb-0">
-                {{ form_label(form.lieu, null, {label_attr: {class: 'form-label'}}) }}
-                {{ form_widget(form.lieu) }}
-                <div class="form-help">100 caracteres maximum.</div>
-                <div class="form-error">{{ form_errors(form.lieu) }}</div>
+            <div>
+                {{ form_label(form.lieu) }}
+                {{ form_widget(form.lieu, {attr: {style: inp}}) }}
+                {% for e in form.lieu.vars.errors %}<div style="color:#dc2626;font-size:12px;margin-top:3px">⚠ {{ e.message }}</div>{% endfor %}
             </div>
         </div>
 
-        <div class="form-section">
-            <div class="form-section-title">
-                <i class="bi bi-image me-2" style="color:var(--clr-lavender);"></i>
-                Image de l evenement
-            </div>
-
-            <div class="mb-2">
-                {{ form_label(form.imageFile, null, {label_attr: {class: 'form-label'}}) }}
-                {{ form_widget(form.imageFile) }}
-                <div class="form-help">Choisir une image depuis votre PC, formats JPG PNG WEBP ou GIF, 4 Mo maximum.</div>
-                {% if isEdit and evenement.imagePath %}
-                <div class="form-help">Laisser vide pour conserver l image actuelle.</div>
-                {% endif %}
-                <div class="form-error">{{ form_errors(form.imageFile) }}</div>
-            </div>
-
-            <div id="imgPreviewBox" style="{% if evenement.imagePath %}display:block{% else %}display:none{% endif %};margin-top:12px;background:var(--clr-bg);border-radius:8px;padding:10px;text-align:center;">
-                <img id="imgPreview" src="{% if evenement.imagePath %}{{ asset(evenement.imagePath) }}{% endif %}" alt="Apercu" style="max-width:100%;max-height:200px;border-radius:8px;object-fit:cover;">
+        <div class="admin-table-section" style="padding:28px">
+            <div style="font-size:13px;font-weight:700;color:#9999b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.2rem">🖼 Image</div>
+            {{ form_label(form.imageFile) }}
+            {{ form_widget(form.imageFile) }}
+            <div style="font-size:12px;color:#9999b8;margin-top:4px">JPG, PNG, WEBP ou GIF — 4 Mo max{% if isEdit and evenement.imagePath %}. Laisser vide pour conserver l'image actuelle.{% endif %}</div>
+            {% for e in form.imageFile.vars.errors %}<div style="color:#dc2626;font-size:12px;margin-top:3px">⚠ {{ e.message }}</div>{% endfor %}
+            <div id="imgPreviewBox" style="{% if evenement.imagePath %}display:block{% else %}display:none{% endif %};margin-top:12px;text-align:center;">
+                <img id="imgPreview" src="{% if evenement.imagePath %}{{ asset(evenement.imagePath) }}{% endif %}" alt="Aperçu" style="max-width:100%;max-height:180px;border-radius:8px;object-fit:cover;">
             </div>
         </div>
     </div>
 
-    <div class="col-lg-4">
-        <div class="form-section">
-            <div class="form-section-title">
-                <i class="bi bi-people me-2" style="color:var(--clr-lavender);"></i>
-                Capacite et prix
+    {# Right #}
+    <div>
+        <div class="admin-table-section" style="padding:24px;margin-bottom:1.5rem">
+            <div style="font-size:13px;font-weight:700;color:#9999b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.2rem">👥 Capacité & Prix</div>
+            {% set inp = 'width:100%;padding:10px 14px;border:1.5px solid #e2e5ea;border-radius:9px;font-size:14px;font-family:DM Sans,sans-serif;outline:none;' %}
+            <div style="margin-bottom:1rem">
+                {{ form_label(form.capaciteMax) }}
+                {{ form_widget(form.capaciteMax, {attr: {style: inp}}) }}
+                {% for e in form.capaciteMax.vars.errors %}<div style="color:#dc2626;font-size:12px;margin-top:3px">⚠ {{ e.message }}</div>{% endfor %}
             </div>
-
-            <div class="mb-3">
-                {{ form_label(form.capaciteMax, null, {label_attr: {class: 'form-label'}}) }}
-                {{ form_widget(form.capaciteMax) }}
-                <div class="form-help">Valeur entiere obligatoire, minimum 1.</div>
-                <div class="form-error">{{ form_errors(form.capaciteMax) }}</div>
-            </div>
-
-            <div class="mb-0">
-                {{ form_label(form.prix, null, {label_attr: {class: 'form-label'}}) }}
-                <div class="input-group">
-                    {{ form_widget(form.prix) }}
-                    <span class="input-group-text" style="border-color:#d1d5db;font-size:13px;color:var(--clr-muted);">TND</span>
-                </div>
-                <div class="form-help">Valeur positive ou 0.00 pour gratuit.</div>
-                <div class="form-error">{{ form_errors(form.prix) }}</div>
+            <div>
+                {{ form_label(form.prix) }}
+                {{ form_widget(form.prix, {attr: {style: inp}}) }}
+                <div style="font-size:12px;color:#9999b8;margin-top:3px">0.00 pour gratuit</div>
+                {% for e in form.prix.vars.errors %}<div style="color:#dc2626;font-size:12px;margin-top:3px">⚠ {{ e.message }}</div>{% endfor %}
             </div>
         </div>
 
-        <div class="form-section">
-            <div class="form-section-title">
-                <i class="bi bi-toggle-on me-2" style="color:var(--clr-lavender);"></i>
-                Statut
-            </div>
-
-            <div class="mb-0">
-                {{ form_label(form.statut, null, {label_attr: {class: 'form-label'}}) }}
-                {{ form_widget(form.statut) }}
-                <div class="form-error">{{ form_errors(form.statut) }}</div>
-            </div>
+        <div class="admin-table-section" style="padding:24px;margin-bottom:1.5rem">
+            <div style="font-size:13px;font-weight:700;color:#9999b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.2rem">🔘 Statut</div>
+            {% set inp = 'width:100%;padding:10px 14px;border:1.5px solid #e2e5ea;border-radius:9px;font-size:14px;font-family:DM Sans,sans-serif;outline:none;' %}
+            {{ form_label(form.statut) }}
+            {{ form_widget(form.statut, {attr: {style: inp}}) }}
         </div>
 
-        {% if isEdit %}
-        <div class="info-card">
-            <div class="info-card-label mb-2">Recapitulatif</div>
-            <div class="d-flex justify-content-between mb-1">
-                <span style="font-size:12px;color:var(--clr-muted);">ID</span>
-                <span style="font-size:12px;font-weight:600;">#{{ evenement.id }}</span>
-            </div>
-            <div class="d-flex justify-content-between mb-1">
-                <span style="font-size:12px;color:var(--clr-muted);">Reservations</span>
-                <span style="font-size:12px;font-weight:600;">{{ evenement.placesReservees }}</span>
-            </div>
-            <div class="d-flex justify-content-between">
-                <span style="font-size:12px;color:var(--clr-muted);">Cree le</span>
-                <span style="font-size:12px;font-weight:600;">
-                    {{ evenement.dateCreation ? evenement.dateCreation|date('d/m/Y') : '-' }}
-                </span>
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="mt-3 d-flex flex-column gap-2">
-            <button type="submit" class="btn-primary-pf w-100 justify-content-center">
-                <i class="bi bi-{{ isEdit ? 'check-lg' : 'plus-lg' }}"></i>
-                {{ isEdit ? 'Enregistrer les modifications' : 'Creer l evenement' }}
+        <div class="admin-table-section" style="padding:24px">
+            <button type="submit" class="btn btn-primary" style="width:100%;background:linear-gradient(135deg,#6C63FF,#9D6BFF);border:none;border-radius:10px;padding:12px;font-weight:600;font-size:15px;color:#fff;cursor:pointer;margin-bottom:10px">
+                + {{ isEdit ? 'Enregistrer' : 'Créer l\'événement' }}
             </button>
-            <a href="{{ path('evenement_index') }}" class="btn-back-pf w-100 justify-content-center" style="border:1px solid var(--clr-border);">
-                <i class="bi bi-x"></i> Annuler
-            </a>
+            <a href="{{ path('evenement_index') }}" class="admin-tool-btn" style="width:100%;justify-content:center;display:flex">✕ Annuler</a>
         </div>
     </div>
 </div>
-
-{% if not form.vars.valid and form.vars.submitted %}
-<div class="mt-3" style="background:#fee2e2;border:1px solid #fecaca;border-radius:10px;padding:14px 16px;font-size:13px;color:var(--clr-danger);display:flex;align-items:center;gap:10px;">
-    <i class="bi bi-exclamation-circle-fill"></i>
-    Veuillez corriger les erreurs dans le formulaire avant de soumettre.
-</div>
-{% endif %}
-
 {{ form_end(form) }}
 {% endblock %}
 
 {% block javascripts %}
 <script>
-const form = document.getElementById('evenement-form');
-
-function setFieldError(field, message) {
-    if (!field) {
-        return;
-    }
-
-    field.setCustomValidity(message);
-    field.classList.toggle('is-invalid', message !== '');
-}
-
-function validateField(field) {
-    if (!field) {
-        return true;
-    }
-
-    const value = field.value.trim();
-    let message = '';
-
-    switch (field.name) {
-        case 'evenement[titre]':
-            if (!value) {
-                message = 'Le titre est obligatoire.';
-            } else if (value.length > 100) {
-                message = 'Le titre ne doit pas depasser 100 caracteres.';
-            }
-            break;
-        case 'evenement[description]':
-            if (value.length > 2000) {
-                message = 'La description ne doit pas depasser 2000 caracteres.';
-            }
-            break;
-        case 'evenement[lieu]':
-            if (value.length > 100) {
-                message = 'Le lieu ne doit pas depasser 100 caracteres.';
-            }
-            break;
-        case 'evenement[capaciteMax]':
-            if (!value) {
-                message = 'La capacite maximale est obligatoire.';
-            } else if (!/^\d+$/.test(value) || Number(value) < 1) {
-                message = 'La capacite maximale doit etre un entier superieur ou egal a 1.';
-            }
-            break;
-        case 'evenement[prix]':
-            if (value !== '' && Number(value) < 0) {
-                message = 'Le prix doit etre positif ou nul.';
-            }
-            break;
-        case 'evenement[imageFile]':
-            if (field.files && field.files[0]) {
-                const file = field.files[0];
-                const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-                if (!allowedTypes.includes(file.type)) {
-                    message = 'Veuillez choisir une image JPG, PNG, WEBP ou GIF.';
-                } else if (file.size > 4 * 1024 * 1024) {
-                    message = 'L image ne doit pas depasser 4 Mo.';
-                }
-            }
-            break;
-    }
-
-    setFieldError(field, message);
-    return message === '';
-}
-
-function validateDates(dateDebut, dateFin) {
-    const today = new Date().toISOString().split('T')[0];
-    let isValid = true;
-
-    if (!dateDebut.value) {
-        setFieldError(dateDebut, 'La date de debut est obligatoire.');
-        isValid = false;
-    } else if (dateDebut.value < today) {
-        setFieldError(dateDebut, 'La date de debut doit etre aujourd hui ou dans le futur.');
-        isValid = false;
-    } else {
-        setFieldError(dateDebut, '');
-    }
-
-    if (!dateFin.value) {
-        setFieldError(dateFin, 'La date de fin est obligatoire.');
-        isValid = false;
-    } else if (dateDebut.value && dateFin.value < dateDebut.value) {
-        setFieldError(dateFin, 'La date de fin doit etre apres ou egale a la date de debut.');
-        isValid = false;
-    } else {
-        setFieldError(dateFin, '');
-    }
-
-    return isValid;
-}
-
-const imgInput = document.querySelector('input[name$="[imageFile]"], input[id*="imageFile"]');
+const imgInput = document.querySelector('input[type="file"]');
 if (imgInput) {
-    function updatePreview() {
+    imgInput.addEventListener('change', function() {
         const box = document.getElementById('imgPreviewBox');
         const img = document.getElementById('imgPreview');
-
-        if (imgInput.files && imgInput.files[0]) {
-            const file = imgInput.files[0];
+        if (this.files && this.files[0]) {
             const reader = new FileReader();
-            reader.onload = (event) => {
-                img.src = event.target.result;
-                box.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        } else if (img.dataset.originalSrc) {
-            img.src = img.dataset.originalSrc;
-            box.style.display = 'block';
-        } else {
-            img.removeAttribute('src');
-            box.style.display = 'none';
-        }
-    }
-
-    const img = document.getElementById('imgPreview');
-    if (img && img.getAttribute('src')) {
-        img.dataset.originalSrc = img.getAttribute('src');
-    }
-
-    imgInput.addEventListener('change', updatePreview);
-    updatePreview();
-}
-
-const dateDebut = document.querySelector('input[name$="[dateDebut]"]');
-const dateFin = document.querySelector('input[name$="[dateFin]"]');
-if (dateDebut && dateFin) {
-    const today = new Date().toISOString().split('T')[0];
-    dateDebut.min = today;
-    dateFin.min = dateDebut.value || today;
-
-    dateDebut.addEventListener('change', () => {
-        dateFin.min = dateDebut.value || today;
-        validateDates(dateDebut, dateFin);
-    });
-
-    dateFin.addEventListener('change', () => validateDates(dateDebut, dateFin));
-}
-
-if (form) {
-    const trackedFields = form.querySelectorAll('input, textarea, select');
-
-    trackedFields.forEach((field) => {
-        field.addEventListener('input', () => validateField(field));
-        field.addEventListener('change', () => validateField(field));
-    });
-
-    form.addEventListener('submit', (event) => {
-        let isValid = true;
-
-        trackedFields.forEach((field) => {
-            if (!validateField(field)) {
-                isValid = false;
-            }
-        });
-
-        if (dateDebut && dateFin && !validateDates(dateDebut, dateFin)) {
-            isValid = false;
-        }
-
-        if (!form.checkValidity() || !isValid) {
-            event.preventDefault();
-            event.stopPropagation();
+            reader.onload = e => { img.src = e.target.result; box.style.display = 'block'; };
+            reader.readAsDataURL(this.files[0]);
         }
     });
 }

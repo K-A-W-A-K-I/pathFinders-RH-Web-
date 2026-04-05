@@ -1,10 +1,19 @@
-{% extends 'base.html.twig' %}
+{% extends 'client/base_client.html.twig' %}
 {% block title %}Mes Candidatures{% endblock %}
-{% block hero_title %}Mes Candidatures{% endblock %}
-{% block hero_sub %}Suivez l'état de vos candidatures aux offres d'emploi{% endblock %}
+{% block nav_candidatures %}active{% endblock %}
 
 {% block body %}
+<div class="pf-hero">
+  <div class="pf-hero-bg"></div>
+  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>Espace candidat</div>
+    <h1>Mes <span>Candidatures</span></h1>
+    <p>Suivez l'état de vos candidatures aux offres d'emploi</p>
+  </div>
+</div>
 
+<div class="pf-content">
 <div class="stats-bar">
     <div class="stat-card stat-total">
         <span class="stat-icon">📋</span>
@@ -82,4 +91,5 @@
         {% endfor %}
     </div>
 {% endif %}
+</div>{# end pf-content #}
 {% endblock %}

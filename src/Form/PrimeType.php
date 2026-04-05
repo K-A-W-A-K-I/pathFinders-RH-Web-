@@ -26,6 +26,12 @@ class PrimeType extends AbstractType
             . ' — '
             . $fiche->getDatePaiement()->format('M Y');
     },
+    'query_builder' => function (\App\Repository\FichesPaiementRepository $repo) {
+        return $repo->createQueryBuilder('f')
+            ->innerJoin('f.employee', 'e')
+            ->innerJoin('e.utilisateur', 'u')
+            ->orderBy('u.nom', 'ASC');
+    },
     'label' => 'Fiche de paiement',
     'placeholder' => '-- Choisir --',
 ])

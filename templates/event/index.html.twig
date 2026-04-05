@@ -1,306 +1,94 @@
-{% extends 'base_events.html.twig' %}
-
+{% extends 'admin_base.html.twig' %}
 {% block title %}Événements{% endblock %}
+{% block page_icon %}📅{% endblock %}
 {% block page_title %}Gestion des Événements{% endblock %}
-{% block page_subtitle %}{{ total }} événement{{ total != 1 ? 's' : '' }}{% endblock %}
+{% block topbar_actions %}
+    <a href="{{ path('evenement_new') }}" class="btn btn-primary" style="background:linear-gradient(135deg,#6C63FF,#9D6BFF);border:none;border-radius:10px;padding:10px 20px;font-weight:600;text-decoration:none;color:#fff;">+ Nouvel Événement</a>
+{% endblock %}
 
 {% block body %}
-
-{# ══ STAT CARDS ROW ══ #}
-<div class="row g-3 mb-4">
-    <div class="col-6 col-xl-3">
-        <div class="stat-card">
-            <div class="stat-icon stat-icon-purple"><i class="bi bi-calendar-event"></i></div>
-            <div>
-                <div class="stat-number">{{ total }}</div>
-                <div class="stat-label">Total événements</div>
-            </div>
-        </div>
+<div class="admin-quick-cards" style="grid-template-columns:repeat(4,1fr)">
+    <div class="quick-card">
+        <div class="quick-card-icon" style="background:rgba(108,99,255,.1)">📅</div>
+        <div class="quick-card-title">Total</div>
+        <div style="font-size:1.6rem;font-weight:700;color:#1a1730">{{ total }}</div>
     </div>
-    <div class="col-6 col-xl-3">
-        <div class="stat-card">
-            <div class="stat-icon stat-icon-green"><i class="bi bi-check-circle"></i></div>
-            <div>
-                <div class="stat-number">{{ stats.Actif ?? 0 }}</div>
-                <div class="stat-label">Actifs</div>
-            </div>
-        </div>
+    <div class="quick-card">
+        <div class="quick-card-icon" style="background:rgba(34,197,94,.1)">✅</div>
+        <div class="quick-card-title">Actifs</div>
+        <div style="font-size:1.6rem;font-weight:700;color:#16a34a">{{ stats.Actif ?? 0 }}</div>
     </div>
-    <div class="col-6 col-xl-3">
-        <div class="stat-card">
-            <div class="stat-icon stat-icon-amber"><i class="bi bi-people-fill"></i></div>
-            <div>
-                <div class="stat-number">{{ stats.Complet ?? 0 }}</div>
-                <div class="stat-label">Complets</div>
-            </div>
-        </div>
+    <div class="quick-card">
+        <div class="quick-card-icon" style="background:rgba(245,158,11,.1)">⬤</div>
+        <div class="quick-card-title">Complets</div>
+        <div style="font-size:1.6rem;font-weight:700;color:#d97706">{{ stats.Complet ?? 0 }}</div>
     </div>
-    <div class="col-6 col-xl-3">
-        <div class="stat-card">
-            <div class="stat-icon stat-icon-red"><i class="bi bi-x-circle"></i></div>
-            <div>
-                <div class="stat-number">{{ (stats.Annulé ?? 0) + (stats.Terminé ?? 0) }}</div>
-                <div class="stat-label">Annulés / Terminés</div>
-            </div>
-        </div>
+    <div class="quick-card">
+        <div class="quick-card-icon" style="background:rgba(239,68,68,.1)">✕</div>
+        <div class="quick-card-title">Annulés/Terminés</div>
+        <div style="font-size:1.6rem;font-weight:700;color:#dc2626">{{ (stats.Annulé ?? 0) + (stats.Terminé ?? 0) }}</div>
     </div>
 </div>
 
-{# ══ SEARCH & FILTER BAR ══ #}
-<div class="info-card mb-4">
-    <form method="GET" action="{{ path('evenement_index') }}" id="filterForm">
-        <div class="row g-2 align-items-end">
-
-            {# Search #}
-            <div class="col-12 col-md-4">
-                <label class="form-label"><i class="bi bi-search me-1"></i>Recherche</label>
-                <div class="search-box">
-                    <i class="bi bi-search"></i>
-                    <input type="text" name="search" value="{{ search }}"
-                           placeholder="Titre, lieu, description…"
-                           oninput="document.getElementById('filterForm').submit()">
-                </div>
-            </div>
-
-            {# Category filter #}
-            <div class="col-6 col-md-2">
-                <label class="form-label"><i class="bi bi-tag me-1"></i>Catégorie</label>
-                <select name="categorie" class="form-select form-select-sm" onchange="this.form.submit()">
-                    <option value="">Toutes</option>
-                    {% for cat in categories %}
-                        <option value="{{ cat.id }}" {% if categorieId == cat.id %}selected{% endif %}>
-                            {{ cat.nomCategorie }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            {# Status filter #}
-            <div class="col-6 col-md-2">
-                <label class="form-label"><i class="bi bi-funnel me-1"></i>Statut</label>
-                <select name="statut" class="form-select form-select-sm" onchange="this.form.submit()">
-                    <option value="">Tous</option>
+<div class="admin-table-section">
+    <div class="admin-table-header">
+        <div class="admin-table-title">
+            Liste des Événements
+            <span class="admin-count-badge">{{ evenements|length }}</span>
+        </div>
+        <div class="admin-table-actions">
+            <form method="GET" action="{{ path('evenement_index') }}" id="filterForm" style="display:flex;gap:8px;align-items:center">
+                <input type="text" name="search" value="{{ search }}" placeholder="Rechercher..." class="admin-search-input" oninput="clearTimeout(window._st);window._st=setTimeout(()=>this.form.submit(),350)">
+                <select name="statut" class="admin-search-input" style="width:auto" onchange="this.form.submit()">
+                    <option value="">Tous statuts</option>
                     {% for s in ['Actif','Complet','Annulé','Terminé'] %}
                         <option value="{{ s }}" {% if statut == s %}selected{% endif %}>{{ s }}</option>
                     {% endfor %}
                 </select>
-            </div>
-
-            {# Type filter #}
-            <div class="col-6 col-md-2">
-                <label class="form-label"><i class="bi bi-briefcase me-1"></i>Type</label>
-                <select name="type" class="form-select form-select-sm" onchange="this.form.submit()">
-                    <option value="">Tous</option>
-                    <option value="Professionnel"     {% if type == 'Professionnel' %}selected{% endif %}>Professionnel</option>
-                    <option value="Non professionnel" {% if type == 'Non professionnel' %}selected{% endif %}>Non professionnel</option>
-                </select>
-            </div>
-
-            {# Reset #}
-            <div class="col-6 col-md-2">
-                <label class="form-label">&nbsp;</label><br>
-                <a href="{{ path('evenement_index') }}" class="btn-back-pf w-100 justify-content-center"
-                   style="border:1px solid var(--clr-border);">
-                    <i class="bi bi-arrow-counterclockwise"></i> Réinitialiser
-                </a>
-            </div>
-
+                <a href="{{ path('evenement_index') }}" class="admin-tool-btn">✕ Reset</a>
+            </form>
         </div>
-    </form>
-</div>
-
-{# ══ EVENTS TABLE ══ #}
-<div class="info-card p-0">
-
-    {# Table header #}
-    <div class="d-flex align-items-center justify-content-between px-4 py-3"
-         style="border-bottom:1px solid var(--clr-border);">
-        <div>
-            <span style="font-size:14px;font-weight:700;color:var(--clr-dark);">
-                <i class="bi bi-calendar-event me-2" style="color:var(--clr-lavender);"></i>
-                Liste des événements
-            </span>
-            <span style="font-size:12px;color:var(--clr-muted);margin-left:10px;">
-                {{ evenements|length }} résultat{{ evenements|length != 1 ? 's' : '' }}
-            </span>
-        </div>
-        <a href="{{ path('evenement_new') }}" class="btn-primary-pf">
-            <i class="bi bi-plus-lg"></i> Nouvel événement
-        </a>
     </div>
 
     {% if evenements is empty %}
-        <div class="empty-state">
-            <div class="empty-icon">⚡</div>
-            <h3>Aucun événement trouvé</h3>
-            <p>Essayez d'autres critères de recherche ou créez un nouvel événement.</p>
-            <a href="{{ path('evenement_new') }}" class="btn-primary-pf mt-3">
-                <i class="bi bi-plus-lg"></i> Créer un événement
-            </a>
-        </div>
+        <div class="admin-body empty-state"><div class="empty-icon">📅</div><p class="empty-title">Aucun événement trouvé</p></div>
     {% else %}
-        <div style="overflow-x:auto;">
-            <table class="events-table">
-                <thead>
-                    <tr>
-                        <th>Événement</th>
-                        <th>Catégorie</th>
-                        <th>Dates</th>
-                        <th>Lieu</th>
-                        <th>Capacité</th>
-                        <th>Prix</th>
-                        <th>Statut</th>
-                        <th>Type</th>
-                        <th style="text-align:right;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for ev in evenements %}
-                    <tr>
-                        {# Title #}
-                        <td>
-                            <div class="ev-title">{{ ev.titre }}</div>
-                            {% if ev.description %}
-                                <div class="ev-lieu">{{ ev.description|slice(0, 55) }}{% if ev.description|length > 55 %}…{% endif %}</div>
-                            {% endif %}
-                        </td>
-
-                        {# Category #}
-                        <td>
-                            {% if ev.categorie %}
-                                <span class="tag tag-categorie">{{ ev.categorie.nomCategorie }}</span>
-                            {% else %}
-                                <span style="color:var(--clr-muted);font-size:12px;">—</span>
-                            {% endif %}
-                        </td>
-
-                        {# Dates #}
-                        <td style="white-space:nowrap;">
-                            <div style="font-size:13px;font-weight:500;">
-                                {{ ev.dateDebut|date('d/m/Y') }}
-                            </div>
-                            {% if ev.dateFin != ev.dateDebut %}
-                                <div style="font-size:11px;color:var(--clr-muted);">
-                                    → {{ ev.dateFin|date('d/m/Y') }}
-                                </div>
-                            {% endif %}
-                        </td>
-
-                        {# Lieu #}
-                        <td>
-                            {% if ev.lieu %}
-                                <span style="font-size:13px;"><i class="bi bi-geo-alt" style="color:var(--clr-lavender);margin-right:4px;"></i>{{ ev.lieu }}</span>
-                            {% else %}
-                                <span style="color:var(--clr-muted);font-size:12px;">—</span>
-                            {% endif %}
-                        </td>
-
-                        {# Capacity with mini progress bar #}
-                        <td style="min-width:120px;">
-                            <div style="font-size:13px;font-weight:500;">
-                                {{ ev.placesReservees }} / {{ ev.capaciteMax }}
-                            </div>
-                            <div class="capacity-bar">
-                                {% set pct = ev.capaciteMax > 0 ? (ev.placesReservees / ev.capaciteMax * 100) : 0 %}
-                                <div class="capacity-fill {% if pct >= 100 %}fill-red{% elseif pct >= 75 %}fill-amber{% else %}fill-green{% endif %}"
-                                     style="width:{{ pct > 100 ? 100 : pct }}%"></div>
-                            </div>
-                            <div style="font-size:11px;color:var(--clr-muted);">
-                                {{ ev.placesRestantesCalculated }} place{{ ev.placesRestantesCalculated != 1 ? 's' : '' }} restante{{ ev.placesRestantesCalculated != 1 ? 's' : '' }}
-                            </div>
-                        </td>
-
-                        {# Prix #}
-                        <td style="white-space:nowrap;">
-                            {% if ev.prix and ev.prix > 0 %}
-                                <span style="font-weight:700;color:var(--clr-success);">{{ ev.prix }} TND</span>
-                            {% else %}
-                                <span class="tag" style="background:#f0fdf4;color:var(--clr-success);">Gratuit</span>
-                            {% endif %}
-                        </td>
-
-                        {# Statut #}
-                        <td>
-                            <span class="tag {{ ev.statutBadgeClass }}">
-                                {% if ev.statut == 'Actif' %}✓{% elseif ev.statut == 'Complet' %}⬤{% elseif ev.statut == 'Annulé' %}✕{% else %}⏹{% endif %}
-                                {{ ev.statut }}
-                            </span>
-                        </td>
-
-                        {# Type #}
-                        <td>
-                            <span class="tag tag-type">{{ ev.typeEvenement }}</span>
-                        </td>
-
-                        {# Actions #}
-                        <td style="text-align:right;white-space:nowrap;">
-                            <a href="{{ path('evenement_show', {id: ev.id}) }}" class="btn-edit-pf me-1" title="Voir">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                            <a href="{{ path('evenement_edit', {id: ev.id}) }}" class="btn-edit-pf me-1" title="Modifier">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <button class="btn-delete-pf"
-                                    title="Supprimer"
-                                    onclick="confirmDelete('{{ path('evenement_delete', {id: ev.id}) }}', '{{ csrf_token('delete_evenement_' ~ ev.id) }}', '{{ ev.titre|e('js') }}')">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% endif %}
-</div>
-
-{# ══ DELETE CONFIRM MODAL ══ #}
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
-        <div class="modal-content" style="border-radius:14px;border:none;box-shadow:0 20px 60px rgba(0,0,0,0.15);">
-            <div class="modal-body p-4 text-center">
-                <div style="width:56px;height:56px;background:#fee2e2;border-radius:50%;
-                            display:flex;align-items:center;justify-content:center;
-                            font-size:24px;margin:0 auto 16px;">🗑️</div>
-                <h5 style="font-weight:700;color:var(--clr-dark);margin-bottom:8px;">Supprimer l'événement ?</h5>
-                <p style="font-size:13px;color:var(--clr-muted);margin-bottom:20px;" id="deleteModalText"></p>
-                <div class="d-flex gap-2 justify-content-center">
-                    <button class="btn-back-pf" style="border:1px solid var(--clr-border);" data-bs-dismiss="modal">
-                        Annuler
-                    </button>
-                    <form id="deleteForm" method="POST">
-                        <input type="hidden" name="_method" value="POST">
-                        <input type="hidden" name="_token" id="deleteToken">
-                        <button type="submit" class="btn-delete-pf">
-                            <i class="bi bi-trash"></i> Supprimer
-                        </button>
+    <table class="admin-table">
+        <thead><tr>
+            <th>Titre</th><th>Catégorie</th><th>Dates</th><th>Lieu</th>
+            <th>Capacité</th><th>Prix</th><th>Statut</th><th style="text-align:right">Actions</th>
+        </tr></thead>
+        <tbody>
+        {% for ev in evenements %}
+        <tr>
+            <td>
+                <div class="admin-table-name">{{ ev.titre }}</div>
+                {% if ev.description %}<div class="admin-table-muted" style="font-size:12px">{{ ev.description|slice(0,55) }}{% if ev.description|length > 55 %}…{% endif %}</div>{% endif %}
+            </td>
+            <td>{% if ev.categorie %}<span class="admin-badge admin-badge-blue">{{ ev.categorie.nomCategorie }}</span>{% else %}<span class="admin-table-muted">—</span>{% endif %}</td>
+            <td class="admin-table-muted" style="font-size:13px;white-space:nowrap">{{ ev.dateDebut|date('d/m/Y') }}{% if ev.dateFin != ev.dateDebut %}<br>→ {{ ev.dateFin|date('d/m/Y') }}{% endif %}</td>
+            <td class="admin-table-muted" style="font-size:13px">{{ ev.lieu ?? '—' }}</td>
+            <td style="font-size:13px">{{ ev.placesReservees }}/{{ ev.capaciteMax }}</td>
+            <td>{% if ev.prix and ev.prix > 0 %}<span style="font-weight:700;color:#16a34a">{{ ev.prix }} TND</span>{% else %}<span class="admin-badge admin-badge-green">Gratuit</span>{% endif %}</td>
+            <td>
+                {% if ev.statut == 'Actif' %}<span class="admin-status-dot dot-active">● {{ ev.statut }}</span>
+                {% elseif ev.statut == 'Complet' %}<span class="admin-status-dot dot-pending">● {{ ev.statut }}</span>
+                {% else %}<span class="admin-status-dot dot-refuse">● {{ ev.statut }}</span>{% endif %}
+            </td>
+            <td>
+                <div class="admin-row-actions" style="justify-content:flex-end">
+                    <a href="{{ path('evenement_show', {id: ev.id}) }}" class="admin-action-btn">👁</a>
+                    <a href="{{ path('evenement_edit', {id: ev.id}) }}" class="admin-action-btn">✏️</a>
+                    <form method="post" action="{{ path('evenement_delete', {id: ev.id}) }}" onsubmit="return confirm('Supprimer ?')" style="display:inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete_evenement_' ~ ev.id) }}">
+                        <button type="submit" class="admin-action-btn admin-action-delete">🗑</button>
                     </form>
                 </div>
-            </div>
-        </div>
-    </div>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
 </div>
-
-{% endblock %}
-
-{% block javascripts %}
-<script>
-function confirmDelete(url, token, titre) {
-    document.getElementById('deleteModalText').textContent =
-        'Cette action est irréversible. L\'événement « ' + titre + ' » sera définitivement supprimé.';
-    document.getElementById('deleteForm').action = url;
-    document.getElementById('deleteToken').value = token;
-    new bootstrap.Modal(document.getElementById('deleteModal')).show();
-}
-
-// Auto-submit search with small debounce
-let debounceTimer;
-const searchInput = document.querySelector('input[name="search"]');
-if (searchInput) {
-    searchInput.oninput = function () {
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => { document.getElementById('filterForm').submit(); }, 350);
-    };
-}
-</script>
 {% endblock %}
