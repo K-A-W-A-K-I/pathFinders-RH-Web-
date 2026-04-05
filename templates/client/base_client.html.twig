@@ -94,7 +94,16 @@
   </div>
   <div class="pf-nav-right">
     <button class="pf-theme-btn" id="themeToggle" title="Changer le thème">🌙</button>
-    <a href="{{ path('auth_login') }}" class="pf-btn-ghost">Connexion</a>
+    {% if app.user %}
+      <a href="{{ path('profile_index') }}" class="pf-btn-ghost" style="display:flex;align-items:center;gap:6px">
+        <span style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6C63FF,#9D6BFF);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff">{{ app.user.fullName|slice(0,1)|upper }}</span>
+        {{ app.user.fullName|split(' ')|first }}
+      </a>
+      <a href="{{ path('auth_logout') }}" class="pf-btn-ghost">Déconnexion</a>
+    {% else %}
+      <a href="{{ path('auth_login') }}" class="pf-btn-ghost">Connexion</a>
+      <a href="{{ path('auth_register') }}" class="pf-btn-primary">S'inscrire</a>
+    {% endif %}
   </div>
 </nav>
 

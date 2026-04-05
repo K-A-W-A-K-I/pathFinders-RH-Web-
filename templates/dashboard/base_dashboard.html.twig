@@ -77,6 +77,10 @@
     <span class="logo-text">PATHFINDER</span>
   </div>
   <div class="sidebar-divider"></div>
+  <a class="nav-item {{ app.request.attributes.get('_route') starts with 'user_' ? 'active' : '' }}" href="{{ path('user_index') }}">
+    <span class="nav-icon">👥</span> Gestion des Utilisateurs
+  </a>
+  <div class="sidebar-divider"></div>
   <a class="nav-item {{ app.request.attributes.get('_route') in ['offre_index','offre_new','offre_show','offre_edit','question_new','question_edit'] ? 'active' : '' }}" href="{{ path('offre_index') }}">
     <span class="nav-icon">💼</span> Gestion des Offres
   </a>

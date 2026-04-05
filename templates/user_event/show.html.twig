@@ -501,4 +501,29 @@
 </div>
 {% endblock %}
 
-{% block javascripts %}{% endblock %}
+{% block javascripts %}
+<div id="userConfirmModal" style="display:none;position:fixed;inset:0;z-index:999999;align-items:center;justify-content:center;">
+    <div id="pfModalBackdrop" style="position:fixed;inset:0;background:rgba(15,23,42,0.55);backdrop-filter:blur(4px);"></div>
+    <div id="pfModalInner" style="position:relative;z-index:1000000;background:white;border-radius:24px;max-width:440px;width:90%;padding:32px 28px;text-align:center;box-shadow:0 26px 70px rgba(15,23,42,0.22);">
+        <div id="userConfirmIcon" style="width:64px;height:64px;margin:0 auto 18px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;background:linear-gradient(135deg,#eef2ff,#ddd6fe);color:#2729aa;"><i class="bi bi-star-fill"></i></div>
+        <h5 id="userConfirmTitle" style="font-size:20px;font-weight:800;color:#010204;margin:0 0 8px;"></h5>
+        <p  id="userConfirmText"  style="font-size:13px;color:#64748b;line-height:1.6;margin:0 0 22px;"></p>
+        <div style="display:flex;justify-content:center;gap:10px;">
+            <button type="button" id="pfModalCancel" style="border:none;border-radius:10px;padding:11px 22px;font-size:13px;font-weight:700;cursor:pointer;background:#eef2ff;color:#2729aa;">Annuler</button>
+            <button type="button" id="userConfirmSubmit" style="border:none;border-radius:10px;padding:11px 22px;font-size:13px;font-weight:700;cursor:pointer;background:#2729aa;color:white;">Confirmer</button>
+        </div>
+    </div>
+</div>
+<script>
+let _pfPendingForm = null;
+function openUserConfirm(button) {
+    _pfPendingForm = button.closest('form');
+    document.getElementById('userConfirmTitle').textContent = button.dataset.confirmTitle || 'Confirmation';
+    document.getElementById('userConfirmText').innerHTML    = button.dataset.confirmText  || '';
+    document.getElementById('userConfirmModal').style.display = 'flex';
+}
+document.getElementById('pfModalBackdrop').addEventListener('click', () => { document.getElementById('userConfirmModal').style.display='none'; });
+document.getElementById('pfModalCancel').addEventListener('click',   () => { document.getElementById('userConfirmModal').style.display='none'; });
+document.getElementById('userConfirmSubmit').addEventListener('click', () => { if (_pfPendingForm) _pfPendingForm.submit(); });
+</script>
+{% endblock %}

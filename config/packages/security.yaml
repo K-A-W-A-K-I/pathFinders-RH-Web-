@@ -14,6 +14,20 @@ security:
             security: false
         main:
             lazy: true
-            security: false
+            provider: app_user_provider
+            form_login:
+                login_path: auth_login
+                check_path: auth_login_check
+                username_parameter: _username
+                password_parameter: _password
+                default_target_path: auth_login
+            logout:
+                path: auth_logout
+                target: auth_login
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 604800
 
-    access_control: []
+    access_control:
+        - { path: ^/connexion, roles: PUBLIC_ACCESS }
+        - { path: ^/inscription, roles: PUBLIC_ACCESS }
