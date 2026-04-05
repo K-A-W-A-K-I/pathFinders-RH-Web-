@@ -1,0 +1,54 @@
+{% extends 'dashboard/base_dashboard.html.twig' %}
+{% block title %}Inscriptions — {{ formation.titre }}{% endblock %}
+{% block nav_form %}active{% endblock %}
+
+{% block body %}
+<div class="topbar">
+  <div class="page-title"><span style="font-size:22px">👥</span><h1>Inscriptions — {{ formation.titre }}</h1></div>
+  <a href="{{ path('dash_formation_index') }}" class="btn-secondary">← Retour</a>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:30px">
+  <div class="stat-card">
+    <div class="stat-num">{{ inscriptions|length }}</div>
+    <div class="stat-label">Total inscrits</div>
+  </div>
+  <div class="stat-card" style="animation-delay:.1s">
+    <div class="stat-num">{{ formation.placeDisponible }}</div>
+    <div class="stat-label">Places restantes</div>
+  </div>
+  <div class="stat-card" style="animation-delay:.2s">
+    <div class="stat-num">{{ formation.capaciteMax }}</div>
+    <div class="stat-label">Capacité maximale</div>
+  </div>
+</div>
+
+<div class="table-section">
+  <div class="table-header">
+    <div class="table-title">
+      <h2>Liste des inscrits</h2>
+      <span class="count-badge">{{ inscriptions|length }}</span>
+    </div>
+  </div>
+
+  {% if inscriptions is empty %}
+    <p style="color:var(--text-light);text-align:center;padding:2rem">Aucune inscription pour cette formation.</p>
+  {% else %}
+    <table>
+      <thead><tr>
+        <th>#</th><th>Nom</th><th>Email</th><th>Date d'inscription</th>
+      </tr></thead>
+      <tbody>
+        {% for insc in inscriptions %}
+          <tr>
+            <td style="color:var(--text-light);font-size:13px">{{ loop.index }}</td>
+            <td><strong>{{ insc.nomParticipant ?? '—' }}</strong></td>
+            <td style="color:var(--text-light);font-size:13px">{{ insc.emailParticipant ?? '—' }}</td>
+            <td style="color:var(--text-light);font-size:13px">{{ insc.dateInscription|date('d/m/Y H:i') }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'dashboard/base_dashboard.html.twig' %}
+{% block title %}Catégories — Dashboard{% endblock %}
+{% block nav_cat %}active{% endblock %}
+
+{% block body %}
+<div class="topbar">
+  <div class="page-title"><span style="font-size:22px">📂</span><h1>Gestion des Catégories</h1></div>
+  <a href="{{ path('dash_categorie_new') }}" class="btn-primary">+ Nouvelle catégorie</a>
+</div>
+
+<div class="table-section">
+  <div class="table-header">
+    <div class="table-title">
+      <h2>Liste des catégories</h2>
+      <span class="count-badge">{{ categories|length }}</span>
+    </div>
+    <form method="get" class="table-actions">
+      <input type="text" name="q" value="{{ q }}" placeholder="Rechercher..." class="search-input">
+      <select name="sort" class="pf-select">
+        <option value="nom" {% if sort == 'nom' %}selected{% endif %}>Nom</option>
+        <option value="id" {% if sort == 'id' %}selected{% endif %}>ID</option>
+      </select>
+      <select name="dir" class="pf-select">
+        <option value="ASC" {% if dir == 'ASC' %}selected{% endif %}>↑ ASC</option>
+        <option value="DESC" {% if dir == 'DESC' %}selected{% endif %}>↓ DESC</option>
+      </select>
+      <button type="submit" class="btn-primary" style="padding:7px 16px;box-shadow:none">Filtrer</button>
+      {% if q %}<a href="{{ path('dash_categorie_index') }}" class="btn-secondary">✕</a>{% endif %}
+    </form>
+  </div>
+
+  {% if categories is empty %}
+    <p style="color:var(--text-light);text-align:center;padding:2rem">Aucune catégorie trouvée.</p>
+  {% else %}
+    <table>
+      <thead><tr>
+        <th>ID</th><th>Nom</th><th>Description</th><th>Image</th><th>Formations</th><th style="text-align:right">Actions</th>
+      </tr></thead>
+      <tbody>
+        {% for cat in categories %}
+          <tr>
+            <td style="color:var(--text-light);font-size:13px">#{{ cat.idCategorie }}</td>
+            <td><strong>{{ cat.nomCategorie }}</strong></td>
+            <td style="color:var(--text-light);font-size:13px;max-width:200px">{{ cat.description ? cat.description|slice(0,60) ~ '...' : '—' }}</td>
+            <td>
+              {% if cat.image %}
+                <img src="{{ cat.image }}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:6px" onerror="this.style.display='none'">
+              {% else %}—{% endif %}
+            </td>
+            <td><span class="tag tag-purple">{{ cat.formations|length }}</span></td>
+            <td>
+              <div class="action-btns">
+                <a href="{{ path('dash_categorie_edit', {id: cat.idCategorie}) }}" class="btn-action" title="Modifier">✏️</a>
+                <form method="post" action="{{ path('dash_categorie_delete', {id: cat.idCategorie}) }}" onsubmit="return confirm('Supprimer cette catégorie ?')">
+                  <input type="hidden" name="_token" value="{{ csrf_token('delete_cat_' ~ cat.idCategorie) }}">
+                  <button type="submit" class="btn-action danger" title="Supprimer">🗑</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+{% endblock %}

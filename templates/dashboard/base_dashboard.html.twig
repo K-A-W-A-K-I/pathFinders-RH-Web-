@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Dashboard — PathFinder{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#f4f5fb;--sidebar-bg:#1a1d2e;--sidebar-text:#8a8fb5;--sidebar-active:#ffffff;--sidebar-active-bg:#6c63ff;--white:#ffffff;--primary:#6c63ff;--primary-light:#ede9ff;--accent-green:#22c55e;--text-dark:#1a1d2e;--text-mid:#4b5563;--text-light:#9ca3af;--border:#e5e7ef;--radius:14px;--shadow:0 2px 16px rgba(108,99,255,0.07)}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text-dark);display:flex;min-height:100vh}
+    .sidebar{width:220px;min-height:100vh;background:var(--sidebar-bg);display:flex;flex-direction:column;padding:28px 0 24px;position:fixed;top:0;left:0;z-index:100}
+    .sidebar-logo{display:flex;align-items:center;gap:10px;padding:0 22px 32px}
+    .logo-icon{width:36px;height:36px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px}
+    .logo-text{font-family:'Sora',sans-serif;font-weight:700;font-size:15px;color:#fff;letter-spacing:.04em}
+    .nav-item{display:flex;align-items:center;gap:11px;padding:10px 22px;font-size:14px;color:var(--sidebar-text);cursor:pointer;transition:background .18s,color .18s;text-decoration:none;margin:1px 10px;border-radius:10px}
+    .nav-item:hover{background:rgba(108,99,255,.12);color:#c4c9f0}
+    .nav-item.active{background:var(--sidebar-active-bg);color:var(--sidebar-active);font-weight:600}
+    .nav-icon{font-size:16px;width:20px;text-align:center}
+    .sidebar-divider{height:1px;background:rgba(255,255,255,.07);margin:16px 22px}
+    .main{margin-left:220px;flex:1;padding:36px 40px;min-height:100vh}
+    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px}
+    .page-title{display:flex;align-items:center;gap:12px}
+    .page-title h1{font-family:'Sora',sans-serif;font-size:22px;font-weight:700;color:var(--text-dark);letter-spacing:-.01em}
+    .btn-primary{background:var(--primary);color:#fff;border:none;padding:11px 22px;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .18s,transform .12s,box-shadow .18s;box-shadow:0 4px 14px rgba(108,99,255,.28);text-decoration:none;display:inline-block}
+    .btn-primary:hover{background:#5a52e0;transform:translateY(-1px)}
+    .btn-secondary{background:var(--white);border:1.5px solid var(--border);color:var(--text-mid);padding:7px 14px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-block;transition:border-color .15s,color .15s}
+    .btn-secondary:hover{border-color:var(--primary);color:var(--primary)}
+    .table-section{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);padding:24px 28px;animation:fadeUp .5s ease .1s both;margin-bottom:24px}
+    .table-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+    .table-title{display:flex;align-items:center;gap:10px}
+    .table-title h2{font-family:'Sora',sans-serif;font-size:16px;font-weight:700}
+    .count-badge{background:var(--primary-light);color:var(--primary);font-size:12px;font-weight:600;padding:3px 10px;border-radius:20px}
+    .table-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .search-input{border:1.5px solid var(--border);border-radius:9px;padding:7px 14px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text-dark);outline:none;width:180px;transition:border-color .15s;background:#fafbff}
+    .search-input:focus{border-color:var(--primary)}
+    .pf-select{border:1.5px solid var(--border);border-radius:9px;padding:7px 14px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--text-dark);outline:none;background:#fafbff;cursor:pointer}
+    table{width:100%;border-collapse:collapse}
+    thead th{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-light);padding:0 8px 12px 0;text-align:left;border-bottom:1.5px solid var(--border)}
+    tbody tr{border-bottom:1px solid var(--border);transition:background .13s}
+    tbody tr:last-child{border-bottom:none}
+    tbody tr:hover{background:#f8f7ff}
+    tbody td{padding:14px 8px 14px 0;font-size:14px;color:var(--text-dark);vertical-align:middle}
+    .action-btns{display:flex;align-items:center;gap:6px;justify-content:flex-end}
+    .btn-action{height:30px;padding:0 10px;border-radius:8px;border:1.5px solid var(--border);background:var(--white);color:var(--text-light);display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;transition:border-color .15s,color .15s,background .15s;text-decoration:none;white-space:nowrap}
+    .btn-action:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+    .btn-action.danger:hover{border-color:#ef4444;color:#ef4444;background:#fef2f2}
+    .btn-action.success{border-color:#22c55e;color:#22c55e}
+    .btn-action.success:hover{background:#f0fdf4}
+    .tag{display:inline-block;padding:4px 11px;border-radius:20px;font-size:12px;font-weight:500}
+    .tag-green{background:#dcfce7;color:#16a34a}
+    .tag-red{background:#fee2e2;color:#dc2626}
+    .tag-blue{background:#eff6ff;color:#3b82f6}
+    .tag-purple{background:var(--primary-light);color:var(--primary)}
+    .form-section{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);padding:32px;max-width:700px;animation:fadeUp .5s ease both}
+    .form-group{margin-bottom:1.2rem}
+    .form-group label{display:block;font-size:13px;font-weight:600;color:var(--text-mid);margin-bottom:.4rem}
+    .form-group input,.form-group textarea,.form-group select{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text-dark);outline:none;transition:border-color .15s;background:#fafbff}
+    .form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--primary)}
+    .form-group input.is-invalid,.form-group textarea.is-invalid,.form-group select.is-invalid{border-color:#ef4444;background:#fff8f8}
+    .form-group textarea{resize:vertical;min-height:100px}
+    .form-hint{font-size:11.5px;color:var(--text-light);margin-top:.3rem}
+    .form-errors{color:#dc2626;font-size:12px;margin-top:.3rem;display:flex;align-items:center;gap:4px}
+    .form-errors::before{content:'⚠';font-size:11px}
+    .flash{padding:.75rem 1.25rem;margin:.5rem 0 1rem;border-radius:8px;font-size:14px;display:flex;align-items:center;gap:.5rem}
+    .flash-success{background:#dcfce7;border:1px solid #86efac;color:#15803d}
+    .flash-error{background:#fee2e2;border:1px solid #fca5a5;color:#dc2626}
+    .flash-warning{background:#fef9c3;border:1px solid #fde047;color:#b45309}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+  {% block stylesheets %}{% endblock %}
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🧭</div>
+    <span class="logo-text">PATHFINDER</span>
+  </div>
+  <a class="nav-item active" href="{{ path('dashboard_home') }}">
+    <span class="nav-icon">📊</span> Tableau de bord
+  </a>
+  <div class="sidebar-divider"></div>
+  <a class="nav-item" href="{{ path('app_home') }}">
+    <span class="nav-icon">🏠</span> Accueil
+  </a>
+  <a class="nav-item" href="{{ path('client_categories') }}">
+    <span class="nav-icon">👁</span> Vue Client
+  </a>
+</aside>
+<main class="main">
+  {% for type, messages in app.flashes %}
+    {% for message in messages %}
+      <div class="flash flash-{{ type }}">{{ message }}</div>
+    {% endfor %}
+  {% endfor %}
+  {% block body %}{% endblock %}
+</main>
+{% block javascripts %}{% endblock %}
+</body>
+</html>
