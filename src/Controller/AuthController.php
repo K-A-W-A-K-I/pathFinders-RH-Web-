@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Candidat;
 use App\Entity\Utilisateur;
 use App\Form\RegistrationFormType;
 use App\Repository\UtilisateurRepository;
@@ -19,50 +20,80 @@ class AuthController extends AbstractController
     #[Route('/connexion', name: 'auth_login')]
     public function login(AuthenticationUtils $authUtils): Response
     {
-        $error        = $authUtils->getLastAuthenticationError();
-        $lastUsername = $authUtils->getLastUsername();
+        // Already logged in → redirect by role
+        if ($this->getUser()) {
+            return $this->redirectByRole($this->getUser());
+        }
 
         return $this->render('auth/login.html.twig', [
-            'last_username' => $lastUsername,
-            'error'         => $error,
+            'last_username' => $authUtils->getLastUsername(),
+            'error'         => $authUtils->getLastAuthenticationError(),
         ]);
     }
 
     #[Route('/connexion/check', name: 'auth_login_check')]
     public function loginCheck(): never
     {
-        throw new \LogicException('This should never be reached.');
+        throw new \LogicException('Handled by Symfony security.');
     }
 
     #[Route('/deconnexion', name: 'auth_logout')]
     public function logout(): never
     {
-        throw new \LogicException('This should never be reached.');
+        throw new \LogicException('Handled by Symfony security.');
     }
 
     #[Route('/inscription', name: 'auth_register')]
     public function register(
         Request $request,
         EntityManagerInterface $em,
-        UserPasswordHasherInterface $hasher,
-        UtilisateurRepository $repo
+        UserPasswordHasherInterface $hasher
     ): Response {
         $user = new Utilisateur();
         $form = $this->createForm(RegistrationFormType::class, $user);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $plainPassword = $form->get('plainPassword')->getData();
-            $user->setPassword($hasher->hashPassword($user, $plainPassword));
+            $user->setPassword($hasher->hashPassword($user, $form->get('plainPassword')->getData()));
+            $user->setRole('ROLE_CANDIDAT');
+            $user->setStatut('actif');
             $em->persist($user);
             $em->flush();
 
-            $this->addFlash('success', 'Compte créé avec succès ! Vous pouvez maintenant vous connecter.');
+            // Auto-create Candidat profile
+            $candidat = new Candidat();
+            $candidat->setIdUtilisateur($user->getId());
+            $em->persist($candidat);
+            $em->flush();
+
+            $this->addFlash('success', 'Compte créé ! Vous pouvez maintenant vous connecter.');
             return $this->redirectToRoute('auth_login');
         }
 
-        return $this->render('auth/register.html.twig', [
-            'form' => $form,
-        ]);
+        return $this->render('auth/register.html.twig', ['form' => $form]);
+    }
+
+    // ── Post-login redirect ────────────────────────────────────────────────
+    #[Route('/redirect-after-login', name: 'auth_redirect')]
+    public function redirectAfterLogin(SessionInterface $session): Response
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->redirectToRoute('auth_login');
+        }
+
+        // Store user_id in session for legacy session-based code
+        $session->set('user_id', method_exists($user, 'getId') ? $user->getId() : null);
+
+        return $this->redirectByRole($user);
+    }
+
+    private function redirectByRole(object $user): Response
+    {
+        $roles = $user->getRoles();
+        if (in_array('ROLE_ADMIN', $roles) || in_array('ROLE_WORKER', $roles)) {
+            return $this->redirectToRoute('offre_index');
+        }
+        return $this->redirectToRoute('offre_list');
     }
 }

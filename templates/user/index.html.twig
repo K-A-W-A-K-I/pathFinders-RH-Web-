@@ -1,0 +1,84 @@
+{% extends 'admin_base.html.twig' %}
+{% block title %}Gestion des Utilisateurs{% endblock %}
+{% block page_icon %}👥{% endblock %}
+{% block page_title %}Gestion des Utilisateurs{% endblock %}
+{% block topbar_actions %}
+    <a href="{{ path('user_new') }}" class="btn btn-primary" style="background:linear-gradient(135deg,#6C63FF,#9D6BFF);border:none;border-radius:10px;padding:10px 20px;font-weight:600;text-decoration:none;color:#fff;">+ Nouvel utilisateur</a>
+{% endblock %}
+
+{% block body %}
+<div class="admin-table-section">
+    <div class="admin-table-header">
+        <div class="admin-table-title">
+            Utilisateurs
+            <span class="admin-count-badge">{{ utilisateurs|length }}</span>
+        </div>
+        <div class="admin-table-actions">
+            <input type="text" id="searchInput" placeholder="Rechercher..." class="admin-search-input" oninput="filterTable(this.value)">
+            <select id="roleFilter" class="admin-search-input" style="width:auto" onchange="filterTable(document.getElementById('searchInput').value)">
+                <option value="">Tous les rôles</option>
+                <option value="ROLE_ADMIN">Admin</option>
+                <option value="ROLE_CANDIDAT">Candidat</option>
+                <option value="ROLE_WORKER">Worker</option>
+                <option value="ROLE_USER">User</option>
+            </select>
+        </div>
+    </div>
+    <table class="admin-table" id="userTable">
+        <thead><tr>
+            <th>Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th>Téléphone</th><th style="text-align:right">Actions</th>
+        </tr></thead>
+        <tbody>
+        {% for u in utilisateurs %}
+        <tr data-role="{{ u.role }}">
+            <td class="admin-table-name">{{ u.fullName }}</td>
+            <td class="admin-table-muted">{{ u.email }}</td>
+            <td>
+                {% if u.role == 'ROLE_ADMIN' %}
+                    <span class="admin-badge" style="background:rgba(239,68,68,.1);color:#dc2626">Admin</span>
+                {% elseif u.role == 'ROLE_CANDIDAT' %}
+                    <span class="admin-badge admin-badge-blue">Candidat</span>
+                {% elseif u.role == 'ROLE_WORKER' %}
+                    <span class="admin-badge admin-badge-green">Worker</span>
+                {% else %}
+                    <span class="admin-badge" style="background:#f1f5f9;color:#64748b">User</span>
+                {% endif %}
+            </td>
+            <td>
+                <span class="admin-status-dot {{ u.statut == 'actif' ? 'dot-active' : 'dot-inactive' }}">
+                    ● {{ u.statut ?? 'actif' }}
+                </span>
+            </td>
+            <td class="admin-table-muted">{{ u.telephone ?? '—' }}</td>
+            <td>
+                <div class="admin-row-actions" style="justify-content:flex-end">
+                    <a href="{{ path('user_edit', {id: u.id}) }}" class="admin-action-btn">✏️ Modifier</a>
+                    <form method="post" action="{{ path('user_delete', {id: u.id}) }}" onsubmit="return confirm('Supprimer cet utilisateur ?')" style="display:inline">
+                        <button type="submit" class="admin-action-btn admin-action-delete">🗑</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="6" style="text-align:center;color:#9999b8;padding:2rem">Aucun utilisateur.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+function filterTable(q) {
+    const role = document.getElementById('roleFilter').value.toLowerCase();
+    const query = q.toLowerCase();
+    document.querySelectorAll('#userTable tbody tr').forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const rowRole = (row.dataset.role || '').toLowerCase();
+        const matchText = text.includes(query);
+        const matchRole = !role || rowRole === role;
+        row.style.display = matchText && matchRole ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

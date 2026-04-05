@@ -1,0 +1,169 @@
+{% extends 'admin_base.html.twig' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_icon %}👤{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block topbar_actions %}
+    <a href="{{ path('user_index') }}" class="admin-tool-btn">← Retour</a>
+{% endblock %}
+
+{% block body %}
+{% set d = data %}
+{% set u = user ?? null %}
+{% set inp = 'width:100%;padding:10px 14px;border:1.5px solid #e2e5ea;border-radius:9px;font-size:14px;font-family:DM Sans,sans-serif;outline:none;transition:border-color .15s;' %}
+
+<div style="max-width:700px">
+<div class="admin-table-section" style="padding:28px">
+
+  {% if errors is not empty %}
+  <div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:13px;color:#dc2626;display:flex;align-items:center;gap:8px">
+    ⚠ Veuillez corriger les erreurs ci-dessous avant de soumettre.
+  </div>
+  {% endif %}
+
+  <form method="post" id="user-form" novalidate style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+
+    <div>
+      <label style="display:block;font-size:12px;font-weight:600;color:#6b6b8a;margin-bottom:5px">Nom *</label>
+      <input type="text" name="nom" id="f-nom" value="{{ d.nom ?? u.nom ?? '' }}"
+             style="{{ inp }}{{ errors.nom is defined ? 'border-color:#ef4444;background:#fff8f8;' : '' }}"
+             placeholder="Nom de famille" minlength="2" maxlength="100" required>
+      <div class="field-err" id="err-nom" style="color:#dc2626;font-size:12px;margin-top:3px;display:{{ errors.nom is defined ? 'block' : 'none' }}">
+        {{ errors.nom ?? '' }}
+      </div>
+    </div>
+
+    <div>
+      <label style="display:block;font-size:12px;font-weight:600;color:#6b6b8a;margin-bottom:5px">Prénom *</label>
+      <input type="text" name="prenom" id="f-prenom" value="{{ d.prenom ?? u.prenom ?? '' }}"
+             style="{{ inp }}{{ errors.prenom is defined ? 'border-color:#ef4444;background:#fff8f8;' : '' }}"
+             placeholder="Prénom" minlength="2" maxlength="100" required>
+      <div class="field-err" id="err-prenom" style="color:#dc2626;font-size:12px;margin-top:3px;display:{{ errors.prenom is defined ? 'block' : 'none' }}">
+        {{ errors.prenom ?? '' }}
+      </div>
+    </div>
+
+    <div style="grid-column:1/-1">
+      <label style="display:block;font-size:12px;font-weight:600;color:#6b6b8a;margin-bottom:5px">Email *</label>
+      <input type="email" name="email" id="f-email" value="{{ d.email ?? u.email ?? '' }}"
+             style="{{ inp }}{{ errors.email is defined ? 'border-color:#ef4444;background:#fff8f8;' : '' }}"
+             placeholder="exemple@email.com" required>
+      <div class="field-err" id="err-email" style="color:#dc2626;font-size:12px;margin-top:3px;display:{{ errors.email is defined ? 'block' : 'none' }}">
+        {{ errors.email ?? '' }}
+      </div>
+    </div>
+
+    <div>
+      <label style="display:block;font-size:12px;font-weight:600;color:#6b6b8a;margin-bottom:5px">Téléphone</label>
+      <input type="text" name="telephone" id="f-telephone" value="{{ d.telephone ?? u.telephone ?? '' }}"
+             style="{{ inp }}" placeholder="Ex: +216 XX XXX XXX" maxlength="20">
+      <div class="field-err" id="err-telephone" style="color:#dc2626;font-size:12px;margin-top:3px;display:none"></div>
+    </div>
+
+    <div>
+      <label style="display:block;font-size:12px;font-weight:600;color:#6b6b8a;margin-bottom:5px">Statut</label>
+      <select name="statut" style="{{ inp }}">
+        <option value="actif"   {{ (d.statut ?? u.statut ?? 'actif') == 'actif'   ? 'selected' : '' }}>Actif</option>
+        <option value="inactif" {{ (d.statut ?? u.statut ?? '') == 'inactif' ? 'selected' : '' }}>Inactif</option>
+      </select>
+    </div>
+
+    <div>
+      <label style="display:block;font-size:12px;font-weight:600;color:#6b6b8a;margin-bottom:5px">Rôle *</label>
+      <select name="role" id="f-role" style="{{ inp }}{{ errors.role is defined ? 'border-color:#ef4444;background:#fff8f8;' : '' }}" required>
+        <option value="">-- Choisir un rôle --</option>
+        {% for val, label in {'ROLE_CANDIDAT': 'Candidat', 'ROLE_ADMIN': 'Admin', 'ROLE_WORKER': 'Worker', 'ROLE_USER': 'User'} %}
+          <option value="{{ val }}" {{ (d.role ?? u.role ?? '') == val ? 'selected' : '' }}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <div class="field-err" id="err-role" style="color:#dc2626;font-size:12px;margin-top:3px;display:{{ errors.role is defined ? 'block' : 'none' }}">
+        {{ errors.role ?? '' }}
+      </div>
+    </div>
+
+    <div>
+      <label style="display:block;font-size:12px;font-weight:600;color:#6b6b8a;margin-bottom:5px">
+        Mot de passe {{ u ? '(laisser vide pour ne pas changer)' : '*' }}
+      </label>
+      <input type="password" name="password" id="f-password"
+             style="{{ inp }}{{ errors.password is defined ? 'border-color:#ef4444;background:#fff8f8;' : '' }}"
+             placeholder="{{ u ? 'Laisser vide pour ne pas changer' : 'Min. 6 caractères' }}"
+             {{ u ? '' : 'required' }} minlength="6">
+      <div class="field-err" id="err-password" style="color:#dc2626;font-size:12px;margin-top:3px;display:{{ errors.password is defined ? 'block' : 'none' }}">
+        {{ errors.password ?? '' }}
+      </div>
+    </div>
+
+    <div style="grid-column:1/-1;display:flex;gap:10px;margin-top:8px;padding-top:16px;border-top:1px solid #e2e5ea">
+      <button type="submit" class="btn btn-primary" style="background:linear-gradient(135deg,#6C63FF,#9D6BFF);border:none;border-radius:10px;padding:11px 24px;font-weight:600;color:#fff;cursor:pointer">
+        💾 Enregistrer
+      </button>
+      <a href="{{ path('user_index') }}" class="admin-tool-btn">Annuler</a>
+    </div>
+
+  </form>
+</div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+const isEdit = {{ user is not null ? 'true' : 'false' }};
+
+function showErr(id, msg) {
+    const el = document.getElementById('err-' + id);
+    const inp = document.getElementById('f-' + id);
+    if (!el || !inp) return;
+    el.textContent = msg;
+    el.style.display = msg ? 'block' : 'none';
+    inp.style.borderColor = msg ? '#ef4444' : '';
+    inp.style.background  = msg ? '#fff8f8' : '';
+}
+
+function validateField(id) {
+    const inp = document.getElementById('f-' + id);
+    if (!inp) return true;
+    const val = inp.value.trim();
+
+    if (id === 'nom') {
+        if (!val) { showErr('nom', 'Le nom est obligatoire.'); return false; }
+        if (val.length < 2) { showErr('nom', 'Minimum 2 caractères.'); return false; }
+    }
+    if (id === 'prenom') {
+        if (!val) { showErr('prenom', 'Le prénom est obligatoire.'); return false; }
+        if (val.length < 2) { showErr('prenom', 'Minimum 2 caractères.'); return false; }
+    }
+    if (id === 'email') {
+        if (!val) { showErr('email', "L'email est obligatoire."); return false; }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) { showErr('email', "L'email n'est pas valide."); return false; }
+    }
+    if (id === 'role') {
+        if (!val) { showErr('role', 'Le rôle est obligatoire.'); return false; }
+    }
+    if (id === 'password') {
+        if (!isEdit && !val) { showErr('password', 'Le mot de passe est obligatoire.'); return false; }
+        if (val && val.length < 6) { showErr('password', 'Minimum 6 caractères.'); return false; }
+    }
+    if (id === 'telephone' && val) {
+        if (!/^[\d\s\+\-\(\)]{6,20}$/.test(val)) { showErr('telephone', 'Numéro invalide.'); return false; }
+    }
+
+    showErr(id, '');
+    return true;
+}
+
+// Live validation on blur
+['nom','prenom','email','role','password','telephone'].forEach(id => {
+    const el = document.getElementById('f-' + id);
+    if (el) el.addEventListener('blur', () => validateField(id));
+    if (el) el.addEventListener('input', () => { if (el.style.borderColor === 'rgb(239, 68, 68)') validateField(id); });
+});
+
+// Submit validation
+document.getElementById('user-form').addEventListener('submit', function(e) {
+    const fields = ['nom','prenom','email','role','password'];
+    let valid = true;
+    fields.forEach(id => { if (!validateField(id)) valid = false; });
+    if (!valid) e.preventDefault();
+});
+</script>
+{% endblock %}
