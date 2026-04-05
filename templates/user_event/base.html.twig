@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Espace utilisateur{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    {% block stylesheets %}{% endblock %}
+    <script>
+        (function() {
+            const saved = localStorage.getItem('pf-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', saved);
+        })();
+    </script>
+    <style>
+        :root {
+            --clr-dark:     #010204;
+            --clr-navy:     #121f59;
+            --clr-purple:   #2729aa;
+            --clr-lavender: #7260d7;
+            --clr-soft:     #c4b3ea;
+            --clr-bg:       #f3f0fb;
+            --clr-border:   #e5e7eb;
+            --clr-muted:    #64748b;
+            --clr-success:  #059669;
+            --clr-danger:   #dc2626;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: 'Sora', 'DM Sans', sans-serif;
+            background:
+                radial-gradient(circle at top right, rgba(114,96,215,0.18), transparent 28%),
+                linear-gradient(180deg, #f8f7fd 0%, #eef4fb 100%);
+            color: var(--clr-dark);
+        }
+        .ue-page { min-height: 100vh; }
+        .ue-main {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 32px 24px 56px;
+        }
+        .ue-page-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .ue-page-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0 0 4px;
+            letter-spacing: -0.3px;
+        }
+        .ue-page-subtitle { margin: 0; color: var(--clr-muted); font-size: 14px; }
+        .ue-flash-zone {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 16px 24px 0;
+        }
+        .flash-success, .flash-error {
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .flash-success { background:#dcfce7; border:1px solid #bbf7d0; color:#15803d; }
+        .flash-error   { background:#fee2e2; border:1px solid #fecaca; color:#b91c1c; }
+        .tag {
+            display: inline-flex; align-items: center;
+            font-size: 11px; font-weight: 700;
+            padding: 4px 10px; border-radius: 999px;
+        }
+        .tag-categorie { background:#eef2ff; color:var(--clr-purple); }
+        .tag-type      { background:#ecfdf5; color:var(--clr-success); }
+        .badge-actif   { background:#dcfce7; color:#16a34a; }
+        .badge-complet { background:#fef3c7; color:#d97706; }
+        .badge-annule  { background:#fee2e2; color:#dc2626; }
+        .badge-termine { background:#e2e8f0; color:#475569; }
+        .badge-default { background:#eef2ff; color:#4338ca; }
+        .info-card {
+            background: white;
+            border-radius: 14px;
+            border: 1px solid var(--clr-border);
+            padding: 16px;
+            box-shadow: 0 10px 24px rgba(15,23,42,0.04);
+        }
+        .info-card-label {
+            font-size: 11px; color: var(--clr-lavender);
+            font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.08em; margin-bottom: 6px;
+        }
+        .info-card-value     { font-size: 15px; font-weight: 700; }
+        .info-card-value-big { font-size: 24px; font-weight: 800; color: var(--clr-purple); }
+        .detail-title { font-size: 28px; font-weight: 800; }
+        .btn-back-pf {
+            background: transparent; color: var(--clr-purple);
+            border: none; border-radius: 10px; padding: 8px 12px;
+            font-size: 13px; font-weight: 700; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        .form-label { font-size:12px; font-weight:700; color:var(--clr-navy); margin-bottom:5px; }
+        .form-select, .search-box input { font-size: 13px; }
+        .search-box {
+            background: white; border: 1px solid #d1d5db;
+            border-radius: 10px; display: flex;
+            align-items: center; padding: 4px 12px; gap: 8px;
+        }
+        .search-box input {
+            border:none; outline:none; background:transparent;
+            color:var(--clr-dark); padding:6px 0; flex:1;
+        }
+        .search-box i { color:#94a3b8; font-size:15px; }
+        .pf-confirm-dialog  { max-width:440px; }
+        .pf-confirm-content {
+            border:none; border-radius:24px; overflow:hidden;
+            box-shadow:0 26px 70px rgba(15,23,42,0.22);
+        }
+        .pf-confirm-body    { padding:28px; text-align:center; }
+        .pf-confirm-icon {
+            width:64px; height:64px; margin:0 auto 18px;
+            border-radius:20px; display:flex;
+            align-items:center; justify-content:center; font-size:28px;
+        }
+        .pf-confirm-icon-accent  { background:linear-gradient(135deg,#eef2ff,#ddd6fe); color:var(--clr-purple); }
+        .pf-confirm-icon-warning { background:linear-gradient(135deg,#fff7ed,#fed7aa); color:#c2410c; }
+        .pf-confirm-title   { font-size:20px; font-weight:800; color:var(--clr-dark); margin-bottom:8px; }
+        .pf-confirm-text    { font-size:13px; line-height:1.6; color:#64748b; margin-bottom:22px; }
+        .pf-confirm-actions { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; }
+        #themeToggle {
+            position:fixed; bottom:24px; right:24px;
+            width:44px; height:44px; border-radius:50%;
+            border:1px solid var(--border,#e5e7ef);
+            background:var(--white,#fff);
+            box-shadow:0 4px 16px rgba(0,0,0,0.12);
+            cursor:pointer; font-size:20px;
+            display:flex; align-items:center; justify-content:center;
+            z-index:9999; transition:transform .2s, box-shadow .2s;
+        }
+        #themeToggle:hover { transform:scale(1.1); box-shadow:0 6px 20px rgba(108,99,255,0.25); }
+
+        /* ── Ensure modals are never trapped in a stacking context ── */
+        body.pf-page { isolation: auto !important; }
+        .pf-nav      { isolation: auto !important; }
+        @media (max-width:768px) {
+            .ue-main { padding:20px 16px 36px; }
+            .ue-page-head { flex-direction:column; align-items:stretch; }
+            .ue-flash-zone { padding:14px 16px 0; }
+        }
+    </style>
+</head>
+<body class="pf-page">
+<div class="ue-page">
+
+    <nav class="pf-nav">
+        <a href="{{ path('app_home') }}" class="pf-logo">
+            <div class="pf-logo-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6l-8-4z" fill="white" opacity="0.9"/>
+                </svg>
+            </div>
+            PathFinder
+        </a>
+        <div class="pf-nav-links">
+            <a href="{{ path('app_home') }}" class="pf-nav-link">Accueil</a>
+            <a href="{{ path('app_about') }}" class="pf-nav-link">À propos</a>
+            <a href="{{ path('user_evenement_index') }}" class="pf-nav-link {% if app.request.attributes.get('_route') starts with 'user_evenement_' %}active{% endif %}">Événements</a>
+        </div>
+        <div class="pf-nav-actions">
+            <a href="{{ path('auth_login') }}"    class="pf-btn-outline">Connexion</a>
+            <a href="{{ path('auth_register') }}" class="pf-btn-primary">S'inscrire</a>
+        </div>
+    </nav>
+
+    {% for message in app.flashes('success') %}
+        <div class="ue-flash-zone">
+            <div class="flash-success"><i class="bi bi-check-circle-fill"></i> {{ message }}</div>
+        </div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="ue-flash-zone">
+            <div class="flash-error"><i class="bi bi-exclamation-circle-fill"></i> {{ message }}</div>
+        </div>
+    {% endfor %}
+
+    <main class="ue-main">
+        <div class="ue-page-head">
+            <div>
+                <h1 class="ue-page-title">{% block page_title %}Espace utilisateur{% endblock %}</h1>
+                <p class="ue-page-subtitle">{% block page_subtitle %}{% endblock %}</p>
+            </div>
+            {% block header_actions %}{% endblock %}
+        </div>
+        {% block body %}{% endblock %}
+    </main>
+
+</div>
+
+<button id="themeToggle" title="Changer le thème">🌙</button>
+
+<style>
+    @keyframes pfFadeIn    { from { opacity:0 } to { opacity:1 } }
+    @keyframes pfSlideUp   { from { opacity:0; transform:translateY(24px) scale(0.97) } to { opacity:1; transform:translateY(0) scale(1) } }
+    #userConfirmModal.is-open               { animation: pfFadeIn .2s ease forwards; }
+    #userConfirmModal.is-open #pfModalInner { animation: pfSlideUp .22s cubic-bezier(.22,.68,0,1.2) forwards; }
+</style>
+
+{# ── Confirm modal — pure CSS fixed modal, no Bootstrap, cannot be trapped ── #}
+<div id="userConfirmModal" style="display:none;position:fixed;inset:0;z-index:999999;align-items:center;justify-content:center;">
+    <div id="pfModalBackdrop" style="position:fixed;inset:0;background:rgba(15,23,42,0.55);backdrop-filter:blur(4px);"></div>
+    <div id="pfModalInner" style="position:relative;z-index:1000000;background:white;border-radius:24px;max-width:440px;width:90%;padding:32px 28px;text-align:center;box-shadow:0 26px 70px rgba(15,23,42,0.22);">
+        <div id="userConfirmIcon" style="width:64px;height:64px;margin:0 auto 18px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;background:linear-gradient(135deg,#eef2ff,#ddd6fe);color:#2729aa;">
+            <i class="bi bi-star-fill"></i>
+        </div>
+        <h5 id="userConfirmTitle" style="font-size:20px;font-weight:800;color:#010204;margin:0 0 8px;font-family:inherit;"></h5>
+        <p  id="userConfirmText"  style="font-size:13px;color:#64748b;line-height:1.6;margin:0 0 22px;"></p>
+        <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;">
+            <button type="button" id="pfModalCancel"  style="border:none;border-radius:10px;padding:11px 22px;font-size:13px;font-weight:700;cursor:pointer;background:#eef2ff;color:#2729aa;font-family:inherit;">Annuler</button>
+            <button type="button" id="userConfirmSubmit" style="border:none;border-radius:10px;padding:11px 22px;font-size:13px;font-weight:700;cursor:pointer;background:#2729aa;color:white;font-family:inherit;">Confirmer</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% block javascripts %}{% endblock %}
+<script>
+    // Theme toggle
+    (function() {
+        const btn  = document.getElementById('themeToggle');
+        const root = document.documentElement;
+        const saved = localStorage.getItem('pf-theme') || 'light';
+        btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+        btn.addEventListener('click', function() {
+            const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            root.setAttribute('data-theme', next);
+            localStorage.setItem('pf-theme', next);
+            btn.textContent = next === 'dark' ? '☀️' : '🌙';
+        });
+    })();
+
+    // Shared confirm modal — pure JS, no Bootstrap dependency
+    let _pfPendingForm = null;
+    const _pfModal     = document.getElementById('userConfirmModal');
+    const _pfBackdrop  = document.getElementById('pfModalBackdrop');
+
+    function openUserConfirm(button) {
+        _pfPendingForm = button.closest('form');
+
+        document.getElementById('userConfirmTitle').textContent = button.dataset.confirmTitle || 'Confirmation';
+        document.getElementById('userConfirmText').innerHTML    = button.dataset.confirmText  || '';
+
+        const icon = document.getElementById('userConfirmIcon');
+        const isWarning = button.dataset.confirmIconClass === 'pf-confirm-icon-warning';
+        icon.style.background = isWarning ? 'linear-gradient(135deg,#fff7ed,#fed7aa)' : 'linear-gradient(135deg,#eef2ff,#ddd6fe)';
+        icon.style.color = isWarning ? '#c2410c' : '#2729aa';
+        icon.innerHTML = '<i class="bi ' + (button.dataset.confirmIcon || 'bi-check-circle-fill') + '"></i>';
+
+        document.getElementById('userConfirmSubmit').textContent = button.dataset.confirmButton || 'Confirmer';
+
+        _pfModal.style.display = 'flex';
+        requestAnimationFrame(() => _pfModal.classList.add('is-open'));
+    }
+
+    function _pfCloseModal() {
+        _pfModal.classList.remove('is-open');
+        setTimeout(() => { _pfModal.style.display = 'none'; _pfPendingForm = null; }, 180);
+    }
+
+    document.getElementById('pfModalBackdrop').addEventListener('click', _pfCloseModal);
+    document.getElementById('pfModalCancel').addEventListener('click', _pfCloseModal);
+    document.getElementById('userConfirmSubmit').addEventListener('click', function () {
+        if (_pfPendingForm) _pfPendingForm.submit();
+    });
+</script>
+</body>
+</html>
