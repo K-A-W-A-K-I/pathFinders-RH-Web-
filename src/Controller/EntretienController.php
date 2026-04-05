@@ -83,10 +83,15 @@ class EntretienController extends AbstractController
     // ── Admin: gestion des entretiens ─────────────────────────────────────
 
     #[Route('/admin/entretiens', name: 'entretien_admin')]
-    public function adminIndex(Request $request, EntretienRepository $repo): Response
+    public function adminIndex(Request $request, EntretienRepository $repo, \App\Repository\CandidatRepository $candidatRepo): Response
     {
-        $filter    = $request->query->get('statut', 'Tous');
+        $filter     = $request->query->get('statut', 'Tous');
         $entretiens = $repo->findAllWithRelations($filter);
+
+        $candidats = array_map(fn($e) => $e->getCandidat(), $entretiens);
+        $candidatRepo->hydrateNames($candidats);
+
+        $entretiens = array_values(array_filter($entretiens, fn($e) => trim($e->getCandidat()->getFullName()) !== ''));
 
         return $this->render('entretien/admin.html.twig', [
             'entretiens' => $entretiens,

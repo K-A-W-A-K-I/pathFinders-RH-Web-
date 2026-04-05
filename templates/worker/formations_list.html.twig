@@ -1,0 +1,57 @@
+{% extends 'worker/base_worker.html.twig' %}
+{% block title %}{{ categorie.nomCategorie }} — PathFinder{% endblock %}
+{% block nav_formations %}active{% endblock %}
+
+{% block body %}
+<div class="pf-hero">
+  <div class="pf-hero-bg"></div>
+  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>{{ categorie.nomCategorie }}</div>
+    <h1>Formations <span>disponibles</span></h1>
+    <p>{{ formations|length }} formation(s) dans cette catégorie.</p>
+  </div>
+</div>
+
+<div class="pf-content">
+  <div class="pf-section">
+    <form method="get" class="pf-search-bar">
+      <input type="text" name="q" value="{{ q }}" placeholder="Rechercher..." class="pf-input">
+      <select name="sort" class="pf-select">
+        <option value="titre" {% if sort == 'titre' %}selected{% endif %}>Titre</option>
+        <option value="dureeHeures" {% if sort == 'dureeHeures' %}selected{% endif %}>Durée</option>
+      </select>
+      <button type="submit" class="pf-btn-search">Filtrer</button>
+      <a href="{{ path('worker_formations') }}" class="pf-btn-ghost" style="padding:9px 16px;border-radius:10px;text-decoration:none">← Catégories</a>
+    </form>
+  </div>
+
+  {% if formations is empty %}
+    <div class="pf-section" style="text-align:center;padding:3rem">
+      <p style="color:var(--text-muted)">Aucune formation dans cette catégorie.</p>
+    </div>
+  {% else %}
+    <div class="pf-cards">
+      {% for f in formations %}
+        <div class="pf-card" style="display:block">
+          <div class="pf-card-img-placeholder">🎓</div>
+          <h3>{{ f.titre }}</h3>
+          {% if f.description %}<p>{{ f.description|slice(0,100) }}...</p>{% endif %}
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:.8rem">
+            {% if f.formateur %}<span class="pf-badge pf-badge-purple">👤 {{ f.formateur }}</span>{% endif %}
+            {% if f.dureeHeures %}<span class="pf-badge pf-badge-purple">⏱ {{ f.dureeHeures }}h</span>{% endif %}
+            {% if f.placeDisponible > 0 %}
+              <span class="pf-badge pf-badge-green">{{ f.placeDisponible }} place(s)</span>
+            {% else %}
+              <span class="pf-badge pf-badge-red">Complet</span>
+            {% endif %}
+          </div>
+          {% if f.placeDisponible > 0 %}
+            <a href="{{ path('client_formation_detail', {id: f.idFormation}) }}" class="pf-btn-details" style="margin-top:1rem;display:inline-block">S'inscrire →</a>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

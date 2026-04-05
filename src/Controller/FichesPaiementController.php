@@ -93,10 +93,17 @@ class FichesPaiementController extends AbstractController
 
     // ── 4. WORKER VIEW ────────────────────────────────
     #[Route('/mes-fiches', name: 'worker_fiches')]
-    public function workerIndex(FichesPaiementRepository $repo): Response
-    {
+    public function workerIndex(
+        FichesPaiementRepository $repo,
+        \App\Repository\EmployeeRepository $employeeRepo
+    ): Response {
+        $user     = $this->getUser();
+        $employee = $user ? $employeeRepo->findOneBy(['utilisateur' => $user]) : null;
+        $fiches   = $employee ? $repo->findBy(['employee' => $employee]) : [];
+
         return $this->render('worker/fiches.html.twig', [
-            'fiches' => $repo->findAll()
+            'fiches'   => $fiches,
+            'employee' => $employee,
         ]);
     }
 

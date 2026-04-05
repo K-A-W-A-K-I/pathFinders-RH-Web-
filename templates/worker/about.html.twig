@@ -1,0 +1,41 @@
+{% extends 'worker/base_worker.html.twig' %}
+{% block title %}À propos — PathFinder{% endblock %}
+{% block nav_about %}active{% endblock %}
+
+{% block body %}
+<div class="pf-hero">
+  <div class="pf-hero-bg"></div>
+  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>Plateforme RH</div>
+    <h1>À propos de <span>PathFinder</span></h1>
+    <p>La solution qui digitalise et accélère chaque étape de votre parcours professionnel.</p>
+  </div>
+</div>
+<div class="pf-content">
+  <div class="pf-section">
+    <div class="pf-section-label">Qui sommes-nous ?</div>
+    <h2>Une plateforme pensée pour les RH</h2>
+    <div class="pf-divider"></div>
+    <p>PathFinder est une solution de gestion RH complète, conçue pour digitaliser et accélérer chaque étape du parcours professionnel — des offres d'emploi aux formations, en passant par la gestion des fiches de paie.</p>
+    <p>Grâce à un espace dédié, chaque employé accède facilement à ses informations personnelles, ses fiches de paiement et ses formations.</p>
+  </div>
+  <div class="pf-cards">
+    <div class="pf-card" style="display:block">
+      <div style="font-size:2rem;margin-bottom:1rem">⚡</div>
+      <h3>Notre Mission</h3>
+      <p>Faciliter la gestion des ressources humaines et maximiser la qualité du parcours employé.</p>
+    </div>
+    <div class="pf-card" style="display:block">
+      <div style="font-size:2rem;margin-bottom:1rem">🎯</div>
+      <h3>Notre Vision</h3>
+      <p>Devenir la référence en gestion RH, reconnue pour sa simplicité et son efficacité.</p>
+    </div>
+    <div class="pf-card" style="display:block">
+      <div style="font-size:2rem;margin-bottom:1rem">🛡</div>
+      <h3>Nos Valeurs</h3>
+      <p>Excellence, transparence, innovation et accessibilité guident chaque décision.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

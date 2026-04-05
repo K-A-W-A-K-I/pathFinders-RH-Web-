@@ -102,6 +102,9 @@
   <a class="nav-item {{ app.request.attributes.get('_route') starts with 'prime_' ? 'active' : '' }}" href="{{ path('prime_index') }}">
     <span class="nav-icon">🏆</span> Primes
   </a>
+  <a class="nav-item {{ app.request.attributes.get('_route') starts with 'admin_reclamation_' ? 'active' : '' }}" href="{{ path('admin_reclamation_index') }}">
+    <span class="nav-icon">📋</span> Réclamations
+  </a>
   <div class="sidebar-divider"></div>
   <a class="nav-item" href="{{ path('auth_logout') }}" style="color:rgba(239,68,68,0.8);margin-top:auto;margin-bottom:8px">
     <span class="nav-icon">🚪</span> Déconnexion

@@ -1,0 +1,91 @@
+{% set userRole = app.user ? app.user.role : '' %}
+{% set isWorker = userRole in ['employe', 'ROLE_WORKER'] %}
+{% extends isWorker ? 'worker/base_worker.html.twig' : 'client/base_client.html.twig' %}
+{% block title %}Nouvelle Réclamation — PathFinder{% endblock %}
+
+{% block body %}
+<div class="pf-hero">
+  <div class="pf-hero-bg"></div>
+  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>Espace {{ isWorker ? 'Employé' : 'Candidat' }}</div>
+    <h1>Nouvelle <span>Réclamation</span></h1>
+    <p>Décrivez votre problème et nous vous répondrons dans les plus brefs délais.</p>
+  </div>
+</div>
+
+<div class="pf-content">
+<div class="pf-section" style="max-width:640px">
+
+  {% if errors is not empty %}
+  <div style="background:rgba(226,75,74,.1);border:.5px solid rgba(226,75,74,.3);border-radius:10px;padding:12px 16px;margin-bottom:1.2rem;font-size:13px;color:#E24B4A">
+    ⚠ Veuillez corriger les erreurs ci-dessous.
+  </div>
+  {% endif %}
+
+  {% set inp = 'width:100%;padding:11px 16px;border:.5px solid var(--border);border-radius:10px;font-size:14px;font-family:DM Sans,sans-serif;background:var(--surface);color:var(--text);outline:none;transition:border-color .2s;' %}
+
+  <form method="post" id="reclamation-form" novalidate>
+
+    <div style="margin-bottom:1rem">
+      <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Titre *</label>
+      <input type="text" name="titre" id="f-titre" value="{{ data.titre ?? '' }}"
+             style="{{ inp }}{{ errors.titre is defined ? 'border-color:#E24B4A;' : '' }}"
+             placeholder="Résumez votre problème en quelques mots" maxlength="255">
+      <div id="err-titre" style="color:#E24B4A;font-size:12px;margin-top:4px;display:{{ errors.titre is defined ? 'block' : 'none' }}">
+        {{ errors.titre ?? '' }}
+      </div>
+    </div>
+
+    <div style="margin-bottom:1.5rem">
+      <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Description *</label>
+      <textarea name="description" id="f-description" rows="5"
+                style="{{ inp }}resize:vertical;{{ errors.description is defined ? 'border-color:#E24B4A;' : '' }}"
+                placeholder="Décrivez votre problème en détail...">{{ data.description ?? '' }}</textarea>
+      <div id="err-description" style="color:#E24B4A;font-size:12px;margin-top:4px;display:{{ errors.description is defined ? 'block' : 'none' }}">
+        {{ errors.description ?? '' }}
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px">
+      <button type="submit" class="pf-btn-details">📤 Envoyer la réclamation</button>
+      <a href="{{ path('reclamation_index') }}" class="pf-btn-ghost" style="padding:8px 18px;border-radius:10px;text-decoration:none">Annuler</a>
+    </div>
+
+  </form>
+</div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+function showErr(id, msg) {
+    const el = document.getElementById('err-' + id);
+    const inp = document.getElementById('f-' + id);
+    el.textContent = msg;
+    el.style.display = msg ? 'block' : 'none';
+    inp.style.borderColor = msg ? '#E24B4A' : '';
+}
+function validateTitre() {
+    const v = document.getElementById('f-titre').value.trim();
+    if (!v) { showErr('titre', 'Le titre est obligatoire.'); return false; }
+    if (v.length < 5) { showErr('titre', 'Minimum 5 caractères.'); return false; }
+    if (v.length > 255) { showErr('titre', 'Maximum 255 caractères.'); return false; }
+    showErr('titre', ''); return true;
+}
+function validateDesc() {
+    const v = document.getElementById('f-description').value.trim();
+    if (!v) { showErr('description', 'La description est obligatoire.'); return false; }
+    if (v.length < 10) { showErr('description', 'Minimum 10 caractères.'); return false; }
+    showErr('description', ''); return true;
+}
+document.getElementById('f-titre').addEventListener('blur', validateTitre);
+document.getElementById('f-description').addEventListener('blur', validateDesc);
+document.getElementById('f-titre').addEventListener('input', () => { if (document.getElementById('err-titre').style.display !== 'none') validateTitre(); });
+document.getElementById('f-description').addEventListener('input', () => { if (document.getElementById('err-description').style.display !== 'none') validateDesc(); });
+document.getElementById('reclamation-form').addEventListener('submit', function(e) {
+    const ok = validateTitre() & validateDesc();
+    if (!ok) e.preventDefault();
+});
+</script>
+{% endblock %}
