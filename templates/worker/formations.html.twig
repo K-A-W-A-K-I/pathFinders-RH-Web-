@@ -1,0 +1,55 @@
+{% extends 'worker/base_worker.html.twig' %}
+{% block title %}Formations — PathFinder{% endblock %}
+{% block nav_formations %}active{% endblock %}
+
+{% block body %}
+<div class="pf-hero">
+  <div class="pf-hero-bg"></div>
+  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>Espace Employé</div>
+    <h1>Nos <span>Catégories</span></h1>
+    <p>Explorez nos domaines de formation et trouvez celle qui correspond à vos objectifs.</p>
+  </div>
+</div>
+
+<div class="pf-content">
+  <div class="pf-section">
+    <form method="get" class="pf-search-bar" id="searchForm">
+      <input type="text" name="q" value="{{ q }}" placeholder="Rechercher une catégorie..." class="pf-input">
+      <select name="sort" class="pf-select" onchange="document.getElementById('searchForm').submit()">
+        <option value="nom" {% if sort == 'nom' %}selected{% endif %}>Trier par nom</option>
+      </select>
+      <select name="dir" class="pf-select" onchange="document.getElementById('searchForm').submit()">
+        <option value="ASC" {% if dir == 'ASC' %}selected{% endif %}>Croissant</option>
+        <option value="DESC" {% if dir == 'DESC' %}selected{% endif %}>Décroissant</option>
+      </select>
+      <button type="submit" class="pf-btn-search">Rechercher</button>
+      {% if q %}<a href="{{ path('worker_formations') }}" class="pf-btn-ghost" style="padding:9px 16px;border-radius:10px;text-decoration:none">✕</a>{% endif %}
+    </form>
+  </div>
+
+  {% if categories is empty %}
+    <div class="pf-section" style="text-align:center;padding:3rem">
+      <p style="color:var(--text-muted)">Aucune catégorie trouvée.</p>
+    </div>
+  {% else %}
+    <div class="pf-cards">
+      {% for cat in categories %}
+        <a href="{{ path('worker_formations_by_categorie', {id: cat.idCategorie}) }}" class="pf-card">
+          {% if cat.image %}
+            <img src="{{ asset('uploads/categories/' ~ cat.image) }}" alt="{{ cat.nomCategorie }}" class="pf-card-img" onerror="this.style.display='none'">
+          {% else %}
+            <div class="pf-card-img-placeholder">📚</div>
+          {% endif %}
+          <h3>{{ cat.nomCategorie }}</h3>
+          {% if cat.description %}
+            <p>{{ cat.description|slice(0,100) }}{% if cat.description|length > 100 %}...{% endif %}</p>
+          {% endif %}
+          <span class="pf-badge pf-badge-purple">{{ cat.formations|length }} formation(s)</span>
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

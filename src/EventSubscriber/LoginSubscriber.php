@@ -22,11 +22,11 @@ class LoginSubscriber implements EventSubscriberInterface
         }
 
         // Redirect by role
-        $roles = $user->getRoles();
         $rawRole = method_exists($user, 'getRole') ? $user->getRole() : '';
-        if (in_array('ROLE_ADMIN', $roles) || in_array('admin', $roles) || $rawRole === 'admin'
-            || in_array('ROLE_WORKER', $roles) || in_array('employe', $roles) || $rawRole === 'employe') {
+        if (in_array($rawRole, ['admin', 'ROLE_ADMIN'])) {
             $event->setResponse(new \Symfony\Component\HttpFoundation\RedirectResponse('/admin/offres'));
+        } elseif (in_array($rawRole, ['employe', 'ROLE_WORKER'])) {
+            $event->setResponse(new \Symfony\Component\HttpFoundation\RedirectResponse('/mes-fiches'));
         } else {
             $event->setResponse(new \Symfony\Component\HttpFoundation\RedirectResponse('/'));
         }

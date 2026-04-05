@@ -28,10 +28,16 @@ class OffreController extends AbstractController
     }
 
     #[Route('/candidatures', name: 'admin_candidatures')]
-    public function adminCandidatures(CandidatureRepository $candidatureRepo): Response
+    public function adminCandidatures(CandidatureRepository $candidatureRepo, \App\Repository\CandidatRepository $candidatRepo): Response
     {
+        $candidatures = $candidatureRepo->findAllWithRelations();
+        $candidats = array_map(fn($c) => $c->getCandidat(), $candidatures);
+        $candidatRepo->hydrateNames($candidats);
+
+        $candidatures = array_values(array_filter($candidatures, fn($c) => trim($c->getCandidat()->getFullName()) !== ''));
+
         return $this->render('offre/candidatures_admin.html.twig', [
-            'candidatures' => $candidatureRepo->findAllWithRelations(),
+            'candidatures' => $candidatures,
         ]);
     }
 

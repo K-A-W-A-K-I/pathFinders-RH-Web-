@@ -1,0 +1,54 @@
+{% set userRole = app.user ? app.user.role : '' %}
+{% set isWorker = userRole in ['employe', 'ROLE_WORKER'] %}
+{% extends isWorker ? 'worker/base_worker.html.twig' : 'client/base_client.html.twig' %}
+{% block title %}Mes Réclamations — PathFinder{% endblock %}
+
+{% block body %}
+<div class="pf-hero">
+  <div class="pf-hero-bg"></div>
+  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>Espace {{ isWorker ? 'Employé' : 'Candidat' }}</div>
+    <h1>Mes <span>Réclamations</span></h1>
+    <p>Suivez l'état de vos réclamations soumises.</p>
+  </div>
+</div>
+
+<div class="pf-content">
+  <div style="display:flex;justify-content:flex-end;margin-bottom:1.5rem">
+    <a href="{{ path('reclamation_new') }}" class="pf-btn-details">+ Nouvelle réclamation</a>
+  </div>
+
+  {% if reclamations is empty %}
+    <div class="pf-section" style="text-align:center;padding:3rem">
+      <div style="font-size:3rem;margin-bottom:1rem">📋</div>
+      <p style="color:var(--text-muted)">Aucune réclamation pour le moment.</p>
+      <a href="{{ path('reclamation_new') }}" class="pf-btn-details" style="margin-top:1rem;display:inline-block">Soumettre une réclamation</a>
+    </div>
+  {% else %}
+    <div style="display:flex;flex-direction:column;gap:1rem">
+      {% for r in reclamations %}
+      <div class="pf-section" style="padding:1.5rem">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:.5rem">
+              <span style="font-family:Sora,sans-serif;font-weight:600;font-size:15px;color:var(--text)">{{ r.titre }}</span>
+              {% set sc = {'En attente':'rgba(245,158,11,.15)','En cours':'rgba(75,139,245,.15)','Résolu':'rgba(29,158,117,.15)','Fermé':'rgba(100,116,139,.15)'} %}
+              {% set tc = {'En attente':'#d97706','En cours':'#2563eb','Résolu':'#16a34a','Fermé':'#64748b'} %}
+              <span style="padding:3px 12px;border-radius:20px;font-size:11px;font-weight:600;background:{{ sc[r.statut] ?? 'rgba(108,99,255,.1)' }};color:{{ tc[r.statut] ?? '#6C63FF' }}">
+                {{ r.statut }}
+              </span>
+            </div>
+            <p style="font-size:13.5px;color:var(--text-muted);line-height:1.6;margin-bottom:.5rem">{{ r.description }}</p>
+            <div style="font-size:12px;color:var(--text-dim)">📅 {{ r.dateCreation|date('d/m/Y H:i') }}</div>
+          </div>
+          <form method="post" action="{{ path('reclamation_delete', {id: r.id}) }}" onsubmit="return confirm('Supprimer cette réclamation ?')">
+            <button type="submit" style="padding:6px 14px;border-radius:8px;border:.5px solid rgba(226,75,74,.3);background:rgba(226,75,74,.08);color:#E24B4A;font-size:12px;cursor:pointer">🗑 Supprimer</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
