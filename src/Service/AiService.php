@@ -25,11 +25,14 @@ class AiService
             CURLOPT_HTTPHEADER     => [
                 'Content-Type: application/json',
                 'Authorization: Bearer ' . self::API_KEY,
+                'HTTP-Referer: http://localhost',
+                'X-Title: PathFinders',
             ],
-            CURLOPT_TIMEOUT        => 30,
+            CURLOPT_TIMEOUT        => 45,
         ]);
 
         $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $err      = curl_error($ch);
         curl_close($ch);
 
@@ -38,7 +41,32 @@ class AiService
         }
 
         $data = json_decode($response, true);
+
+        if ($httpCode !== 200) {
+            $msg = $data['error']['message'] ?? $response;
+            throw new \RuntimeException("API error {$httpCode}: " . substr($msg, 0, 200));
+        }
+
         return $data['choices'][0]['message']['content'] ?? '';
+    }
+
+    // ── Extract JSON from raw AI response ────────────────────────────────
+
+    private function extractJson(string $raw): string
+    {
+        // Strip markdown code fences
+        $raw = preg_replace('/```(?:json)?\s*/i', '', $raw);
+        $raw = trim($raw);
+
+        // Try to extract first JSON array [...] or object {...}
+        if (preg_match('/(\[[\s\S]*\])/m', $raw, $m)) {
+            return $m[1];
+        }
+        if (preg_match('/(\{[\s\S]*\})/m', $raw, $m)) {
+            return $m[1];
+        }
+
+        return $raw;
     }
 
     // ── Generate QCM questions for an offre ───────────────────────────────
@@ -49,37 +77,21 @@ class AiService
      */
     public function generateQuestions(string $titre, string $description, string $domaine, int $count = 5): array
     {
-        $prompt = <<<PROMPT
-Tu es un expert RH. Génère exactement {$count} questions QCM pour évaluer un candidat au poste suivant :
-Titre : {$titre}
-Domaine : {$domaine}
-Description : {$description}
+        $prompt = "You are an HR expert. Generate exactly {$count} multiple choice questions (MCQ) to evaluate a candidate for this job:\n"
+            . "Title: {$titre}\nDomain: {$domaine}\nDescription: {$description}\n\n"
+            . "Reply ONLY with a valid JSON array, no text before or after, no markdown. Format:\n"
+            . '[{"question":"...","choix":["A","B","C","D"],"bonne_reponse":1,"points":2}]'
+            . "\nbonne_reponse is the index (1 to 4) of the correct choice.";
 
-Réponds UNIQUEMENT avec un JSON valide (tableau), sans texte avant ou après. Format :
-[
-  {
-    "question": "...",
-    "choix": ["choix1", "choix2", "choix3", "choix4"],
-    "bonne_reponse": 1,
-    "points": 2
-  }
-]
-La bonne_reponse est l'index (1 à 4) du bon choix dans le tableau choix.
-PROMPT;
+        $raw    = $this->chat($prompt);
+        $json   = $this->extractJson($raw);
+        $result = json_decode($json, true);
 
-        $raw = $this->chat($prompt);
-
-        // Extract JSON from response (strip markdown code blocks if present)
-        $raw = preg_replace('/^```(?:json)?\s*/m', '', $raw);
-        $raw = preg_replace('/```\s*$/m', '', $raw);
-        $raw = trim($raw);
-
-        $questions = json_decode($raw, true);
-        if (!is_array($questions)) {
-            throw new \RuntimeException('IA response is not valid JSON: ' . $raw);
+        if (!is_array($result) || empty($result)) {
+            throw new \RuntimeException('Invalid JSON from AI. Raw: ' . substr($raw, 0, 300));
         }
 
-        return $questions;
+        return $result;
     }
 
     // ── Analyse CV text against an offre ──────────────────────────────────
@@ -89,30 +101,19 @@ PROMPT;
      */
     public function analyseCv(string $cvText, string $offreTitre, string $offreDescription, string $domaine): array
     {
-        $prompt = <<<PROMPT
-Tu es un expert RH. Analyse ce CV par rapport à l'offre d'emploi suivante et donne un score de compatibilité de 0 à 100.
+        // Truncate CV text to avoid token limits
+        $cvText = mb_substr($cvText, 0, 3000);
 
-Offre : {$offreTitre} ({$domaine})
-Description de l'offre : {$offreDescription}
+        $prompt = "You are an HR expert. Analyse this CV against the job offer and give a compatibility score from 0 to 100.\n\n"
+            . "Job: {$offreTitre} ({$domaine})\nDescription: {$offreDescription}\n\nCV:\n{$cvText}\n\n"
+            . 'Reply ONLY with valid JSON, no text before or after, no markdown. Format: {"score":75,"details":"2-3 sentences about strengths and weaknesses."}';
 
-CV du candidat :
-{$cvText}
+        $raw    = $this->chat($prompt);
+        $json   = $this->extractJson($raw);
+        $result = json_decode($json, true);
 
-Réponds UNIQUEMENT avec un JSON valide, sans texte avant ou après. Format :
-{
-  "score": 75,
-  "details": "Explication courte en 2-3 phrases des points forts et faibles."
-}
-PROMPT;
-
-        $raw = $this->chat($prompt);
-        $raw = preg_replace('/^```(?:json)?\s*/m', '', $raw);
-        $raw = preg_replace('/```\s*$/m', '', $raw);
-        $raw = trim($raw);
-
-        $result = json_decode($raw, true);
         if (!isset($result['score'])) {
-            throw new \RuntimeException('IA CV analysis response invalid: ' . $raw);
+            throw new \RuntimeException('Invalid JSON from AI. Raw: ' . substr($raw, 0, 300));
         }
 
         return [
