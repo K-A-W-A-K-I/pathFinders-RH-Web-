@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\Offre;
 
 use App\Repository\CandidatRepository;
 use App\Repository\CandidatureRepository;

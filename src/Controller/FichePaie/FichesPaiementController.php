@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\FichePaie;
 
 use App\Entity\FichesPaiement;
 use App\Form\FichesPaiementType;
