@@ -36,6 +36,23 @@
     {% if candidatures is empty %}
         <p class="empty-sub">Aucune candidature pour cette offre.</p>
     {% else %}
+
+    {# Charts #}
+    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:24px;align-items:flex-start">
+        {% if scoreChartUrl %}
+        <div style="flex:1;min-width:300px">
+            <div style="font-size:13px;font-weight:600;color:#6C63FF;margin-bottom:8px">📊 Distribution des scores</div>
+            <img src="{{ scoreChartUrl }}" alt="Score chart" style="width:100%;border-radius:12px;border:1px solid var(--border)">
+        </div>
+        {% endif %}
+        {% if statutChartUrl %}
+        <div style="min-width:220px">
+            <div style="font-size:13px;font-weight:600;color:#6C63FF;margin-bottom:8px">🎯 Statuts</div>
+            <img src="{{ statutChartUrl }}" alt="Statut chart" style="width:100%;border-radius:12px;border:1px solid var(--border)">
+        </div>
+        {% endif %}
+    </div>
+
     <table class="data-table">
         <thead><tr><th>#</th><th>Candidat</th><th>Score Quiz</th><th>Score CV IA</th><th>Statut</th><th>Actions</th></tr></thead>
         <tbody>
@@ -44,7 +61,14 @@
             <td>{{ i == 0 ? '🥇' : (i == 1 ? '🥈' : (i == 2 ? '🥉' : i+1)) }}</td>
             <td>{{ c.candidat.fullName }}</td>
             <td><strong>{{ c.score }}%</strong></td>
-            <td>{{ c.cvScoreIa ?? '—' }}</td>
+            <td id="cv-score-{{ c.id }}">
+                {% if c.cvScoreIa is not null %}
+                    <span style="color:#6C63FF;font-weight:600">{{ c.cvScoreIa }}%</span>
+                {% else %}
+                    <button class="btn btn-sm" style="background:rgba(108,99,255,.1);color:#6C63FF;border:1px solid rgba(108,99,255,.3);font-size:11px"
+                            onclick="analyseCv({{ c.id }}, this)">🤖 Analyser CV</button>
+                {% endif %}
+            </td>
             <td><span class="badge {{ c.statutClass }}">{{ c.statutLabel }}</span></td>
             <td>
                 <form method="post" action="{{ path('candidature_statut', {id: c.id, statut: 1}) }}" style="display:inline">
@@ -63,8 +87,19 @@
 
 {# ── Questions ── #}
 <div id="tab-questions" class="tab-content" style="display:none">
-    <div class="section-actions">
+    <div class="section-actions" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <a href="{{ path('question_new', {id: offre.id}) }}" class="btn btn-primary">＋ Ajouter une question</a>
+        <button type="button" class="btn" style="background:linear-gradient(135deg,#6C63FF,#9D6BFF);color:#fff;border:none"
+                onclick="generateQuestions({{ offre.id }})">
+            🤖 Générer avec IA
+        </button>
+        <select id="ia-count" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);font-size:13px">
+            <option value="3">3 questions</option>
+            <option value="5" selected>5 questions</option>
+            <option value="8">8 questions</option>
+            <option value="10">10 questions</option>
+        </select>
+        <span id="ia-status" style="font-size:13px;color:#6C63FF"></span>
     </div>
     {% if questions is empty %}
         <p class="empty-sub">Aucune question pour cette offre.</p>
@@ -121,5 +156,51 @@ function showTab(name, btn) {
 }
 // Auto-open questions tab if fragment
 if (location.hash === '#questions') showTab('questions', document.querySelector('[onclick*="questions"]'));
+
+// ── AI: Generate questions ──────────────────────────────────────────────
+function generateQuestions(offreId) {
+    const count  = document.getElementById('ia-count').value;
+    const status = document.getElementById('ia-status');
+    status.textContent = '⏳ Génération en cours...';
+
+    fetch(`/admin/offres/${offreId}/generate-questions`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: `count=${count}`,
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            status.textContent = `✅ ${data.count} questions générées !`;
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            status.textContent = '❌ Erreur : ' + data.error;
+        }
+    })
+    .catch(() => { status.textContent = '❌ Erreur réseau'; });
+}
+
+// ── AI: Analyse CV ──────────────────────────────────────────────────────
+function analyseCv(candidatureId, btn) {
+    btn.textContent = '⏳...';
+    btn.disabled = true;
+
+    fetch(`/admin/offres/candidature/${candidatureId}/analyse-cv`, {
+        method: 'POST',
+    })
+    .then(r => r.json())
+    .then(data => {
+        const cell = document.getElementById('cv-score-' + candidatureId);
+        if (data.success) {
+            cell.innerHTML = `<span style="color:#6C63FF;font-weight:600">${data.score}%</span>
+                <span title="${data.details}" style="cursor:help;font-size:11px;color:#9999b8"> ℹ️</span>`;
+        } else {
+            cell.innerHTML = `<span style="color:#f87171;font-size:11px">${data.error}</span>`;
+        }
+    })
+    .catch(() => {
+        document.getElementById('cv-score-' + candidatureId).innerHTML = '<span style="color:#f87171;font-size:11px">Erreur réseau</span>';
+    });
+}
 </script>
 {% endblock %}
