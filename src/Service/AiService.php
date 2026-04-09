@@ -4,7 +4,7 @@ namespace App\Service;
 
 class AiService
 {
-    private const API_KEY = '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';
+    private const API_KEY = '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';
     private const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
     private const MODEL   = 'openai/gpt-3.5-turbo';
 
