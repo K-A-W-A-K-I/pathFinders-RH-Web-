@@ -253,17 +253,17 @@ class OffreController extends AbstractController
 
         $fullPath = $this->getParameter('kernel.project_dir') . '/public/uploads/cv/' . basename($cvPath);
         if (!file_exists($fullPath)) {
-            return new JsonResponse(['success' => false, 'error' => 'Fichier CV introuvable'], 404);
+            return new JsonResponse(['success' => false, 'error' => 'Fichier CV introuvable sur le serveur'], 404);
         }
 
         try {
-            // Extract text from PDF using pdftotext if available, else read raw
-            $cvText = '';
-            if (strtolower(pathinfo($fullPath, PATHINFO_EXTENSION)) === 'pdf') {
-                $cvText = shell_exec('pdftotext ' . escapeshellarg($fullPath) . ' -') ?? '';
-            }
+            // Extract text from PDF using smalot/pdfparser
+            $parser  = new \Smalot\PdfParser\Parser();
+            $pdf     = $parser->parseFile($fullPath);
+            $cvText  = $pdf->getText();
+
             if (empty(trim($cvText))) {
-                $cvText = file_get_contents($fullPath);
+                return new JsonResponse(['success' => false, 'error' => 'Impossible d\'extraire le texte du CV (PDF scanné ?)'], 400);
             }
 
             $offre  = $candidature->getOffre();
