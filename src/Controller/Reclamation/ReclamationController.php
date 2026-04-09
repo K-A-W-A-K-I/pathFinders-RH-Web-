@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\Reclamation;
 
 use App\Entity\Reclamation;
 use App\Repository\ReclamationRepository;
