@@ -72,26 +72,34 @@ class OffreController extends AbstractController
         QuestionRepository $questionRepo,
         CandidatureRepository $candidatureRepo,
         EntretienRepository $entretienRepo,
-        CandidatRepository $candidatRepo,
-        ChartService $chartService
+        CandidatRepository $candidatRepo
     ): Response {
         $candidatures = $candidatureRepo->findByOffre($offre->getId());
         $candidatRepo->hydrateNames(array_map(fn($c) => $c->getCandidat(), $candidatures));
         $candidatures = array_values(array_filter($candidatures, fn($c) => trim($c->getCandidat()->getFullName()) !== ''));
 
+        // Compute final score: 80% CV IA + 20% quiz, or 20% quiz only if no CV score
+        $finalScores = [];
+        foreach ($candidatures as $c) {
+            $cvScore   = $c->getCvScoreIa();
+            $quizScore = $c->getScore();
+            $finalScores[$c->getId()] = $cvScore !== null
+                ? (int) round($cvScore * 0.8 + $quizScore * 0.2)
+                : (int) round($quizScore * 0.2);
+        }
+
+        // Sort by final score descending
+        usort($candidatures, fn($a, $b) => $finalScores[$b->getId()] <=> $finalScores[$a->getId()]);
+
         $entretiens = $entretienRepo->findAllWithRelations();
         $entretiens = array_filter($entretiens, fn($e) => $e->getOffre()->getId() === $offre->getId());
 
-        $scoreChartUrl  = !empty($candidatures) ? $chartService->buildScoreDistributionUrl($candidatures) : null;
-        $statutChartUrl = !empty($candidatures) ? $chartService->buildStatutChartUrl($candidatures) : null;
-
         return $this->render('offre/show.html.twig', [
-            'offre'          => $offre,
-            'questions'      => $questionRepo->findByOffre($offre->getId()),
-            'candidatures'   => $candidatures,
-            'entretiens'     => $entretiens,
-            'scoreChartUrl'  => $scoreChartUrl,
-            'statutChartUrl' => $statutChartUrl,
+            'offre'        => $offre,
+            'questions'    => $questionRepo->findByOffre($offre->getId()),
+            'candidatures' => $candidatures,
+            'finalScores'  => $finalScores,
+            'entretiens'   => $entretiens,
         ]);
     }
 
