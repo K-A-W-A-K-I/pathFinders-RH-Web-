@@ -1,0 +1,79 @@
+{% extends 'client/base_client.html.twig' %}
+{% block title %}{{ offre.titre }}{% endblock %}
+{% block nav_offres %}active{% endblock %}
+
+{% block body %}
+<div class="pf-hero" style="min-height:180px">
+  <div class="pf-hero-bg"></div>
+  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>{{ offre.domaine }} · {{ offre.typeContrat }}</div>
+    <h1>{{ offre.titre }}</h1>
+  </div>
+</div>
+
+<div class="pf-content">
+  <div style="max-width:760px;margin:0 auto">
+
+    {# Back link #}
+    <a href="{{ path('offre_list') }}" style="display:inline-flex;align-items:center;gap:6px;color:#9999b8;font-size:13px;text-decoration:none;margin-bottom:24px">
+      ← Retour aux offres
+    </a>
+
+    {# Main card #}
+    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:28px;margin-bottom:20px">
+
+      {# Badges #}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px">
+        <span class="badge badge-domain">{{ offre.domaine }}</span>
+        <span class="badge badge-contrat">{{ offre.typeContrat }}</span>
+      </div>
+
+      {# Description #}
+      <h3 style="font-size:14px;font-weight:600;color:#9999b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Description du poste</h3>
+      <p style="color:rgba(255,255,255,0.85);line-height:1.7;font-size:15px;white-space:pre-line">{{ offre.description }}</p>
+    </div>
+
+    {# Info grid #}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px">
+      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:18px">
+        <div style="font-size:11px;color:#9999b8;font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">💰 Salaire</div>
+        <div style="font-size:18px;font-weight:700;color:#fff">{{ offre.salaireMin }} – {{ offre.salaireMax }} DT</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:18px">
+        <div style="font-size:11px;color:#9999b8;font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">📋 Contrat</div>
+        <div style="font-size:18px;font-weight:700;color:#fff">{{ offre.typeContrat }}</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:18px">
+        <div style="font-size:11px;color:#9999b8;font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">📊 Score minimum requis</div>
+        <div style="font-size:18px;font-weight:700;color:#fff">{{ offre.scoreMinimum }}%</div>
+        <div style="margin-top:8px;height:5px;background:rgba(255,255,255,0.1);border-radius:4px">
+          <div style="height:5px;border-radius:4px;background:linear-gradient(90deg,#6C63FF,#9D6BFF);width:{{ offre.scoreMinimum }}%"></div>
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:18px">
+        <div style="font-size:11px;color:#9999b8;font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">⏱ Durée du test</div>
+        <div style="font-size:18px;font-weight:700;color:#fff">{{ offre.dureeTestMinutes }} min</div>
+      </div>
+    </div>
+
+    {# Info banner #}
+    <div style="background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.25);border-radius:12px;padding:14px 18px;margin-bottom:24px;font-size:13px;color:rgba(255,255,255,0.7);line-height:1.6">
+      💡 Pour postuler, vous devrez passer un quiz de <strong style="color:#fff">{{ offre.dureeTestMinutes }} minutes</strong> avec un score minimum de <strong style="color:#fff">{{ offre.scoreMinimum }}%</strong>. Assurez-vous d'être dans un endroit calme avant de commencer.
+    </div>
+
+    {# CTA #}
+    <div style="display:flex;gap:12px;align-items:center">
+      {% if dejaPostule %}
+        <button class="btn btn-applied" disabled style="flex:1;justify-content:center">✅ Vous avez déjà postulé</button>
+      {% else %}
+        <a href="{{ path('quiz_start', {id: offre.id}) }}" class="btn btn-postuler" style="flex:1;text-align:center;justify-content:center">
+          🚀 Postuler maintenant
+        </a>
+      {% endif %}
+      <a href="{{ path('offre_list') }}" class="btn btn-secondary" style="white-space:nowrap">← Retour</a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

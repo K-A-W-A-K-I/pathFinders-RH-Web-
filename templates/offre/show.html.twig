@@ -4,11 +4,11 @@
 {% block page_title %}{{ offre.titre }}{% endblock %}
 
 {% block topbar_actions %}
-    <a href="{{ path('offre_edit', {id: offre.id}) }}" class="btn btn-edit">✏️ Modifier</a>
-    <form method="post" action="{{ path('offre_delete', {id: offre.id}) }}" onsubmit="return confirm('Supprimer ?')" style="display:inline">
-        <button type="submit" class="btn btn-danger">🗑 Supprimer</button>
+    <a href="{{ path('offre_edit', {id: offre.id}) }}" class="btn btn-edit" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;font-weight:600;text-decoration:none;background:rgba(108,99,255,.1);color:#6C63FF;border:1px solid rgba(108,99,255,.3)">✏️ Modifier</a>
+    <form method="post" action="{{ path('offre_delete', {id: offre.id}) }}" onsubmit="return confirm('Supprimer cette offre ?')" style="display:inline">
+        <button type="submit" class="btn btn-danger" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;font-weight:600;background:#ef4444;color:#fff;border:none;cursor:pointer">🗑 Supprimer</button>
     </form>
-    <a href="{{ path('offre_index') }}" class="btn btn-secondary">← Retour</a>
+    <a href="{{ path('offre_index') }}" class="btn btn-secondary" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;font-weight:600;text-decoration:none;background:var(--white);color:var(--text-light);border:1px solid var(--border)">← Retour</a>
 {% endblock %}
 
 {% block body %}
@@ -218,26 +218,25 @@ function generateChart() {
     const type = document.getElementById('chart-type').value;
     const rows = document.querySelectorAll('#ranking-table tbody tr');
 
-    const labels = [], quizData = [], cvData = [], finalData = [];
+    const labels = [], quizData = [], cvData = [];
     rows.forEach(row => {
         labels.push(row.dataset.name);
         quizData.push(parseInt(row.dataset.quiz) || 0);
-        cvData.push(row.dataset.cv !== '' ? parseInt(row.dataset.cv) : null);
-        finalData.push(parseInt(row.dataset.final) || 0);
+        cvData.push(row.dataset.cv !== '' ? parseInt(row.dataset.cv) : 0);
     });
 
     let config;
     const isRound = type === 'doughnut' || type === 'pie';
 
     if (isRound) {
-        // For doughnut/pie: show final scores
+        // For doughnut/pie: show CV IA scores (or quiz if no CV)
         config = {
             type: type,
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Score Final',
-                    data: finalData,
+                    label: 'Score CV IA',
+                    data: cvData,
                     backgroundColor: ['#6C63FF','#9D6BFF','#4ade80','#facc15','#f87171','#60a5fa','#fb923c','#a78bfa'],
                 }]
             },
@@ -249,23 +248,21 @@ function generateChart() {
             data: {
                 labels: labels,
                 datasets: [
-                    { label: 'Score Final', data: finalData, borderColor: '#6C63FF', backgroundColor: 'rgba(108,99,255,.15)', pointBackgroundColor: '#6C63FF' },
+                    { label: 'Score CV IA', data: cvData, borderColor: '#6C63FF', backgroundColor: 'rgba(108,99,255,.15)', pointBackgroundColor: '#6C63FF' },
                     { label: 'Score Quiz', data: quizData, borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,.1)', pointBackgroundColor: '#4ade80' },
                 ]
             },
             options: { scales: { r: { beginAtZero: true, max: 100 } } }
         };
     } else {
-        // bar / horizontalBar / line
         const chartType = type === 'horizontalBar' ? 'bar' : type;
         config = {
             type: chartType,
             data: {
                 labels: labels,
                 datasets: [
-                    { label: 'Score Final (80% CV + 20% Quiz)', data: finalData, backgroundColor: 'rgba(108,99,255,.8)', borderColor: '#6C63FF', borderWidth: 2, borderRadius: 6 },
-                    { label: 'Score Quiz', data: quizData, backgroundColor: 'rgba(74,222,128,.6)', borderColor: '#4ade80', borderWidth: 2, borderRadius: 6 },
-                    { label: 'Score CV IA', data: cvData, backgroundColor: 'rgba(250,204,21,.6)', borderColor: '#facc15', borderWidth: 2, borderRadius: 6 },
+                    { label: 'Score Quiz', data: quizData, backgroundColor: 'rgba(74,222,128,.7)', borderColor: '#4ade80', borderWidth: 2, borderRadius: 6 },
+                    { label: 'Score CV IA', data: cvData, backgroundColor: 'rgba(108,99,255,.7)', borderColor: '#6C63FF', borderWidth: 2, borderRadius: 6 },
                 ]
             },
             options: {

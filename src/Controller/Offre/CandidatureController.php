@@ -2,6 +2,7 @@
 
 namespace App\Controller\Offre;
 
+use App\Entity\Offre;
 use App\Repository\CandidatRepository;
 use App\Repository\CandidatureRepository;
 use App\Repository\EntretienRepository;
@@ -49,6 +50,30 @@ class CandidatureController extends AbstractController
             'domaine'     => $domaine,
             'contrat'     => $contrat,
             'sort'        => $sort,
+        ]);
+    }
+
+    /** Détail d'une offre (vue candidat) */
+    #[Route('/offre/{id}', name: 'offre_detail', requirements: ['id' => '\d+'])]
+    public function offreDetail(
+        int $id,
+        OffreRepository $offreRepo,
+        CandidatureRepository $candidatureRepo,
+        CandidatRepository $candidatRepo,
+        SessionInterface $session
+    ): Response {
+        $offre = $offreRepo->find($id);
+        if (!$offre || $offre->getStatut() !== 'active') {
+            throw $this->createNotFoundException('Offre introuvable.');
+        }
+
+        $userId      = $session->get('user_id', 1);
+        $candidat    = $candidatRepo->findByUserId($userId);
+        $dejaPostule = $candidat && $candidatureRepo->dejaPostule($candidat->getId(), $id);
+
+        return $this->render('candidature/offre_detail.html.twig', [
+            'offre'       => $offre,
+            'dejaPostule' => $dejaPostule,
         ]);
     }
 
