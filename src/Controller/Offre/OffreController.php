@@ -24,10 +24,26 @@ use Symfony\Component\Routing\Attribute\Route;
 class OffreController extends AbstractController
 {
     #[Route('', name: 'offre_index')]
-    public function index(OffreRepository $repo): Response
+    public function index(OffreRepository $repo, CandidatureRepository $candidatureRepo, CandidatRepository $candidatRepo, QuestionRepository $questionRepo): Response
     {
+        $offres        = $repo->findAll();
+        $allCandidatures = $candidatureRepo->findAllWithRelations();
+        $candidatRepo->hydrateNames(array_map(fn($c) => $c->getCandidat(), $allCandidatures));
+        $allCandidatures = array_values(array_filter($allCandidatures, fn($c) => trim($c->getCandidat()->getFullName()) !== ''));
+
+        $totalCv    = count($allCandidatures);
+        $analysedCv = count(array_filter($allCandidatures, fn($c) => $c->getCvScoreIa() !== null));
+
+        // Question stats
+        $offresWithoutQuestions = array_values(array_filter($offres, fn($o) => $o->getQuestions()->count() === 0));
+        $totalQuestions = array_sum(array_map(fn($o) => $o->getQuestions()->count(), $offres));
+
         return $this->render('offre/index.html.twig', [
-            'offres' => $repo->findAll(),
+            'offres'                  => $offres,
+            'totalCv'                 => $totalCv,
+            'analysedCv'              => $analysedCv,
+            'offresWithoutQuestions'  => count($offresWithoutQuestions),
+            'totalQuestions'          => $totalQuestions,
         ]);
     }
 
@@ -66,7 +82,7 @@ class OffreController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'offre_show')]
+    #[Route('/{id}', name: 'offre_show', requirements: ['id' => '\d+'])]
     public function show(
         Offre $offre,
         QuestionRepository $questionRepo,
@@ -202,6 +218,54 @@ class OffreController extends AbstractController
             $this->addFlash('success', 'Statut mis à jour.');
         }
         return $this->redirectToRoute('admin_candidatures');
+    }
+
+    // ── AI: Bulk generate questions for offres without questions ──────────
+
+    #[Route('/bulk-generate-questions', name: 'offre_bulk_generate_questions', methods: ['POST'])]
+    public function bulkGenerateQuestions(
+        OffreRepository $repo,
+        AiService $ai,
+        EntityManagerInterface $em
+    ): JsonResponse {
+        $offres = $repo->findAll();
+        $offresWithout = array_values(array_filter($offres, fn($o) => $o->getQuestions()->count() === 0));
+
+        if (empty($offresWithout)) {
+            return new JsonResponse(['success' => true, 'count' => 0, 'message' => 'Toutes les offres ont déjà des questions.']);
+        }
+
+        $totalSaved = 0;
+        $errors = [];
+
+        foreach ($offresWithout as $offre) {
+            try {
+                $generated = $ai->generateQuestions($offre->getTitre(), $offre->getDescription(), $offre->getDomaine(), 5);
+                foreach ($generated as $item) {
+                    $q = new Question();
+                    $q->setOffre($offre);
+                    $q->setQuestion($item['question'] ?? '');
+                    $q->setChoix1($item['choix'][0] ?? 'A');
+                    $q->setChoix2($item['choix'][1] ?? 'B');
+                    $q->setChoix3($item['choix'][2] ?? null);
+                    $q->setChoix4($item['choix'][3] ?? null);
+                    $q->setBonneReponse((int) ($item['bonne_reponse'] ?? 1));
+                    $q->setPoints((int) ($item['points'] ?? 1));
+                    $em->persist($q);
+                    $totalSaved++;
+                }
+                $em->flush();
+            } catch (\Throwable $e) {
+                $errors[] = $offre->getTitre() . ': ' . $e->getMessage();
+            }
+        }
+
+        return new JsonResponse([
+            'success'   => true,
+            'count'     => count($offresWithout),
+            'questions' => $totalSaved,
+            'errors'    => $errors,
+        ]);
     }
 
     // ── AI: Generate questions ─────────────────────────────────────────────
