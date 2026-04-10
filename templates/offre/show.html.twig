@@ -37,52 +37,97 @@
         <p class="empty-sub">Aucune candidature pour cette offre.</p>
     {% else %}
 
-    {# Charts #}
-    <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:24px;align-items:flex-start">
-        {% if scoreChartUrl %}
-        <div style="flex:1;min-width:300px">
-            <div style="font-size:13px;font-weight:600;color:#6C63FF;margin-bottom:8px">📊 Distribution des scores</div>
-            <img src="{{ scoreChartUrl }}" alt="Score chart" style="width:100%;border-radius:12px;border:1px solid var(--border)">
+    {# Toolbar #}
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+        <span style="font-size:13px;color:var(--text-light)">{{ candidatures|length }} candidat(s)</span>
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+            <select id="chart-type" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border);font-size:13px;background:var(--white)">
+                <option value="bar">📊 Barres</option>
+                <option value="horizontalBar">📊 Barres horizontales</option>
+                <option value="doughnut">🍩 Donut</option>
+                <option value="pie">🥧 Camembert</option>
+                <option value="radar">🕸️ Radar</option>
+                <option value="line">📈 Ligne</option>
+            </select>
+            <button onclick="openChartModal()" class="btn" style="background:linear-gradient(135deg,#6C63FF,#9D6BFF);color:#fff;border:none;font-weight:600">
+                📊 Générer graphique
+            </button>
         </div>
-        {% endif %}
-        {% if statutChartUrl %}
-        <div style="min-width:220px">
-            <div style="font-size:13px;font-weight:600;color:#6C63FF;margin-bottom:8px">🎯 Statuts</div>
-            <img src="{{ statutChartUrl }}" alt="Statut chart" style="width:100%;border-radius:12px;border:1px solid var(--border)">
-        </div>
-        {% endif %}
     </div>
 
-    <table class="data-table">
-        <thead><tr><th>#</th><th>Candidat</th><th>Score Quiz</th><th>Score CV IA</th><th>Statut</th><th>Actions</th></tr></thead>
+    {# Ranking table #}
+    <table class="data-table" id="ranking-table">
+        <thead>
+            <tr>
+                <th>Rang</th>
+                <th>Candidat</th>
+                <th>Score Quiz <small style="font-weight:400;color:#9999b8">(20%)</small></th>
+                <th>Score CV IA <small style="font-weight:400;color:#9999b8">(80%)</small></th>
+                <th>Score Final</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
         <tbody>
         {% for i, c in candidatures %}
-        <tr>
-            <td>{{ i == 0 ? '🥇' : (i == 1 ? '🥈' : (i == 2 ? '🥉' : i+1)) }}</td>
-            <td>{{ c.candidat.fullName }}</td>
+        {% set final = finalScores[c.id] %}
+        <tr data-name="{{ c.candidat.fullName }}" data-quiz="{{ c.score }}" data-cv="{{ c.cvScoreIa ?? '' }}" data-final="{{ final }}">
+            <td style="font-size:18px;text-align:center">
+                {{ i == 0 ? '🥇' : (i == 1 ? '🥈' : (i == 2 ? '🥉' : '#' ~ (i+1))) }}
+            </td>
+            <td style="font-weight:600">{{ c.candidat.fullName }}</td>
             <td><strong>{{ c.score }}%</strong></td>
             <td id="cv-score-{{ c.id }}">
                 {% if c.cvScoreIa is not null %}
                     <span style="color:#6C63FF;font-weight:600">{{ c.cvScoreIa }}%</span>
+                    {% if c.candidat.cvScoreDetails %}
+                        <span title="{{ c.candidat.cvScoreDetails }}" style="cursor:help;color:#9999b8;font-size:11px"> ℹ️</span>
+                    {% endif %}
                 {% else %}
                     <button class="btn btn-sm" style="background:rgba(108,99,255,.1);color:#6C63FF;border:1px solid rgba(108,99,255,.3);font-size:11px"
                             onclick="analyseCv({{ c.id }}, this)">🤖 Analyser CV</button>
                 {% endif %}
             </td>
+            <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                    <div style="flex:1;height:8px;background:#f0f0f8;border-radius:4px;min-width:60px">
+                        <div style="height:8px;border-radius:4px;background:{{ final >= 70 ? '#4ade80' : (final >= 40 ? '#facc15' : '#f87171') }};width:{{ final }}%"></div>
+                    </div>
+                    <strong style="color:{{ final >= 70 ? '#16a34a' : (final >= 40 ? '#ca8a04' : '#dc2626') }}">{{ final }}%</strong>
+                </div>
+            </td>
             <td><span class="badge {{ c.statutClass }}">{{ c.statutLabel }}</span></td>
             <td>
-                <form method="post" action="{{ path('candidature_statut', {id: c.id, statut: 1}) }}" style="display:inline">
-                    <button class="btn btn-sm btn-success" {{ c.statutAdmin == 1 ? 'disabled' : '' }}>✅</button>
-                </form>
-                <form method="post" action="{{ path('candidature_statut', {id: c.id, statut: -1}) }}" style="display:inline">
-                    <button class="btn btn-sm btn-danger" {{ c.statutAdmin == -1 ? 'disabled' : '' }}>❌</button>
-                </form>
+                <div class="admin-row-actions">
+                    <form method="post" action="{{ path('candidature_statut', {id: c.id, statut: 1}) }}" style="display:inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token('statut' ~ c.id) }}">
+                        <button class="btn btn-sm btn-success" {{ c.statutAdmin == 1 ? 'disabled' : '' }} title="Accepter">✅</button>
+                    </form>
+                    <form method="post" action="{{ path('candidature_statut', {id: c.id, statut: -1}) }}" style="display:inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token('statut' ~ c.id) }}">
+                        <button class="btn btn-sm btn-danger" {{ c.statutAdmin == -1 ? 'disabled' : '' }} title="Refuser">❌</button>
+                    </form>
+                </div>
             </td>
         </tr>
         {% endfor %}
         </tbody>
     </table>
     {% endif %}
+</div>
+
+{# ── Chart Modal ── #}
+<div id="chart-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:16px;padding:28px;max-width:780px;width:95%;max-height:90vh;overflow-y:auto;position:relative">
+        <button onclick="closeChartModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#666">✕</button>
+        <h3 style="margin:0 0 20px;font-size:16px;font-weight:700;color:#1a1730">📊 Graphique des candidats — {{ offre.titre }}</h3>
+        <div id="chart-container" style="text-align:center">
+            <p style="color:#9999b8">Génération en cours...</p>
+        </div>
+        <div style="margin-top:16px;text-align:center">
+            <a id="chart-download" href="#" download="chart.png" style="display:none" class="btn btn-secondary">⬇️ Télécharger</a>
+        </div>
+    </div>
 </div>
 
 {# ── Questions ── #}
@@ -154,10 +199,98 @@ function showTab(name, btn) {
     document.getElementById('tab-' + name).style.display = '';
     btn.classList.add('tab-active');
 }
-// Auto-open questions tab if fragment
 if (location.hash === '#questions') showTab('questions', document.querySelector('[onclick*="questions"]'));
 
-// ── AI: Generate questions ──────────────────────────────────────────────
+// ── Chart Modal ────────────────────────────────────────────────────────
+function openChartModal() {
+    const modal = document.getElementById('chart-modal');
+    modal.style.display = 'flex';
+    generateChart();
+}
+function closeChartModal() {
+    document.getElementById('chart-modal').style.display = 'none';
+}
+document.getElementById('chart-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeChartModal();
+});
+
+function generateChart() {
+    const type = document.getElementById('chart-type').value;
+    const rows = document.querySelectorAll('#ranking-table tbody tr');
+
+    const labels = [], quizData = [], cvData = [], finalData = [];
+    rows.forEach(row => {
+        labels.push(row.dataset.name);
+        quizData.push(parseInt(row.dataset.quiz) || 0);
+        cvData.push(row.dataset.cv !== '' ? parseInt(row.dataset.cv) : null);
+        finalData.push(parseInt(row.dataset.final) || 0);
+    });
+
+    let config;
+    const isRound = type === 'doughnut' || type === 'pie';
+
+    if (isRound) {
+        // For doughnut/pie: show final scores
+        config = {
+            type: type,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Score Final',
+                    data: finalData,
+                    backgroundColor: ['#6C63FF','#9D6BFF','#4ade80','#facc15','#f87171','#60a5fa','#fb923c','#a78bfa'],
+                }]
+            },
+            options: { plugins: { legend: { position: 'bottom' } } }
+        };
+    } else if (type === 'radar') {
+        config = {
+            type: 'radar',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'Score Final', data: finalData, borderColor: '#6C63FF', backgroundColor: 'rgba(108,99,255,.15)', pointBackgroundColor: '#6C63FF' },
+                    { label: 'Score Quiz', data: quizData, borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,.1)', pointBackgroundColor: '#4ade80' },
+                ]
+            },
+            options: { scales: { r: { beginAtZero: true, max: 100 } } }
+        };
+    } else {
+        // bar / horizontalBar / line
+        const chartType = type === 'horizontalBar' ? 'bar' : type;
+        config = {
+            type: chartType,
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'Score Final (80% CV + 20% Quiz)', data: finalData, backgroundColor: 'rgba(108,99,255,.8)', borderColor: '#6C63FF', borderWidth: 2, borderRadius: 6 },
+                    { label: 'Score Quiz', data: quizData, backgroundColor: 'rgba(74,222,128,.6)', borderColor: '#4ade80', borderWidth: 2, borderRadius: 6 },
+                    { label: 'Score CV IA', data: cvData, backgroundColor: 'rgba(250,204,21,.6)', borderColor: '#facc15', borderWidth: 2, borderRadius: 6 },
+                ]
+            },
+            options: {
+                indexAxis: type === 'horizontalBar' ? 'y' : 'x',
+                scales: { y: { beginAtZero: true, max: 100 } },
+                plugins: { legend: { position: 'bottom' } }
+            }
+        };
+    }
+
+    const url = 'https://quickchart.io/chart?w=700&h=400&c=' + encodeURIComponent(JSON.stringify(config));
+    const container = document.getElementById('chart-container');
+    container.innerHTML = '<img src="' + url + '" style="max-width:100%;border-radius:10px" onload="this.style.opacity=1" onerror="this.parentElement.innerHTML=\'<p style=color:#f87171>Erreur de génération du graphique</p>\'">';
+
+    const dl = document.getElementById('chart-download');
+    dl.href = url;
+    dl.style.display = 'inline-block';
+}
+
+// Re-generate when chart type changes (if modal open)
+document.getElementById('chart-type').addEventListener('change', function() {
+    if (document.getElementById('chart-modal').style.display === 'flex') generateChart();
+});
+
+// ── AI: Generate questions ─────────────────────────────────────────────
 function generateQuestions(offreId) {
     const count  = document.getElementById('ia-count').value;
     const status = document.getElementById('ia-status');
@@ -180,20 +313,33 @@ function generateQuestions(offreId) {
     .catch(() => { status.textContent = '❌ Erreur réseau'; });
 }
 
-// ── AI: Analyse CV ──────────────────────────────────────────────────────
+// ── AI: Analyse CV ─────────────────────────────────────────────────────
 function analyseCv(candidatureId, btn) {
     btn.textContent = '⏳...';
     btn.disabled = true;
 
-    fetch(`/admin/offres/candidature/${candidatureId}/analyse-cv`, {
-        method: 'POST',
-    })
+    fetch(`/admin/offres/candidature/${candidatureId}/analyse-cv`, { method: 'POST' })
     .then(r => r.json())
     .then(data => {
         const cell = document.getElementById('cv-score-' + candidatureId);
         if (data.success) {
-            cell.innerHTML = `<span style="color:#6C63FF;font-weight:600">${data.score}%</span>
-                <span title="${data.details}" style="cursor:help;font-size:11px;color:#9999b8"> ℹ️</span>`;
+            cell.innerHTML = `<span style="color:#6C63FF;font-weight:600">${data.score}%</span>`
+                + (data.details ? ` <span title="${data.details.replace(/"/g,"'")}" style="cursor:help;color:#9999b8;font-size:11px">ℹ️</span>` : '');
+            // Update data-cv on the row for chart
+            const row = cell.closest('tr');
+            if (row) {
+                row.dataset.cv = data.score;
+                const quiz = parseInt(row.dataset.quiz) || 0;
+                const newFinal = Math.round(data.score * 0.8 + quiz * 0.2);
+                row.dataset.final = newFinal;
+                // Update final score cell (5th td)
+                const finalCell = row.cells[4];
+                if (finalCell) {
+                    const color = newFinal >= 70 ? '#16a34a' : (newFinal >= 40 ? '#ca8a04' : '#dc2626');
+                    const bg    = newFinal >= 70 ? '#4ade80' : (newFinal >= 40 ? '#facc15' : '#f87171');
+                    finalCell.innerHTML = `<div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:8px;background:#f0f0f8;border-radius:4px;min-width:60px"><div style="height:8px;border-radius:4px;background:${bg};width:${newFinal}%"></div></div><strong style="color:${color}">${newFinal}%</strong></div>`;
+                }
+            }
         } else {
             cell.innerHTML = `<span style="color:#f87171;font-size:11px">${data.error}</span>`;
         }
