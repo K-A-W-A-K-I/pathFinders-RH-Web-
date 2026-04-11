@@ -40,7 +40,7 @@
 <!-- TABS -->
 <div class="dash-tabs">
   <button class="dash-tab active" onclick="showTab('categories')">📂 Catégories</button>
-  <button class="dash-tab" onclick="showTab('formations')">🎓 Formations</button>
+  <button class="dash-tab" onclick="showTab('formations'); resetFormationsFilter()">🎓 Formations</button>
   <button class="dash-tab" onclick="showTab('inscriptions')">✅ Inscriptions</button>
 </div>
 
@@ -105,7 +105,7 @@
     <div class="admin-table-header">
       <div class="admin-table-title">
         Formations
-        <span class="admin-count-badge">{{ formations|length }}</span>
+        <span class="admin-count-badge" id="formations-count-badge">{{ formations|length }}</span>
       </div>
       <div class="admin-table-actions">
         <input type="text" id="search-form" placeholder="Rechercher..." class="admin-search-input" oninput="filterTable('tbl-form', this.value)">
@@ -217,18 +217,42 @@ function showTab(name) {
       t.classList.add('active');
     }
   });
+  // Ne réinitialiser que si on vient du tab, pas du bouton "📋 Formations"
+  if (name === 'formations') {
+    const sel = document.getElementById('filter-cat');
+    if (sel && sel.value !== '') {
+      // Ne réinitialiser que si on vient du tab, pas du bouton "📋 Formations"
+    }
+  }
+}
+
+function resetFormationsFilter() {
+  const sel = document.getElementById('filter-cat');
+  const search = document.getElementById('search-form');
+  if (sel) { sel.value = ''; filterByCat(''); }
+  if (search) { search.value = ''; filterTable('tbl-form', ''); }
 }
 
 function filterTable(tableId, q) {
+  let count = 0;
   document.querySelectorAll('#' + tableId + ' tbody tr').forEach(row => {
-    row.style.display = row.innerText.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+    const visible = row.innerText.toLowerCase().includes(q.toLowerCase());
+    row.style.display = visible ? '' : 'none';
+    if (visible) count++;
   });
+  if (tableId === 'tbl-form') {
+    document.getElementById('formations-count-badge').textContent = count;
+  }
 }
 
 function filterByCat(catId) {
+  let count = 0;
   document.querySelectorAll('#tbl-form tbody tr').forEach(row => {
-    row.style.display = (!catId || row.dataset.catid === catId) ? '' : 'none';
+    const visible = !catId || row.dataset.catid === catId;
+    row.style.display = visible ? '' : 'none';
+    if (visible) count++;
   });
+  document.getElementById('formations-count-badge').textContent = count;
 }
 
 function sortCategories(sortValue) {
