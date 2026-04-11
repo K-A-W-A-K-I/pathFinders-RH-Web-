@@ -116,6 +116,7 @@
           </div>
 
           {# Status + action #}
+          {% set delaiDepasse = f.dateFin is not null and "now"|date('U') > f.dateFin|date('U') %}
           <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px">
             {% if prog == 100 %}
               <span class="mi-status mi-status-termine">TERMINÉ</span>
@@ -124,7 +125,16 @@
             {% else %}
               <span class="mi-status mi-status-nondebute">NON DÉBUTÉ</span>
             {% endif %}
-            <a href="{{ path('client_formation_detail', {id: f.idFormation}) }}" class="pf-btn-details" style="margin-top:0;font-size:12px;padding:6px 14px">📋 Accéder</a>
+
+            {% if delaiDepasse and prog < 100 %}
+              <form method="post" action="{{ path('client_formation_reinscire', {id: f.idFormation}) }}">
+                <button disabled title="Le délai de cette formation est dépassé" style="padding:6px 14px;border-radius:10px;border:none;background:rgba(226,75,74,.2);color:#E24B4A;font-size:12px;font-weight:600;cursor:not-allowed">
+                  🚫 Accès refusé
+                </button>
+              </form>
+            {% else %}
+              <a href="{{ path('client_formation_detail', {id: f.idFormation}) }}" class="pf-btn-details" style="margin-top:0;font-size:12px;padding:6px 14px">📋 Accéder</a>
+            {% endif %}
           </div>
 
         </div>

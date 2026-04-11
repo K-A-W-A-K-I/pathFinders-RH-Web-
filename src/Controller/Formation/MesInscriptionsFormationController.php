@@ -54,12 +54,16 @@ class MesInscriptionsFormationController extends AbstractController
             $f          = $i->getFormation();
             $totalMods  = $f->getContenuModules()->count();
             $modulesVus = $session->get('modules_vus_' . $f->getIdFormation(), []);
-            $prog       = $totalMods > 0 ? round((count($modulesVus) / $totalMods) * 100) : (int)$i->getPourcentage_progression();
+
+            // Priorité : valeur en base, sinon calculer depuis session
+            $progBase    = (int)$i->getPourcentage_progression();
+            $progSession = $totalMods > 0 ? (int)round((count($modulesVus) / $totalMods) * 100) : 0;
+            $prog        = max($progBase, $progSession);
 
             $unified[] = [
                 'formation'   => $f,
                 'dateInscrit' => $i->getDate_inscription(),
-                'progression' => (int)$prog,
+                'progression' => $prog,
                 'source'      => 'db',
             ];
         }
