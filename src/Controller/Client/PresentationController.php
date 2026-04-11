@@ -12,9 +12,14 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 #[Route('/formations', name: 'client_')]
 class PresentationController extends AbstractController
 {
-    private const GROQ_API_KEY = $_ENV['GROQ_API_KEY'];
+    private const GROQ_API_KEY = '';
     private const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
     private const VOICERSS_KEY = '3c1a419a9c314d7ba9c86c0a465b1100';
+
+    private function getGroqKey(): string
+    {
+        return $_ENV['GROQ_API_KEY'] ?? self::GROQ_API_KEY;
+    }
 
     #[Route('/translate', name: 'translate', methods: ['POST'])]
     public function translate(Request $request): JsonResponse
@@ -142,7 +147,7 @@ class PresentationController extends AbstractController
             CURLOPT_POSTFIELDS     => $payload,
             CURLOPT_HTTPHEADER     => [
                 'Content-Type: application/json',
-                'Authorization: Bearer ' . self::GROQ_API_KEY,
+                'Authorization: Bearer ' . $this->getGroqKey(),
             ],
             CURLOPT_TIMEOUT        => 30,
             CURLOPT_SSL_VERIFYPEER => false,
