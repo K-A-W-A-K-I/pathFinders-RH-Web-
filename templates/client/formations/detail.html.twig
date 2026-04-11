@@ -79,7 +79,18 @@
           <div class="pf-section-label">Contenu de la formation</div>
           <h2>Modules</h2>
           <div class="pf-divider"></div>
-          {% if contenuModules is empty %}
+          {% if delaiDepasse %}
+            <div style="text-align:center;padding:2rem">
+              <div style="font-size:2rem;margin-bottom:.8rem">⏰</div>
+              <h3 style="font-family:'Sora',sans-serif;color:var(--red);margin-bottom:.5rem">Délai dépassé</h3>
+              <p style="color:var(--text-muted);font-size:14px;margin-bottom:1.5rem">La date de fin de cette formation est passée. Vous ne pouvez plus accéder aux modules.</p>
+              {% if progression < 100 %}
+                <button disabled title="Le délai de cette formation est dépassé" style="padding:12px 28px;border-radius:10px;border:none;background:rgba(226,75,74,.2);color:#E24B4A;font-size:14px;font-weight:600;cursor:not-allowed;margin-top:1rem">
+                  🚫 Accès refusé
+                </button>
+              {% endif %}
+            </div>
+          {% elseif contenuModules is empty %}
             <p style="color:var(--text-muted)">Aucun module disponible pour le moment.</p>
           {% else %}
             {% for module in contenuModules %}
@@ -109,10 +120,21 @@
     <div class="pf-section" style="position:sticky;top:80px">
       {% if isInscrit %}
         <div style="text-align:center;padding:1rem 0">
-          <div style="font-size:2rem;margin-bottom:.8rem">✅</div>
-          <h3 style="font-family:'Sora',sans-serif;color:var(--teal);margin-bottom:.4rem">Vous êtes inscrit</h3>
-          <p style="color:var(--text-muted);font-size:13px">Vous avez accès au contenu de cette formation.</p>
-          <button disabled style="width:100%;margin-top:1.2rem;padding:12px;border-radius:10px;border:none;background:rgba(29,158,117,.15);color:var(--teal);font-size:14px;font-weight:600;cursor:not-allowed">Déjà inscrit</button>
+          {% if delaiDepasse %}
+            <div style="font-size:2rem;margin-bottom:.8rem">⏰</div>
+            <h3 style="font-family:'Sora',sans-serif;color:var(--red);margin-bottom:.4rem">Délai dépassé</h3>
+            <p style="color:var(--text-muted);font-size:13px">La date de fin est passée.</p>
+            {% if progression < 100 %}
+              <button disabled title="Le délai de cette formation est dépassé" style="width:100%;margin-top:1rem;padding:12px;border-radius:10px;border:none;background:rgba(226,75,74,.2);color:#E24B4A;font-size:14px;font-weight:600;cursor:not-allowed">
+                🚫 Accès refusé
+              </button>
+            {% endif %}
+          {% else %}
+            <div style="font-size:2rem;margin-bottom:.8rem">✅</div>
+            <h3 style="font-family:'Sora',sans-serif;color:var(--teal);margin-bottom:.4rem">Vous êtes inscrit</h3>
+            <p style="color:var(--text-muted);font-size:13px">Vous avez accès au contenu de cette formation.</p>
+            <button disabled style="width:100%;margin-top:1.2rem;padding:12px;border-radius:10px;border:none;background:rgba(29,158,117,.15);color:var(--teal);font-size:14px;font-weight:600;cursor:not-allowed">Déjà inscrit</button>
+          {% endif %}
         </div>
       {% elseif formation.placeDisponible <= 0 %}
         <div style="text-align:center;padding:1rem 0">
@@ -120,6 +142,15 @@
           <h3 style="font-family:'Sora',sans-serif;color:var(--red);margin-bottom:.4rem">Formation complète</h3>
           <p style="color:var(--text-muted);font-size:13px">Aucune place disponible.</p>
           <button disabled style="width:100%;margin-top:1.2rem;padding:12px;border-radius:10px;border:none;background:rgba(226,75,74,.15);color:var(--red);font-size:14px;font-weight:600;cursor:not-allowed">Inscription fermée</button>
+        </div>
+      {% elseif delaiDepasse %}
+        <div style="text-align:center;padding:1rem 0">
+          <div style="font-size:2rem;margin-bottom:.8rem">⏰</div>
+          <h3 style="font-family:'Sora',sans-serif;color:var(--red);margin-bottom:.4rem">Délai dépassé</h3>
+          <p style="color:var(--text-muted);font-size:13px">La date de fin de cette formation est passée.</p>
+          <button disabled title="Le délai de cette formation est dépassé" style="width:100%;margin-top:1rem;padding:12px;border-radius:10px;border:none;background:rgba(226,75,74,.2);color:#E24B4A;font-size:14px;font-weight:600;cursor:not-allowed">
+            🚫 Accès refusé
+          </button>
         </div>
       {% else %}
         <div class="pf-section-label">S'inscrire</div>

@@ -80,8 +80,23 @@ class FormationController extends AbstractController
         // Calcul progression
         $totalModules = $formation->getContenuModules()->count();
         $modulesVus   = $session->get('modules_vus_' . $id, []);
-        $nbVus        = count($modulesVus);
-        $progression  = $totalModules > 0 ? round(($nbVus / $totalModules) * 100) : 0;
+
+        // Si connecté et session vide, restaurer depuis la base
+        if ($user && empty($modulesVus) && $totalModules > 0) {
+            $inscForm = $inscFormRepo->findOneBy(['utilisateur' => $user, 'formation' => $formation]);
+            if ($inscForm && $inscForm->getPourcentage_progression() > 0) {
+                $allMods = $formation->getContenuModules()->toArray();
+                usort($allMods, fn($a, $b) => $a->getOrdre() <=> $b->getOrdre());
+                $nbVusBase = (int)round((float)$inscForm->getPourcentage_progression() / 100 * $totalModules);
+                for ($i = 0; $i < $nbVusBase && $i < count($allMods); $i++) {
+                    $modulesVus[] = $allMods[$i]->getIdContenu();
+                }
+                $session->set('modules_vus_' . $id, $modulesVus);
+            }
+        }
+
+        $nbVus       = count($modulesVus);
+        $progression = $totalModules > 0 ? round(($nbVus / $totalModules) * 100) : 0;
 
         return $this->render('client/formations/detail.html.twig', [
             'formation'      => $formation,
@@ -91,6 +106,7 @@ class FormationController extends AbstractController
             'nbVus'          => $nbVus,
             'totalModules'   => $totalModules,
             'modulesVus'     => $modulesVus,
+            'delaiDepasse'   => $formation->getDateFin() && new \DateTime() > $formation->getDateFin(),
         ]);
     }
 
@@ -102,10 +118,6 @@ public function inscrire(
     InscriptionsFormationRepository $inscFormRepo,
     EntityManagerInterface $em
 ): Response {
-    // 🔍 DEBUG TEMPORAIRE
-    dump($this->getUser());
-    die();
-
     $formation = $formationRepo->find($id);
     if (!$formation) {
         throw $this->createNotFoundException('Formation introuvable.');
@@ -177,9 +189,40 @@ public function inscrire(
             return $this->redirectToRoute('client_formation_detail', ['id' => $formation->getIdFormation()]);
         }
 
+        // Bloquer si délai dépassé et progression < 100% et pas de réinscription récente
+        if ($formation->getDateFin()) {
+            $now = new \DateTime();
+            if ($now > $formation->getDateFin()) {
+                $inscForm = $user ? $inscFormRepo->findOneBy(['utilisateur' => $user, 'formation' => $formation]) : null;
+                $prog = $inscForm ? (int)$inscForm->getPourcentage_progression() : 0;
+                // Bloquer seulement si l'inscription date d'avant la date de fin
+                if ($prog < 100 && $inscForm && $inscForm->getDate_inscription() < $formation->getDateFin()) {
+                    $this->addFlash('error', 'Le délai de cette formation est dépassé. Vous pouvez vous réinscrire.');
+                    return $this->redirectToRoute('mes_inscriptions_formation');
+                }
+            }
+        }
+
         // Enregistrer ce module comme vu
         $sessionKey = 'modules_vus_' . $formation->getIdFormation();
         $modulesVus = $session->get($sessionKey, []);
+
+        // Si connecté et session vide, restaurer depuis la base
+        if ($user && empty($modulesVus)) {
+            $inscForm = $inscFormRepo->findOneBy(['utilisateur' => $user, 'formation' => $formation]);
+            if ($inscForm && $inscForm->getPourcentage_progression() > 0) {
+                // Reconstruire les modules vus depuis la progression sauvegardée
+                $allMods = $formation->getContenuModules()->toArray();
+                usort($allMods, fn($a, $b) => $a->getOrdre() <=> $b->getOrdre());
+                $totalMods = count($allMods);
+                $nbVusBase = $totalMods > 0 ? (int)round((float)$inscForm->getPourcentage_progression() / 100 * $totalMods) : 0;
+                for ($i = 0; $i < $nbVusBase && $i < $totalMods; $i++) {
+                    $modulesVus[] = $allMods[$i]->getIdContenu();
+                }
+                $session->set($sessionKey, $modulesVus);
+            }
+        }
+
         if (!in_array($id, $modulesVus)) {
             $modulesVus[] = $id;
             $session->set($sessionKey, $modulesVus);
@@ -188,6 +231,15 @@ public function inscrire(
         $totalModules = $formation->getContenuModules()->count();
         $nbVus        = count($modulesVus);
         $progression  = $totalModules > 0 ? round(($nbVus / $totalModules) * 100) : 0;
+
+        // Sauvegarder la progression en base si connecté
+        if ($user) {
+            $inscForm = $inscFormRepo->findOneBy(['utilisateur' => $user, 'formation' => $formation]);
+            if ($inscForm && (float)$inscForm->getPourcentage_progression() < $progression) {
+                $inscForm->setPourcentage_progression((string)$progression);
+                $em->flush();
+            }
+        }
 
         $allModules = $formation->getContenuModules()->toArray();
         usort($allModules, fn($a, $b) => $a->getOrdre() <=> $b->getOrdre());
@@ -270,6 +322,50 @@ public function inscrire(
                 'Content-Disposition' => 'attachment; filename="' . $filename . '"',
             ]
         );
+    }
+
+    #[Route('/reinscire/{id}', name: 'formation_reinscire', methods: ['POST'])]
+    public function reinscire(
+        int $id,
+        Request $request,
+        FormationRepository $formationRepo,
+        InscriptionsFormationRepository $inscFormRepo,
+        EntityManagerInterface $em
+    ): Response {
+        $formation = $formationRepo->find($id);
+        if (!$formation) throw $this->createNotFoundException();
+
+        $user = $this->getUser();
+        if (!$user) return $this->redirectToRoute('auth_login');
+
+        // Supprimer l'ancienne inscription et flush immédiatement
+        $existing = $inscFormRepo->findOneBy(['utilisateur' => $user, 'formation' => $formation]);
+        if ($existing) {
+            $em->remove($existing);
+            $em->flush();
+        }
+
+        // Vérifier places disponibles
+        if ($formation->getPlaceDisponible() <= 0) {
+            $this->addFlash('error', 'Aucune place disponible.');
+            return $this->redirectToRoute('mes_inscriptions_formation');
+        }
+
+        // Nouvelle inscription
+        $formation->setPlaceDisponible($formation->getPlaceDisponible() - 1);
+        $inscForm = new \App\Entity\InscriptionsFormation();
+        $inscForm->setUtilisateur($user);
+        $inscForm->setFormation($formation);
+        $inscForm->setDate_inscription(new \DateTime());
+        $inscForm->setPourcentage_progression('0');
+        $em->persist($inscForm);
+        $em->flush();
+
+        // Réinitialiser la progression en session
+        $request->getSession()->remove('modules_vus_' . $id);
+
+        $this->addFlash('success', 'Réinscription réussie ! Vous avez de nouveau accès aux modules.');
+        return $this->redirectToRoute('client_formation_detail', ['id' => $id]);
     }
 
     #[Route('/mes-inscriptions', name: 'mes_inscriptions')]
