@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: Georgia, serif;
+    background: #ffffff;
+    width: 210mm;
+    height: 297mm;
+  }
+
+  .cert {
+    width: 210mm;
+    height: 297mm;
+    position: relative;
+    background: #ffffff;
+    border: 2.5px solid #c9a84c;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── Header navy ── */
+  .header {
+    background: #1a2f4e;
+    padding: 22px 28px 18px;
+  }
+  .header-org {
+    font-family: Georgia, serif;
+    font-size: 22pt;
+    font-weight: bold;
+    color: #ffffff;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .header-sub {
+    font-family: Arial, sans-serif;
+    font-size: 7pt;
+    color: #c9a84c;
+    letter-spacing: 3px;
+  }
+
+  /* ── Ligne dorée sous header ── */
+  .gold-line {
+    height: 2.5px;
+    background: linear-gradient(to right, #c9a84c, #e8d5a3, #c9a84c);
+  }
+
+  /* ── Bordure intérieure ── */
+  .inner-frame {
+    margin: 12px;
+    border: 1px solid #c9a84c;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 32px 24px;
+  }
+
+  /* ── Corps ── */
+  .body {
+    text-align: center;
+    width: 100%;
+  }
+
+  .label-spaced {
+    font-family: Arial, sans-serif;
+    font-size: 6pt;
+    color: #94a3b8;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .cert-title-1 {
+    font-family: Georgia, serif;
+    font-size: 22pt;
+    font-weight: bold;
+    color: #0f172a;
+    margin-bottom: 4px;
+  }
+
+  .cert-title-2 {
+    font-family: Georgia, serif;
+    font-size: 22pt;
+    font-style: italic;
+    color: #1a2f4e;
+    margin-bottom: 14px;
+  }
+
+  .gold-diamonds {
+    font-size: 11pt;
+    color: #c9a84c;
+    margin-bottom: 18px;
+    letter-spacing: 8px;
+  }
+
+  .label-decerne {
+    font-family: Arial, sans-serif;
+    font-size: 6pt;
+    color: #94a3b8;
+    letter-spacing: 5px;
+    margin-bottom: 10px;
+  }
+
+  .nom-participant {
+    font-family: Georgia, serif;
+    font-size: 26pt;
+    font-style: italic;
+    color: #1a2f4e;
+    margin-bottom: 6px;
+  }
+
+  .gold-underline {
+    width: 220px;
+    height: 1.5px;
+    background: linear-gradient(to right, transparent, #c9a84c, transparent);
+    margin: 0 auto 20px;
+  }
+
+  .label-pour {
+    font-family: Arial, sans-serif;
+    font-size: 6pt;
+    color: #475569;
+    letter-spacing: 5px;
+    margin-bottom: 12px;
+  }
+
+  .formation-name {
+    font-family: Georgia, serif;
+    font-size: 13pt;
+    font-style: italic;
+    color: #0f172a;
+    padding: 8px 0;
+    border-top: 1px solid #d1d5db;
+    border-bottom: 1px solid #d1d5db;
+    margin-bottom: 16px;
+  }
+
+  .spacer-line {
+    width: 100%;
+    height: 1px;
+    background: #e5e7eb;
+    margin: 8px 0 16px;
+  }
+
+  .meta {
+    font-family: Arial, sans-serif;
+    font-size: 8pt;
+    color: #475569;
+    margin-bottom: 3px;
+  }
+
+  /* ── Bas : date + signature+tampon ── */
+  .bottom-row {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 10px;
+  }
+
+  .date-zone {
+    font-family: Arial, sans-serif;
+    font-size: 8pt;
+    color: #475569;
+  }
+
+  .signature-zone {
+    text-align: left;
+    position: relative;
+    width: 200px;
+  }
+  .sig-name {
+    font-family: Georgia, serif;
+    font-style: italic;
+    font-size: 18pt;
+    color: #0f172a;
+    margin-bottom: 2px;
+  }
+  .sig-line {
+    border-bottom: 1.5px solid #0f172a;
+    margin-bottom: 4px;
+    width: 160px;
+  }
+  .sig-title {
+    font-family: Arial, sans-serif;
+    font-size: 7pt;
+    font-weight: bold;
+    color: #0f172a;
+  }
+  .sig-sub {
+    font-family: Arial, sans-serif;
+    font-size: 6pt;
+    color: #94a3b8;
+  }
+
+  /* Tampon positionné en bas à droite de la signature */
+  .stamp {
+    position: absolute;
+    bottom: -10px;
+    right: -20px;
+    width: 56px;
+    height: 56px;
+    border: 2px solid #c9a84c;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+  }
+  .stamp-text {
+    font-family: Arial, sans-serif;
+    font-size: 5.5pt;
+    font-weight: bold;
+    color: #c9a84c;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  /* ── Footer navy ── */
+  .gold-line-bot {
+    height: 2px;
+    background: linear-gradient(to right, #c9a84c, #e8d5a3, #c9a84c);
+  }
+  .footer {
+    background: #1a2f4e;
+    padding: 7px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer-left {
+    font-family: Arial, sans-serif;
+    font-size: 5pt;
+    color: rgba(255,255,255,0.5);
+  }
+  .footer-ref {
+    font-family: 'Courier New', monospace;
+    font-size: 5pt;
+    color: #c9a84c;
+  }
+</style>
+</head>
+<body>
+<div class="cert">
+
+  <!-- Header navy -->
+  <div class="header">
+    <div class="header-org">PATHFINDERS</div>
+    <div class="header-sub">FORMATION &nbsp;&amp;&nbsp; CERTIFICATION</div>
+  </div>
+  <div class="gold-line"></div>
+
+  <!-- Cadre intérieur avec contenu centré -->
+  <div class="inner-frame">
+
+    <div class="body">
+      <div class="label-spaced">CERTIFICAT OFFICIEL DE RÉUSSITE</div>
+      <div class="cert-title-1">Certificat de</div>
+      <div class="cert-title-2">Réussite</div>
+      <div class="gold-diamonds">◆ &nbsp; ◆ &nbsp; ◆</div>
+      <div class="label-decerne">CE CERTIFICAT EST DÉCERNÉ À</div>
+      <div class="nom-participant">{{ nomParticipant }}</div>
+      <div class="gold-underline"></div>
+      <div class="label-pour">POUR AVOIR COMPLÉTÉ AVEC SUCCÈS</div>
+      <div class="formation-name">« {{ formation.titre }} »</div>
+      <div class="spacer-line"></div>
+      {% if formation.formateur %}
+        <div class="meta">Dispensée par <strong>{{ formation.formateur }}</strong></div>
+      {% endif %}
+      {% if formation.dureeHeures %}
+        <div class="meta">Durée : {{ formation.dureeHeures }} heures</div>
+      {% endif %}
+    </div>
+
+    <!-- Bas : date à gauche, tampon+signature à droite -->
+    <div class="bottom-row">
+      <div class="date-zone">Fait le {{ dateObtention|date('d F Y') }}</div>
+      <div style="position:relative; width:200px;">
+        <div class="signature-zone">
+          <div class="sig-name">Pathfinders</div>
+          <div class="sig-line"></div>
+          <div class="sig-title">Direction Pathfinders</div>
+          <div class="sig-sub">Signature officielle</div>
+        </div>
+        <div class="stamp">
+          <div class="stamp-text">CER TIFIÉ<br>OFFICIEL</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer navy -->
+  <div class="gold-line-bot"></div>
+  <div class="footer">
+    <div class="footer-left">Pathfinders — Plateforme de formation certifiante — Document officiel</div>
+    <div class="footer-ref">REF: PF-{{ formation.idFormation }}-{{ dateObtention|date('Y') }}</div>
+  </div>
+
+</div>
+</body>
+</html>

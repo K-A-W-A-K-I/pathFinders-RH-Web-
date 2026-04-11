@@ -29,8 +29,8 @@ class InscriptionsFormation
         return $this;
     }
 
-    #[ORM\OneToOne(targetEntity: Utilisateur::class, inversedBy: 'inscriptionsFormation')]
-    #[ORM\JoinColumn(name: 'id_utilisateur', referencedColumnName: 'id_utilisateur', unique: true)]
+    #[ORM\ManyToOne(targetEntity: Utilisateur::class)]
+    #[ORM\JoinColumn(name: 'id_utilisateur', referencedColumnName: 'id_utilisateur', nullable: true)]
     private ?Utilisateur $utilisateur = null;
 
     public function getUtilisateur(): ?Utilisateur
@@ -44,8 +44,8 @@ class InscriptionsFormation
         return $this;
     }
 
-    #[ORM\OneToOne(targetEntity: Formation::class, inversedBy: 'inscriptionsFormation')]
-    #[ORM\JoinColumn(name: 'id_formation', referencedColumnName: 'id_formation', unique: true)]
+    #[ORM\ManyToOne(targetEntity: Formation::class)]
+    #[ORM\JoinColumn(name: 'id_formation', referencedColumnName: 'id_formation', nullable: true, onDelete: 'SET NULL')]
     private ?Formation $formation = null;
 
     public function getFormation(): ?Formation
@@ -74,14 +74,14 @@ class InscriptionsFormation
     }
 
     #[ORM\Column(type: 'decimal', nullable: true)]
-    private ?float $pourcentage_progression = null;
+    private ?string $pourcentage_progression = null;
 
-    public function getPourcentage_progression(): ?float
+    public function getPourcentage_progression(): ?string
     {
         return $this->pourcentage_progression;
     }
 
-    public function setPourcentage_progression(?float $pourcentage_progression): self
+    public function setPourcentage_progression(?string $pourcentage_progression): self
     {
         $this->pourcentage_progression = $pourcentage_progression;
         return $this;

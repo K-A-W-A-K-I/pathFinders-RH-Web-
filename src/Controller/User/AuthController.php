@@ -20,7 +20,6 @@ class AuthController extends AbstractController
     #[Route('/connexion', name: 'auth_login')]
     public function login(AuthenticationUtils $authUtils): Response
     {
-        // Already logged in → redirect by role
         if ($this->getUser()) {
             return $this->redirectByRole($this->getUser());
         }
@@ -60,7 +59,6 @@ class AuthController extends AbstractController
             $em->persist($user);
             $em->flush();
 
-            // Auto-create Candidat profile
             $candidat = new Candidat();
             $candidat->setIdUtilisateur($user->getId());
             $em->persist($candidat);
@@ -73,20 +71,29 @@ class AuthController extends AbstractController
         return $this->render('auth/register.html.twig', ['form' => $form]);
     }
 
-    // ── Post-login redirect ────────────────────────────────────────────────
-    #[Route('/redirect-after-login', name: 'auth_redirect')]
-    public function redirectAfterLogin(SessionInterface $session): Response
-    {
-        $user = $this->getUser();
-        if (!$user) {
-            return $this->redirectToRoute('auth_login');
-        }
-
-        // Store user_id in session for legacy session-based code
-        $session->set('user_id', method_exists($user, 'getId') ? $user->getId() : null);
-
-        return $this->redirectByRole($user);
+   #[Route('/redirect-after-login', name: 'auth_redirect')]
+public function redirectAfterLogin(SessionInterface $session, Request $request): Response
+{
+    $user = $this->getUser();
+    if (!$user) {
+        return $this->redirectToRoute('auth_login');
     }
+
+    // 🔍 DEBUG - voir toutes les clés de session
+    dump($session->all());
+    dump($session->get('_security.main.target_path'));
+    die();
+
+    $session->set('user_id', method_exists($user, 'getId') ? $user->getId() : null);
+
+    $targetUrl = $session->get('_security.main.target_path');
+    if ($targetUrl) {
+        $session->remove('_security.main.target_path');
+        return $this->redirect($targetUrl);
+    }
+
+    return $this->redirectByRole($user);
+}
 
     private function redirectByRole(object $user): Response
     {

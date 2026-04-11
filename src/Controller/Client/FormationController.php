@@ -3,10 +3,11 @@
 namespace App\Controller\Client;
 
 use App\Entity\Inscription;
-use App\Form\InscriptionType;
+use App\Entity\InscriptionsFormation;
 use App\Repository\CategorieFormationRepository;
 use App\Repository\FormationRepository;
 use App\Repository\InscriptionRepository;
+use App\Repository\InscriptionsFormationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -50,7 +51,8 @@ class FormationController extends AbstractController
         int $id,
         Request $request,
         FormationRepository $formationRepo,
-        InscriptionRepository $inscriptionRepo
+        InscriptionRepository $inscriptionRepo,
+        InscriptionsFormationRepository $inscFormRepo
     ): Response {
         $formation = $formationRepo->find($id);
         if (!$formation) {
@@ -59,76 +61,96 @@ class FormationController extends AbstractController
 
         $session   = $request->getSession();
         $sessionId = $session->getId();
-        if (!$sessionId) {
-            $session->start();
-            $sessionId = $session->getId();
+        if (!$sessionId) { $session->start(); $sessionId = $session->getId(); }
+
+        $user      = $this->getUser();
+        $isInscrit = false;
+
+        if ($user) {
+            // Vérifier dans inscriptions_formation
+            $existing = $inscFormRepo->findOneBy(['utilisateur' => $user, 'formation' => $formation]);
+            $isInscrit = $existing !== null;
+        } else {
+            // Fallback session
+            $isInscrit = $inscriptionRepo->isAlreadyInscrit($sessionId, $id);
         }
 
-        $isInscrit = $inscriptionRepo->isAlreadyInscrit($sessionId, $id);
         $contenuModules = $isInscrit ? $formation->getContenuModules() : [];
+
+        // Calcul progression
+        $totalModules = $formation->getContenuModules()->count();
+        $modulesVus   = $session->get('modules_vus_' . $id, []);
+        $nbVus        = count($modulesVus);
+        $progression  = $totalModules > 0 ? round(($nbVus / $totalModules) * 100) : 0;
 
         return $this->render('client/formations/detail.html.twig', [
             'formation'      => $formation,
             'isInscrit'      => $isInscrit,
             'contenuModules' => $contenuModules,
+            'progression'    => $progression,
+            'nbVus'          => $nbVus,
+            'totalModules'   => $totalModules,
+            'modulesVus'     => $modulesVus,
         ]);
     }
 
     #[Route('/inscrire/{id}', name: 'formation_inscrire', methods: ['POST'])]
-    public function inscrire(
-        int $id,
-        Request $request,
-        FormationRepository $formationRepo,
-        InscriptionRepository $inscriptionRepo,
-        EntityManagerInterface $em
-    ): Response {
-        $formation = $formationRepo->find($id);
-        if (!$formation) {
-            throw $this->createNotFoundException('Formation introuvable.');
-        }
+public function inscrire(
+    int $id,
+    Request $request,
+    FormationRepository $formationRepo,
+    InscriptionsFormationRepository $inscFormRepo,
+    EntityManagerInterface $em
+): Response {
+    // 🔍 DEBUG TEMPORAIRE
+    dump($this->getUser());
+    die();
 
-        $session   = $request->getSession();
-        $sessionId = $session->getId();
-        if (!$sessionId) {
-            $session->start();
-            $sessionId = $session->getId();
-        }
+    $formation = $formationRepo->find($id);
+    if (!$formation) {
+        throw $this->createNotFoundException('Formation introuvable.');
+    }
 
-        // Vérifier si déjà inscrit
-        $isInscrit = $inscriptionRepo->isAlreadyInscrit($sessionId, $id);
-        if ($isInscrit) {
-            $this->addFlash('warning', 'Vous êtes déjà inscrit à cette formation.');
-            return $this->redirectToRoute('client_formation_detail', ['id' => $id]);
-        }
+    $user = $this->getUser();
+    if (!$user) {
+        $this->addFlash('error', 'Vous devez être connecté pour vous inscrire à une formation.');
+        return $this->redirectToRoute('auth_login');
+    }
 
-        // Vérifier les places disponibles
-        if ($formation->getPlaceDisponible() <= 0) {
-            $this->addFlash('error', 'Aucune place disponible pour cette formation.');
-            return $this->redirectToRoute('client_formation_detail', ['id' => $id]);
-        }
-
-        // Créer l'inscription
-        $inscription = new Inscription();
-        $inscription->setSessionId($sessionId);
-        $inscription->setFormation($formation);
-        $inscription->setNomParticipant('Ranim');
-        $inscription->setEmailParticipant('ranim_wadrani@gmail.com');
-
-        // Décrémenter les places disponibles
-        $formation->setPlaceDisponible($formation->getPlaceDisponible() - 1);
-
-        $em->persist($inscription);
-        $em->flush();
-
-        $this->addFlash('success', 'Inscription réussie ! Vous avez maintenant accès au contenu de la formation.');
+    $existing = $inscFormRepo->findOneBy([
+        'utilisateur' => $user,
+        'formation'   => $formation,
+    ]);
+    if ($existing) {
+        $this->addFlash('warning', 'Vous êtes déjà inscrit à cette formation.');
         return $this->redirectToRoute('client_formation_detail', ['id' => $id]);
     }
 
+    if ($formation->getPlaceDisponible() <= 0) {
+        $this->addFlash('error', 'Aucune place disponible pour cette formation.');
+        return $this->redirectToRoute('client_formation_detail', ['id' => $id]);
+    }
+
+    $inscForm = new InscriptionsFormation();
+    $inscForm->setUtilisateur($user);
+    $inscForm->setFormation($formation);
+    $inscForm->setDate_inscription(new \DateTime());
+    $inscForm->setPourcentage_progression('0');
+
+    $formation->setPlaceDisponible($formation->getPlaceDisponible() - 1);
+
+    $em->persist($inscForm);
+    $em->flush();
+
+    $this->addFlash('success', 'Inscription réussie ! Vous avez maintenant accès au contenu de la formation.');
+    return $this->redirectToRoute('client_formation_detail', ['id' => $id]);
+}
     #[Route('/module/{id}', name: 'module_detail')]
     public function moduleDetail(
         int $id,
         Request $request,
         InscriptionRepository $inscriptionRepo,
+        InscriptionsFormationRepository $inscFormRepo,
         EntityManagerInterface $em
     ): Response {
         $module = $em->getRepository(\App\Entity\ContenuModule::class)->find($id);
@@ -137,26 +159,117 @@ class FormationController extends AbstractController
         }
 
         $formation = $module->getFormation();
-        
-        // Vérifier si l'utilisateur est inscrit à la formation
         $session   = $request->getSession();
         $sessionId = $session->getId();
-        if (!$sessionId) {
-            $session->start();
-            $sessionId = $session->getId();
+        if (!$sessionId) { $session->start(); $sessionId = $session->getId(); }
+
+        $user      = $this->getUser();
+        $isInscrit = false;
+
+        if ($user) {
+            $isInscrit = $inscFormRepo->findOneBy(['utilisateur' => $user, 'formation' => $formation]) !== null;
+        } else {
+            $isInscrit = $inscriptionRepo->isAlreadyInscrit($sessionId, $formation->getIdFormation());
         }
 
-        $isInscrit = $inscriptionRepo->isAlreadyInscrit($sessionId, $formation->getIdFormation());
-        
         if (!$isInscrit) {
             $this->addFlash('error', 'Vous devez être inscrit à la formation pour accéder à ce module.');
             return $this->redirectToRoute('client_formation_detail', ['id' => $formation->getIdFormation()]);
         }
 
+        // Enregistrer ce module comme vu
+        $sessionKey = 'modules_vus_' . $formation->getIdFormation();
+        $modulesVus = $session->get($sessionKey, []);
+        if (!in_array($id, $modulesVus)) {
+            $modulesVus[] = $id;
+            $session->set($sessionKey, $modulesVus);
+        }
+
+        $totalModules = $formation->getContenuModules()->count();
+        $nbVus        = count($modulesVus);
+        $progression  = $totalModules > 0 ? round(($nbVus / $totalModules) * 100) : 0;
+
+        $allModules = $formation->getContenuModules()->toArray();
+        usort($allModules, fn($a, $b) => $a->getOrdre() <=> $b->getOrdre());
+        $currentIndex = array_search($module, $allModules);
+        $prevModule   = $currentIndex > 0 ? $allModules[$currentIndex - 1] : null;
+        $nextModule   = $currentIndex < count($allModules) - 1 ? $allModules[$currentIndex + 1] : null;
+
         return $this->render('client/modules/detail.html.twig', [
-            'module'    => $module,
-            'formation' => $formation,
+            'module'       => $module,
+            'formation'    => $formation,
+            'progression'  => $progression,
+            'nbVus'        => $nbVus,
+            'totalModules' => $totalModules,
+            'modulesVus'   => $modulesVus,
+            'prevModule'   => $prevModule,
+            'nextModule'   => $nextModule,
         ]);
+    }
+
+    #[Route('/certificat/{id}', name: 'certificat')]
+    public function certificat(
+        int $id,
+        Request $request,
+        FormationRepository $formationRepo,
+        InscriptionRepository $inscriptionRepo,
+        InscriptionsFormationRepository $inscFormRepo
+    ): Response {
+        $formation = $formationRepo->find($id);
+        if (!$formation) throw $this->createNotFoundException();
+
+        $session   = $request->getSession();
+        $sessionId = $session->getId();
+        if (!$sessionId) { $session->start(); $sessionId = $session->getId(); }
+
+        $user      = $this->getUser();
+        $isInscrit = $user
+            ? $inscFormRepo->findOneBy(['utilisateur' => $user, 'formation' => $formation]) !== null
+            : $inscriptionRepo->isAlreadyInscrit($sessionId, $id);
+
+        if (!$isInscrit) {
+            $this->addFlash('error', 'Vous devez être inscrit pour obtenir un certificat.');
+            return $this->redirectToRoute('client_formation_detail', ['id' => $id]);
+        }
+
+        // Vérifier 100%
+        $totalModules = $formation->getContenuModules()->count();
+        $modulesVus   = $session->get('modules_vus_' . $id, []);
+        $progression  = $totalModules > 0 ? round((count($modulesVus) / $totalModules) * 100) : 0;
+
+        if ($progression < 100) {
+            $this->addFlash('warning', 'Vous devez compléter tous les modules pour obtenir votre certificat.');
+            return $this->redirectToRoute('client_formation_detail', ['id' => $id]);
+        }
+
+        $nomParticipant = $user ? $user->getFullName() : 'Ranim Wadrani';
+        $dateObtention  = new \DateTime();
+
+        // Générer le HTML du certificat
+        $html = $this->renderView('client/certificat_pdf.html.twig', [
+            'formation'      => $formation,
+            'nomParticipant' => $nomParticipant,
+            'dateObtention'  => $dateObtention,
+        ]);
+
+        // Générer le PDF avec Dompdf
+        $dompdf = new \Dompdf\Dompdf();
+        $dompdf->getOptions()->setChroot($this->getParameter('kernel.project_dir') . '/public');
+        $dompdf->getOptions()->setIsRemoteEnabled(true);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $filename = 'certificat_' . preg_replace('/[^a-z0-9]/i', '_', $formation->getTitre()) . '.pdf';
+
+        return new Response(
+            $dompdf->output(),
+            200,
+            [
+                'Content-Type'        => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            ]
+        );
     }
 
     #[Route('/mes-inscriptions', name: 'mes_inscriptions')]

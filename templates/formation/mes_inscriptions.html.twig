@@ -1,0 +1,206 @@
+{% extends 'client/base_client.html.twig' %}
+{% block title %}Mes Inscriptions de Formation — PathFinder{% endblock %}
+{% block nav_mes_inscriptions_formation %}active{% endblock %}
+
+{% block body %}
+<div class="pf-hero">
+  <div class="pf-hero-bg"></div>
+  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>Mon parcours</div>
+    <h1>Mes <span>Inscriptions</span> de Formation</h1>
+    <p>Suivez votre progression et vos objectifs pour chaque formation.</p>
+  </div>
+</div>
+
+<div class="pf-content">
+
+  {# ── Stats bar ── #}
+  {% set nbTermines = 0 %}
+  {% set nbEnCours = 0 %}
+  {% set nbNonDebutes = 0 %}
+  {% for ins in inscriptions %}
+    {% if ins.progression == 100 %}{% set nbTermines = nbTermines + 1 %}
+    {% elseif ins.progression > 0 %}{% set nbEnCours = nbEnCours + 1 %}
+    {% else %}{% set nbNonDebutes = nbNonDebutes + 1 %}
+    {% endif %}
+  {% endfor %}
+
+  <div class="mi-stats-bar">
+    <div class="mi-stat-card mi-stat-total">
+      <span class="mi-stat-icon">📋</span>
+      <span class="mi-stat-number" data-target="{{ inscriptions|length }}">0</span>
+      <span class="mi-stat-label">Total</span>
+    </div>
+    <div class="mi-stat-card mi-stat-termine">
+      <span class="mi-stat-icon">✅</span>
+      <span class="mi-stat-number" data-target="{{ nbTermines }}">0</span>
+      <span class="mi-stat-label">Terminés</span>
+    </div>
+    <div class="mi-stat-card mi-stat-encours">
+      <span class="mi-stat-icon">⚡</span>
+      <span class="mi-stat-number" data-target="{{ nbEnCours }}">0</span>
+      <span class="mi-stat-label">En cours</span>
+    </div>
+    <div class="mi-stat-card mi-stat-nondebute">
+      <span class="mi-stat-icon">🕐</span>
+      <span class="mi-stat-number" data-target="{{ nbNonDebutes }}">0</span>
+      <span class="mi-stat-label">Non débutés</span>
+    </div>
+  </div>
+
+  {# ── Empty state ── #}
+  {% if inscriptions is empty %}
+    <div class="pf-section" style="text-align:center;padding:3rem">
+      <div style="font-size:3rem;margin-bottom:1rem">🎓</div>
+      <p style="color:var(--text-muted);font-size:16px;margin-bottom:1.5rem">Aucune inscription pour l'instant.</p>
+      <a href="{{ path('client_categories') }}" class="pf-btn-details">📚 Découvrir les formations</a>
+    </div>
+  {% else %}
+
+    {% for ins in inscriptions %}
+      {% set f = ins.formation %}
+      {% set prog = ins.progression %}
+      {% set stripClass = prog == 100 ? 'mi-strip-green' : (prog > 0 ? 'mi-strip-amber' : 'mi-strip-red') %}
+
+      <div class="mi-card">
+        <div class="mi-strip {{ stripClass }}"></div>
+        <div class="mi-card-inner">
+
+          {# Left info #}
+          <div class="mi-left">
+            <div class="mi-title">🎓 {{ f.titre }}</div>
+            {% if f.formateur %}
+              <div class="mi-meta">👤 {{ f.formateur }}</div>
+            {% endif %}
+            {% if f.dureeHeures %}
+              <div class="mi-meta">⏱ {{ f.dureeHeures }}h</div>
+            {% endif %}
+            {% if f.categorie %}
+              <div class="mi-meta">📁 {{ f.categorie.nomCategorie }}</div>
+            {% endif %}
+            <div class="mi-date-insc">Inscrit le {{ ins.dateInscrit|date('d/m/Y') }}</div>
+          </div>
+
+          {# Progression #}
+          <div class="mi-progress-box">
+            <div class="mi-progress-value" data-percent="{{ prog }}">0%</div>
+            <div class="mi-progress-label">Progression</div>
+          </div>
+
+          {# Objectif quotidien #}
+          <div class="mi-objectif-box">
+            <div class="mi-objectif-title">🎯 Objectif quotidien</div>
+            {% if prog == 100 %}
+              <span class="mi-badge mi-badge-green">✅ Formation terminée !</span>
+            {% elseif f.dateFin is null %}
+              <span class="mi-badge mi-badge-amber">⚠ Pas de date limite définie</span>
+            {% else %}
+              {% set joursRestants = ((f.dateFin|date('U') - "now"|date('U')) / 86400)|round(0, 'ceil') %}
+              <div class="mi-meta">📅 Fin : {{ f.dateFin|date('d/m/Y') }}</div>
+              {% if joursRestants <= 0 %}
+                <span class="mi-badge mi-badge-red">🔴 Délai dépassé</span>
+              {% else %}
+                {% set restant = 100 - prog %}
+                {% set parJour = restant / joursRestants %}
+                <div class="mi-meta">⏳ {{ joursRestants }} jour(s) restant(s)</div>
+                {% if parJour <= 2 %}
+                  <span class="mi-badge mi-badge-green">✅ +{{ parJour|number_format(1) }}% / jour suffit</span>
+                {% elseif parJour <= 5 %}
+                  <span class="mi-badge mi-badge-amber">⚠ +{{ parJour|number_format(1) }}% / jour nécessaire</span>
+                {% else %}
+                  <span class="mi-badge mi-badge-red">🔴 +{{ parJour|number_format(1) }}% / jour — intense !</span>
+                {% endif %}
+              {% endif %}
+            {% endif %}
+          </div>
+
+          {# Status + action #}
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:10px">
+            {% if prog == 100 %}
+              <span class="mi-status mi-status-termine">TERMINÉ</span>
+            {% elseif prog > 0 %}
+              <span class="mi-status mi-status-encours">EN COURS</span>
+            {% else %}
+              <span class="mi-status mi-status-nondebute">NON DÉBUTÉ</span>
+            {% endif %}
+            <a href="{{ path('client_formation_detail', {id: f.idFormation}) }}" class="pf-btn-details" style="margin-top:0;font-size:12px;padding:6px 14px">📋 Accéder</a>
+          </div>
+
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>
+
+{% block stylesheets %}
+<style>
+.mi-stats-bar{display:flex;gap:1rem;margin-bottom:2rem;flex-wrap:wrap}
+.mi-stat-card{flex:1;min-width:130px;display:flex;align-items:center;gap:10px;padding:1.2rem 1.5rem;border-radius:16px;border:.5px solid var(--border);background:var(--surface)}
+.mi-stat-icon{font-size:1.4rem}
+.mi-stat-number{font-family:'Sora',sans-serif;font-size:1.8rem;font-weight:700}
+.mi-stat-label{font-size:12px;color:var(--text-muted)}
+.mi-stat-total .mi-stat-number{color:var(--primary)}
+.mi-stat-termine .mi-stat-number{color:#1D9E75}
+.mi-stat-encours .mi-stat-number{color:#F59E0B}
+.mi-stat-nondebute .mi-stat-number{color:#E24B4A}
+
+.mi-card{display:flex;border-radius:18px;border:.5px solid var(--border);background:var(--surface);margin-bottom:1rem;overflow:hidden;transition:box-shadow .2s,transform .2s}
+.mi-card:hover{box-shadow:0 4px 20px rgba(108,99,255,.12);transform:translateY(-2px)}
+.mi-strip{width:5px;flex-shrink:0}
+.mi-strip-green{background:#1D9E75}
+.mi-strip-amber{background:#F59E0B}
+.mi-strip-red{background:#E24B4A}
+.mi-card-inner{display:flex;align-items:center;gap:2rem;padding:1.5rem 2rem;flex:1;flex-wrap:wrap}
+
+.mi-left{flex:1;min-width:180px}
+.mi-title{font-family:'Sora',sans-serif;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px}
+.mi-meta{font-size:12px;color:var(--text-muted);margin-bottom:2px}
+.mi-date-insc{font-size:11px;color:var(--text-dim);margin-top:6px}
+
+.mi-progress-box{text-align:center;min-width:80px}
+.mi-progress-value{font-family:'Sora',sans-serif;font-size:1.6rem;font-weight:700;color:var(--primary)}
+.mi-progress-label{font-size:11px;color:var(--text-muted);margin-top:2px}
+
+.mi-objectif-box{min-width:200px}
+.mi-objectif-title{font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+
+.mi-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;margin-top:4px}
+.mi-badge-green{background:rgba(29,158,117,.12);color:#1D9E75;border:.5px solid rgba(29,158,117,.3)}
+.mi-badge-amber{background:rgba(245,158,11,.12);color:#F59E0B;border:.5px solid rgba(245,158,11,.3)}
+.mi-badge-red{background:rgba(226,75,74,.12);color:#E24B4A;border:.5px solid rgba(226,75,74,.3)}
+
+.mi-status{padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;font-family:'Sora',sans-serif}
+.mi-status-termine{background:rgba(29,158,117,.15);color:#1D9E75;border:.5px solid rgba(29,158,117,.3)}
+.mi-status-encours{background:rgba(245,158,11,.12);color:#F59E0B;border:.5px solid rgba(245,158,11,.3)}
+.mi-status-nondebute{background:rgba(226,75,74,.12);color:#E24B4A;border:.5px solid rgba(226,75,74,.3)}
+</style>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+document.querySelectorAll('.mi-stat-number').forEach(el => {
+  const target = parseInt(el.dataset.target) || 0;
+  if (target === 0) return;
+  let current = 0;
+  const step = Math.ceil(target / 30);
+  const timer = setInterval(() => {
+    current = Math.min(current + step, target);
+    el.textContent = current;
+    if (current >= target) clearInterval(timer);
+  }, 20);
+});
+document.querySelectorAll('.mi-progress-value').forEach(el => {
+  const target = parseInt(el.dataset.percent) || 0;
+  if (target === 0) { el.textContent = '0%'; return; }
+  let current = 0;
+  const step = Math.ceil(target / 30);
+  const timer = setInterval(() => {
+    current = Math.min(current + step, target);
+    el.textContent = current + '%';
+    if (current >= target) clearInterval(timer);
+  }, 20);
+});
+</script>
+{% endblock %}
+{% endblock %}
