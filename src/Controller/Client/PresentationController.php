@@ -266,9 +266,6 @@ button{padding:11px 26px;border:none;border-radius:50px;font-size:.95em;cursor:p
   <p class="audio-status" id="audioStatus">🔊 Chargement audio...</p>
   <div class="card"><ul id="list">{$liItems}</ul></div>
   <div class="controls">
-    <button class="btn-lang" onclick="changeLang('ar-sa')">🇸🇦 Arabe</button>
-    <button class="btn-lang" onclick="changeLang('fr-fr')">🇫🇷 Français</button>
-    <button class="btn-lang" onclick="changeLang('en-us')">🇬🇧 Anglais</button>
     <button class="btn-play" id="btnToggle" onclick="toggleAudio()">⏸ Pause</button>
     <button class="btn-restart" onclick="restart()">↩ Recommencer</button>
     <button class="btn-stop" onclick="stopAndClose()">⏹ Arrêter et quitter</button>
