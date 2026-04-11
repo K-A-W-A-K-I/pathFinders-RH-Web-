@@ -18,7 +18,180 @@ class PresentationController extends AbstractController
 
     private function getGroqKey(): string
     {
-        return $_ENV['GROQ_API_KEY'] ?? self::GROQ_API_KEY;
+        return $_ENV['GROQ_API_KEY'] ?? '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';
+    }
+
+    private const DID_API_KEY   = 'cHJvamV0emVmdEBnbWFpbC5jb20:NiW6U_0F1uojAjcCXI4Pb';
+    private const DID_API_URL   = 'https://api.d-id.com';
+    private const DID_PRESENTER = 'https://d-id-public-bucket.s3.us-east-1.amazonaws.com/alice.jpg';
+
+    #[Route('/video/generate', name: 'video_generate', methods: ['POST'])]
+    public function generateVideo(Request $request): JsonResponse
+    {
+        $data   = json_decode($request->getContent(), true);
+        $contenu = $data['contenu'] ?? '';
+        $titre   = $data['titre'] ?? 'Module';
+        $lang    = $data['lang'] ?? 'fr-fr';
+
+        if (empty($contenu)) return new JsonResponse(['error' => 'Contenu vide'], 400);
+
+        try {
+            // 1. Traduire si nécessaire (ar ou en)
+            $texteAGenerer = $contenu;
+            if ($lang !== 'fr-fr') {
+                $langpair = $lang === 'ar-sa' ? 'fr|ar' : 'fr|en';
+                $url = 'https://api.mymemory.translated.net/get?q='
+                    . urlencode(mb_substr($contenu, 0, 500))
+                    . '&langpair=' . $langpair
+                    . '&de=ranimoudrani@gmail.com';
+                $ch = curl_init($url);
+                curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 15, CURLOPT_SSL_VERIFYPEER => false]);
+                $resp = curl_exec($ch); curl_close($ch);
+                $json = json_decode($resp, true);
+                $t = $json['responseData']['translatedText'] ?? null;
+                if ($t && !str_starts_with($t, 'MYMEMORY')) $texteAGenerer = $t;
+            }
+
+            // 2. Enrichir avec Groq dans la langue cible
+            $script = $this->enrichirAvecGroq($texteAGenerer, $lang);
+            $script = mb_substr($script, 0, 500);
+
+            // 2. Créer le talk D-ID
+            $talkId = $this->createDIDTalk($script, $lang);
+            if (!$talkId) throw new \Exception('Impossible de créer le talk D-ID.');
+
+            // 3. Polling jusqu\'à obtenir la vidéo
+            $videoUrl = $this->pollDIDTalk($talkId);
+            if (!$videoUrl) throw new \Exception('Vidéo D-ID non générée dans les délais.');
+
+            // 4. Construire le HTML player
+            $html = $this->buildVideoHTML($titre, $videoUrl);
+
+            return new JsonResponse(['html' => $html]);
+        } catch (\Exception $e) {
+            return new JsonResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    private function createDIDTalk(string $script, string $lang): ?string
+    {
+        $voiceId = match($lang) {
+            'ar-sa' => 'ar-SA-ZariyahNeural',
+            'en-us' => 'en-US-JennyNeural',
+            default => 'fr-FR-DeniseNeural',
+        };
+
+        $payload = json_encode([
+            'source_url' => self::DID_PRESENTER,
+            'script' => [
+                'type'     => 'text',
+                'input'    => $script,
+                'provider' => [
+                    'type'     => 'microsoft',
+                    'voice_id' => $voiceId,
+                ],
+            ],
+        ]);
+
+        $ch = curl_init(self::DID_API_URL . '/talks');
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $payload,
+            CURLOPT_HTTPHEADER     => [
+                'Content-Type: application/json',
+                'Accept: application/json',
+                'Authorization: Basic ' . self::DID_API_KEY,
+            ],
+            CURLOPT_TIMEOUT        => 30,
+            CURLOPT_SSL_VERIFYPEER => false,
+        ]);
+
+        $response = curl_exec($ch);
+        $code     = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($code === 200 || $code === 201) {
+            $json = json_decode($response, true);
+            return $json['id'] ?? null;
+        }
+        throw new \Exception('D-ID error ' . $code . ': ' . $response);
+    }
+
+    private function pollDIDTalk(string $talkId): ?string
+    {
+        $url = self::DID_API_URL . '/talks/' . $talkId;
+        for ($i = 0; $i < 30; $i++) {
+            sleep(5);
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER     => [
+                    'Accept: application/json',
+                    'Authorization: Basic ' . self::DID_API_KEY,
+                ],
+                CURLOPT_TIMEOUT        => 15,
+                CURLOPT_SSL_VERIFYPEER => false,
+            ]);
+            $response = curl_exec($ch);
+            $code     = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($code !== 200) continue;
+            $json   = json_decode($response, true);
+            $status = $json['status'] ?? '';
+
+            if ($status === 'done')  return $json['result_url'] ?? null;
+            if ($status === 'error') throw new \Exception('D-ID error: ' . $response);
+        }
+        return null;
+    }
+
+    private function buildVideoHTML(string $titre, string $videoUrl): string
+    {
+        $titreEsc = htmlspecialchars($titre);
+        return <<<HTML
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',Arial,sans-serif;background:linear-gradient(135deg,#0f0c29,#302b63,#24243e);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;padding:30px}
+.container{max-width:860px;width:100%;text-align:center}
+.badge{display:inline-block;background:rgba(102,126,234,.2);border:1px solid rgba(102,126,234,.4);color:#a78bfa;padding:3px 12px;border-radius:50px;font-size:.85em;margin-bottom:12px}
+h1{font-size:1.8em;font-weight:700;background:linear-gradient(90deg,#a78bfa,#60a5fa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:24px}
+.video-wrapper{border-radius:20px;overflow:hidden;box-shadow:0 0 40px rgba(102,126,234,.4);background:#000;margin-bottom:20px}
+video{width:100%;max-height:480px;display:block}
+.controls{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+button{padding:11px 26px;border:none;border-radius:50px;font-size:.95em;cursor:pointer;font-weight:600;transition:all .2s}
+.btn-play{background:linear-gradient(135deg,#667eea,#764ba2);color:white}
+.btn-play:hover{transform:scale(1.05);box-shadow:0 4px 20px rgba(102,126,234,.5)}
+.btn-restart{background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2)}
+.btn-restart:hover{background:rgba(255,255,255,.2)}
+.btn-stop{background:rgba(226,75,74,.2);color:#E24B4A;border:1px solid rgba(226,75,74,.4)}
+.btn-stop:hover{background:rgba(226,75,74,.35);transform:scale(1.05)}
+</style>
+</head>
+<body>
+<div class="container">
+  <span class="badge">🎬 Vidéo Avatar IA</span>
+  <h1>{$titreEsc}</h1>
+  <div class="video-wrapper">
+    <video id="vid" autoplay controls>
+      <source src="{$videoUrl}" type="video/mp4">
+      Votre navigateur ne supporte pas la vidéo.
+    </video>
+  </div>
+  <div class="controls">
+    <button class="btn-play" onclick="document.getElementById('vid').play()">▶ Lire</button>
+    <button class="btn-restart" onclick="var v=document.getElementById('vid');v.currentTime=0;v.play()">↩ Rejouer</button>
+    <button class="btn-stop" onclick="window.parent.closePresentation()">⏹ Fermer</button>
+  </div>
+</div>
+</body>
+</html>
+HTML;
     }
 
     #[Route('/translate', name: 'translate', methods: ['POST'])]
