@@ -34,22 +34,57 @@ class CandidatureController extends AbstractController
         // Offres déjà postulées par le candidat courant
         $userId   = $session->get('user_id', 1);
         $candidat = $candidatRepo->findByUserId($userId);
-        $dejaPostule = [];
+        $isBlacklisted = $candidat && $candidat->isBlacklisted();
+        $dejaPostule  = [];
+        $recommandees = [];
+
         if ($candidat) {
             foreach ($offres as $o) {
                 if ($candidatureRepo->dejaPostule($candidat->getId(), $o->getId())) {
                     $dejaPostule[$o->getId()] = true;
                 }
             }
+
+            // Recommandations uniquement sans filtre actif
+            if (!$search && !$domaine && !$contrat) {
+                $candidatures = $candidatureRepo->findByCandidat($candidat->getId());
+
+                $domainesPostules = [];
+                $contratsPostules = [];
+                $offresDejaIds    = array_keys($dejaPostule);
+                $cvScores         = [];
+
+                foreach ($candidatures as $c) {
+                    $domainesPostules[] = $c->getOffre()->getDomaine();
+                    $contratsPostules[] = $c->getOffre()->getTypeContrat();
+                    if ($c->getCvScoreIa() !== null) {
+                        $cvScores[] = $c->getCvScoreIa();
+                    }
+                }
+
+                $cvScoreMoyen = !empty($cvScores) ? (int) round(array_sum($cvScores) / count($cvScores)) : 0;
+
+                if (!empty($domainesPostules)) {
+                    $recommandees = $offreRepo->findRecommended(
+                        array_unique($domainesPostules),
+                        array_unique($contratsPostules),
+                        $offresDejaIds,
+                        $cvScoreMoyen,
+                        4
+                    );
+                }
+            }
         }
 
         return $this->render('candidature/offre_list.html.twig', [
-            'offres'      => $offres,
-            'dejaPostule' => $dejaPostule,
-            'search'      => $search,
-            'domaine'     => $domaine,
-            'contrat'     => $contrat,
-            'sort'        => $sort,
+            'offres'        => $offres,
+            'dejaPostule'   => $dejaPostule,
+            'isBlacklisted' => $isBlacklisted,
+            'recommandees'  => $recommandees,
+            'search'        => $search,
+            'domaine'       => $domaine,
+            'contrat'       => $contrat,
+            'sort'          => $sort,
         ]);
     }
 
@@ -70,10 +105,12 @@ class CandidatureController extends AbstractController
         $userId      = $session->get('user_id', 1);
         $candidat    = $candidatRepo->findByUserId($userId);
         $dejaPostule = $candidat && $candidatureRepo->dejaPostule($candidat->getId(), $id);
+        $isBlacklisted = $candidat && $candidat->isBlacklisted();
 
         return $this->render('candidature/offre_detail.html.twig', [
-            'offre'       => $offre,
-            'dejaPostule' => $dejaPostule,
+            'offre'          => $offre,
+            'dejaPostule'    => $dejaPostule,
+            'isBlacklisted'  => $isBlacklisted,
         ]);
     }
 

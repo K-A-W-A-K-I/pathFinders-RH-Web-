@@ -66,6 +66,10 @@
     <div style="display:flex;gap:12px;align-items:center">
       {% if dejaPostule %}
         <button class="btn btn-applied" disabled style="flex:1;justify-content:center">✅ Vous avez déjà postulé</button>
+      {% elseif isBlacklisted %}
+        <button class="btn btn-blocked" disabled style="flex:1;justify-content:center" title="Votre compte ne peut plus postuler">
+          🚫 Candidature bloquée
+        </button>
       {% else %}
         <a href="{{ path('quiz_start', {id: offre.id}) }}" class="btn btn-postuler" style="flex:1;text-align:center;justify-content:center">
           🚀 Postuler maintenant
