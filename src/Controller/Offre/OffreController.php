@@ -214,10 +214,53 @@ class OffreController extends AbstractController
         if ($candidature) {
             $candidature->setStatutAdmin($statut);
             $candidature->setAdmis($statut === 1);
+
+            // Si on accepte, lever le blacklist automatiquement
+            if ($statut === 1) {
+                $candidat = $candidature->getCandidat();
+                if ($candidat->isBlacklisted()) {
+                    $candidat->setIsBlacklisted(false);
+                    $candidat->setBlacklistNote(null);
+                    $candidat->setBlacklistedAt(null);
+                    $this->addFlash('success', 'Candidature acceptée et blacklist levé.');
+                } else {
+                    $this->addFlash('success', 'Candidature acceptée.');
+                }
+            } else {
+                $this->addFlash('success', 'Statut mis à jour.');
+            }
+
             $em->flush();
-            $this->addFlash('success', 'Statut mis à jour.');
         }
-        return $this->redirectToRoute('admin_candidatures');
+        $referer = $request->headers->get('referer');
+        return $referer ? $this->redirect($referer) : $this->redirectToRoute('admin_candidatures');
+    }
+
+    #[Route('/admin/candidatures/{id}/blacklist', name: 'candidature_blacklist', methods: ['POST'])]
+    public function blacklistCandidat(
+        int $id,
+        Request $request,
+        CandidatureRepository $repo,
+        EntityManagerInterface $em
+    ): Response {
+        $candidature = $repo->find($id);
+        if ($candidature) {
+            // Refuser la candidature
+            $candidature->setStatutAdmin(-1);
+            $candidature->setAdmis(false);
+
+            // Blacklister le candidat
+            $candidat = $candidature->getCandidat();
+            $note = trim($request->request->get('blacklist_note', ''));
+            $candidat->setIsBlacklisted(true);
+            $candidat->setBlacklistNote($note ?: null);
+            $candidat->setBlacklistedAt(new \DateTime());
+
+            $em->flush();
+            $this->addFlash('warning', 'Candidature refusée et candidat blacklisté.');
+        }
+        $referer = $request->headers->get('referer');
+        return $referer ? $this->redirect($referer) : $this->redirectToRoute('admin_candidatures');
     }
 
     // ── AI: Bulk generate questions for offres without questions ──────────

@@ -47,6 +47,60 @@
     </div>
 {% else %}
 
+{# ── Recommandations ── #}
+{% if recommandees is defined and recommandees|length > 0 %}
+<div class="pf-section" style="margin-bottom:32px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <span style="font-size:18px">⭐</span>
+        <h2 style="font-size:15px;font-weight:700;color:#fff;margin:0">Recommandées pour vous</h2>
+        <span style="font-size:12px;color:#9999b8;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);padding:2px 10px;border-radius:20px">Basé sur votre profil</span>
+        <button id="btn-toggle-reco"
+                onclick="toggleRecommandations()"
+                style="margin-left:auto;padding:6px 16px;border-radius:20px;border:1px solid rgba(157,107,255,0.4);background:rgba(157,107,255,0.1);color:#c4b5fd;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s">
+            👁 Afficher
+        </button>
+    </div>
+    <div id="reco-grid" style="display:none">
+        <div class="cards-grid">
+            {% for offre in recommandees %}
+            <div class="offer-card" style="border-color:rgba(157,107,255,0.35);box-shadow:0 0 0 1px rgba(157,107,255,0.2)">
+                <div class="card-badges">
+                    <span class="badge badge-domain">{{ offre.domaine }}</span>
+                    <span class="badge badge-contrat">{{ offre.typeContrat }}</span>
+                    <span style="background:rgba(157,107,255,0.15);color:#c4b5fd;border:1px solid rgba(157,107,255,0.3);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600">⭐ Recommandé</span>
+                </div>
+                <h3 class="card-title" style="cursor:pointer" onclick="openModal({{ offre.id }})">{{ offre.titre }}</h3>
+                <p class="card-desc">{{ offre.description|slice(0, 120) }}{% if offre.description|length > 120 %}…{% endif %}</p>
+                <div class="card-info-panel">
+                    <div class="card-info-row">💰 {{ offre.salaireMin }} – {{ offre.salaireMax }} DT</div>
+                    <div class="card-info-row">📊 Score minimum : {{ offre.scoreMinimum }}%</div>
+                    <div class="card-info-row">⏱ Durée du test : {{ offre.dureeTestMinutes }} min</div>
+                </div>
+                <div class="card-actions">
+                    {% if isBlacklisted %}
+                        <button class="btn btn-blocked" disabled title="Votre compte ne peut plus postuler">🚫 Candidature bloquée</button>
+                    {% else %}
+                        <a href="{{ path('quiz_start', {id: offre.id}) }}" class="btn btn-postuler">Postuler maintenant</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.08);margin:28px 0 0">
+    </div>
+</div>
+<script>
+function toggleRecommandations() {
+    const grid = document.getElementById('reco-grid');
+    const btn  = document.getElementById('btn-toggle-reco');
+    const open = grid.style.display === 'none';
+    grid.style.display = open ? '' : 'none';
+    btn.textContent    = open ? '🙈 Masquer' : '👁 Afficher';
+    btn.style.background    = open ? 'rgba(157,107,255,0.2)' : 'rgba(157,107,255,0.1)';
+}
+</script>
+{% endif %}
+
 {# ── Detail modal ── #}
 <div id="offre-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)closeModal()">
     <div style="background:#1e1b3a;border:1px solid rgba(255,255,255,0.12);border-radius:18px;padding:28px;max-width:580px;width:100%;max-height:85vh;overflow-y:auto;position:relative">
@@ -77,6 +131,8 @@
         <div class="card-actions">
             {% if dejaPostule[offre.id] is defined %}
                 <button class="btn btn-applied" disabled>✅ Déjà postulé</button>
+            {% elseif isBlacklisted %}
+                <button class="btn btn-blocked" disabled title="Votre compte ne peut plus postuler">🚫 Candidature bloquée</button>
             {% else %}
                 <a href="{{ path('quiz_start', {id: offre.id}) }}" class="btn btn-postuler">Postuler maintenant</a>
             {% endif %}
@@ -88,7 +144,11 @@
 {# Offre data for modal #}
 <script>
 const offresData = {
-    {% for offre in offres %}
+    {% set allOffres = offres|merge(recommandees is defined ? recommandees : []) %}
+    {% set seen = [] %}
+    {% for offre in allOffres %}
+    {% if offre.id not in seen %}
+    {% set seen = seen|merge([offre.id]) %}
     {{ offre.id }}: {
         titre: {{ offre.titre|json_encode|raw }},
         domaine: {{ offre.domaine|json_encode|raw }},
@@ -99,8 +159,10 @@ const offresData = {
         scoreMin: {{ offre.scoreMinimum }},
         duree: {{ offre.dureeTestMinutes }},
         dejaPostule: {{ dejaPostule[offre.id] is defined ? 'true' : 'false' }},
+        blacklisted: {{ isBlacklisted ? 'true' : 'false' }},
         quizUrl: {{ path('quiz_start', {id: offre.id})|json_encode|raw }},
     },
+    {% endif %}
     {% endfor %}
 };
 
@@ -130,6 +192,8 @@ function openModal(id) {
     document.getElementById('modal-desc').textContent = o.description;
     document.getElementById('modal-cta').innerHTML = o.dejaPostule
         ? `<button class="btn btn-applied" disabled style="width:100%;justify-content:center">✅ Déjà postulé</button>`
+        : o.blacklisted
+        ? `<button class="btn btn-blocked" disabled style="width:100%;justify-content:center" title="Votre compte ne peut plus postuler">🚫 Candidature bloquée</button>`
         : `<a href="${o.quizUrl}" class="btn btn-postuler" style="width:100%;text-align:center;display:block">🚀 Postuler maintenant</a>`;
     const modal = document.getElementById('offre-modal');
     modal.style.display = 'flex';

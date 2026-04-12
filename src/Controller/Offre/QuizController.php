@@ -42,6 +42,12 @@ class QuizController extends AbstractController
         $userId   = $session->get('user_id', 1);
         $candidat = $candidatRepo->findByUserId($userId);
 
+        // Vérifier si le candidat est blacklisté
+        if ($candidat && $candidat->isBlacklisted()) {
+            $this->addFlash('danger', 'Votre compte ne vous permet pas de postuler à des offres.');
+            return $this->redirectToRoute('offre_list');
+        }
+
         if ($candidat && $candidatureRepo->dejaPostule($candidat->getId(), $id)) {
             $this->addFlash('warning', 'Vous avez déjà postulé à cette offre.');
             return $this->redirectToRoute('offre_list');
@@ -99,6 +105,12 @@ class QuizController extends AbstractController
         // Récupère ou crée le candidat
         $userId   = $session->get('user_id', 1);
         $candidat = $candidatRepo->findByUserId($userId);
+
+        // Bloquer si blacklisté
+        if ($candidat && $candidat->isBlacklisted()) {
+            $this->addFlash('danger', 'Votre compte ne vous permet pas de postuler à des offres.');
+            return $this->redirectToRoute('offre_list');
+        }
 
         if (!$candidat) {
             $candidat = new Candidat();

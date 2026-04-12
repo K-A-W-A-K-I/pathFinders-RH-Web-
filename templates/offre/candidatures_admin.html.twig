@@ -81,6 +81,17 @@
                         <button type="submit" class="admin-action-btn admin-action-delete" title="Refuser">✗</button>
                     </form>
                     <a href="{{ path('offre_show', {id: c.offre.id}) }}" class="admin-action-btn" title="Voir l'offre">→</a>
+                    {% if not c.candidat.isBlacklisted %}
+                    <button type="button"
+                            class="admin-action-btn"
+                            style="color:#dc2626;border-color:rgba(239,68,68,.3)"
+                            title="Refuser & Blacklister"
+                            onclick="openBlacklistModal({{ c.id }}, '{{ c.candidat.fullName|e('js') }}')">
+                        🚫
+                    </button>
+                    {% else %}
+                    <span title="Blacklisté : {{ c.candidat.blacklistNote }}" style="font-size:13px;cursor:help">🚫✓</span>
+                    {% endif %}
                 </div>
             </td>
         </tr>
@@ -90,12 +101,64 @@
     {% endif %}
 </div>
 
+{# ── Blacklist Modal ── #}
+<div id="blacklist-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:16px;padding:28px;max-width:460px;width:95%;position:relative">
+        <button onclick="closeBlacklistModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#666">✕</button>
+        <h3 style="margin:0 0 6px;font-size:16px;font-weight:700;color:#dc2626">🚫 Refuser & Blacklister</h3>
+        <p id="blacklist-candidat-name" style="margin:0 0 18px;font-size:13px;color:#666"></p>
+        <form id="blacklist-form" method="post">
+            <input type="hidden" name="_token" id="blacklist-token">
+            <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Note (raison du blacklist)</label>
+            <textarea name="blacklist_note" id="blacklist-note" rows="3"
+                      placeholder="Ex: Faux diplômes, No-show entretien..."
+                      style="width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box"></textarea>
+            <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end">
+                <button type="button" onclick="closeBlacklistModal()"
+                        style="padding:9px 18px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;font-weight:600;cursor:pointer;font-size:13px">
+                    Annuler
+                </button>
+                <button type="submit"
+                        style="padding:9px 18px;border-radius:8px;border:none;background:#dc2626;color:#fff;font-weight:600;cursor:pointer;font-size:13px">
+                    🚫 Confirmer le blacklist
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 document.getElementById('candidatSearch')?.addEventListener('input', function() {
     const q = this.value.toLowerCase();
     document.querySelectorAll('#candidatTable tbody tr').forEach(row => {
         row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
     });
+});
+
+// ── Blacklist Modal ────────────────────────────────────────────────────
+const blacklistUrls = {
+    {% for c in candidatures %}
+    {{ c.id }}: "{{ path('candidature_blacklist', {id: c.id}) }}",
+    {% endfor %}
+};
+const blacklistTokens = {
+    {% for c in candidatures %}
+    {{ c.id }}: "{{ csrf_token('blacklist' ~ c.id) }}",
+    {% endfor %}
+};
+
+function openBlacklistModal(candidatureId, candidatName) {
+    document.getElementById('blacklist-candidat-name').textContent = 'Candidat : ' + candidatName;
+    document.getElementById('blacklist-form').action = blacklistUrls[candidatureId];
+    document.getElementById('blacklist-token').value = blacklistTokens[candidatureId];
+    document.getElementById('blacklist-note').value = '';
+    document.getElementById('blacklist-modal').style.display = 'flex';
+}
+function closeBlacklistModal() {
+    document.getElementById('blacklist-modal').style.display = 'none';
+}
+document.getElementById('blacklist-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeBlacklistModal();
 });
 
 function analyseCv(candidatureId, btn) {
