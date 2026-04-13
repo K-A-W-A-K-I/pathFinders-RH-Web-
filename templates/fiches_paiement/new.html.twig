@@ -7,7 +7,7 @@
 
 <div class="form-card">
 
-  {{ form_start(form) }}
+  {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
 
     <div class="form-group">
       {{ form_label(form.employee) }}

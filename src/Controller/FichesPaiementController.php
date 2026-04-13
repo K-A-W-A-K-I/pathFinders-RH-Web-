@@ -25,44 +25,54 @@ class FichesPaiementController extends AbstractController
     }
 
     // ── 2. NEW ────────────────────────────────────────
-    #[Route('/fiches/new', name: 'fiche_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $em): Response
-    {
-        $fiche = new FichesPaiement();
-        $form = $this->createForm(FichesPaiementType::class, $fiche);
-        $form->handleRequest($request);
+#[Route('/fiches/new', name: 'fiche_new', methods: ['GET', 'POST'])]
+public function new(Request $request, EntityManagerInterface $em, FichesPaiementRepository $repo): Response
+{
+    $fiche = new FichesPaiement();
+    $form = $this->createForm(FichesPaiementType::class, $fiche);
+    $form->handleRequest($request);
 
-        if ($form->isSubmitted() && !$form->isValid()) {
-            foreach ($form->getErrors(true) as $error) {
-                dump($error->getMessage());
-            }
-            dd('end of errors');
+    if ($form->isSubmitted() && !$form->isValid()) {
+        foreach ($form->getErrors(true) as $error) {
+            dump($error->getMessage());
         }
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $employee = $fiche->getEmployee();
-            $salaireMensuel = $employee->getSalaire() ?? 0;
-            $salaireAnnuel = $salaireMensuel * 12;
-
-            $taxe = FichesPaiement::calculerTaxe($salaireAnnuel);
-            $fiche->setMontantTaxe($taxe);
-
-            $score = $employee->getScore() ?? 0;
-            $deduction = ((100 - $score) / 100) * $salaireMensuel * 0.1;
-            $fiche->setMontantDeduction(round(abs($deduction), 2));
-
-            $em->persist($fiche);
-            $em->flush();
-
-            $this->addFlash('success', 'Fiche créée avec succès !');
-            return $this->redirectToRoute('fiche_index');
-        }
-
-        return $this->render('fiches_paiement/new.html.twig', [
-            'form' => $form->createView(),
-        ]);
+        dd('end of errors');
     }
 
+    if ($form->isSubmitted() && $form->isValid()) {
+        $employee = $fiche->getEmployee();
+        $date = $fiche->getDatePaiement();
+
+        // ── CHECK: only one fiche per employee per month ──
+        if ($date && $repo->findOneBy([
+            'employee' => $employee,
+            'date_paiement' => new \DateTime($date->format('Y-m-01')) // match the first day of month
+        ])) {
+            $this->addFlash('error', 'Une fiche pour ce mois existe déjà pour cet employé.pour des changements, veuillez éditer la fiche existante.');
+            return $this->redirectToRoute('fiche_new');
+        }
+
+        $salaireMensuel = $employee->getSalaire() ?? 0;
+        $salaireAnnuel = $salaireMensuel * 12;
+
+        $taxe = FichesPaiement::calculerTaxe($salaireAnnuel);
+        $fiche->setMontantTaxe($taxe);
+
+        $score = $employee->getScore() ?? 0;
+        $deduction = ((100 - $score) / 100) * $salaireMensuel * 0.1;
+        $fiche->setMontantDeduction(round(abs($deduction), 2));
+
+        $em->persist($fiche);
+        $em->flush();
+
+        $this->addFlash('success', 'Fiche créée avec succès !');
+        return $this->redirectToRoute('fiche_index');
+    }
+
+    return $this->render('fiches_paiement/new.html.twig', [
+        'form' => $form->createView(),
+    ]);
+}
     // ── 3. PRINT ALL ──────────────────────────────────
     #[Route('/fiches/print', name: 'fiche_print_all')]
     public function printAll(FichesPaiementRepository $repo): Response
@@ -95,10 +105,24 @@ class FichesPaiementController extends AbstractController
     #[Route('/mes-fiches', name: 'worker_fiches')]
     public function workerIndex(FichesPaiementRepository $repo): Response
     {
-        return $this->render('worker/fiches.html.twig', [
-            'fiches' => $repo->findAll()
-        ]);
+        // hardcode employee id for now — replace with auth later
+    $employeeId = 1;
+
+    return $this->render('worker/fiches.html.twig', [
+        'fiches' => $repo->findCurrentMonthByEmployee($employeeId),
+        'isHistory' => false,
+    ]);
     }
+    #[Route('/mes-fiches/historique', name: 'worker_fiches_history')]
+public function workerHistory(FichesPaiementRepository $repo): Response
+{
+    $employeeId = 1;
+
+    return $this->render('worker/fiches.html.twig', [
+        'fiches' => $repo->findAllByEmployee($employeeId),
+        'isHistory' => true,
+    ]);
+}
 
     // ── 5. SHOW ───────────────────────────────────────
     #[Route('/fiches/{id}', name: 'fiche_show', methods: ['GET'])]
