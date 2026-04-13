@@ -4,14 +4,16 @@ namespace App\Controller\FichePaie;
 
 use App\Entity\FichesPaiement;
 use App\Form\FichesPaiementType;
+use App\Repository\EmployeeRepository;
 use App\Repository\FichesPaiementRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Dompdf\Dompdf;
-use Dompdf\Options;
+ use App\Repository\UtilisateurRepository;
 
 class FichesPaiementController extends AbstractController
 {
@@ -132,25 +134,52 @@ public function new(Request $request, EntityManagerInterface $em, FichesPaiement
         );
     }
 
-    // ── 4. WORKER VIEW ────────────────────────────────
-    #[Route('/mes-fiches', name: 'worker_fiches')]
-    public function workerIndex(FichesPaiementRepository $repo): Response
-    {
-        // hardcode employee id for now — replace with auth later
-    $employeeId = 1;
+
+
+#[Route('/mes-fiches', name: 'worker_fiches')]
+public function workerIndex(
+    FichesPaiementRepository $repo,
+    EmployeeRepository $employeeRepo
+): Response {
+    $utilisateur = $this->getUser();
+
+    if (!$utilisateur) {
+        return $this->redirectToRoute('auth_login');
+    }
+
+    $employee = $employeeRepo->findOneBy(['utilisateur' => $utilisateur]);
+
+    if (!$employee) {
+        throw $this->createNotFoundException('Aucun employé lié à ce compte.');
+    }
 
     return $this->render('worker/fiches.html.twig', [
-        'fiches' => $repo->findCurrentMonthByEmployee($employeeId),
+        'fiches'    => $repo->findCurrentMonthByEmployee($employee->getIdEmployee()),
+        'employee'  => $employee,
         'isHistory' => false,
     ]);
+}
+
+#[Route('/mes-fiches/historique', name: 'worker_fiches_history')]
+public function workerHistory(
+    FichesPaiementRepository $repo,
+    EmployeeRepository $employeeRepo
+): Response {
+    $utilisateur = $this->getUser();
+
+    if (!$utilisateur) {
+        return $this->redirectToRoute('auth_login');
     }
-    #[Route('/mes-fiches/historique', name: 'worker_fiches_history')]
-public function workerHistory(FichesPaiementRepository $repo): Response
-{
-    $employeeId = 1;
+
+    $employee = $employeeRepo->findOneBy(['utilisateur' => $utilisateur]);
+
+    if (!$employee) {
+        throw $this->createNotFoundException('Aucun employé lié à ce compte.');
+    }
 
     return $this->render('worker/fiches.html.twig', [
-        'fiches' => $repo->findAllByEmployee($employeeId),
+        'fiches'    => $repo->findAllByEmployee($employee->getIdEmployee()),
+        'employee'  => $employee,
         'isHistory' => true,
     ]);
 }

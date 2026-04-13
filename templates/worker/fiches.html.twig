@@ -8,17 +8,9 @@
   <div class="pf-hero-grid"></div>
   <div class="pf-hero-inner">
     <div class="pf-hero-badge">
-    {# at the top of your content section, before the table #}
-
-<div class="pf-section-label">
-  {{ isHistory ? 'Historique complet' : 'Mois en cours' }}
-</div>
-
-
       <div class="pf-hero-badge-dot"></div>
       Espace Employé
     </div>
-    
     <h1>Mes Fiches de<br><span>Paiement</span></h1>
     <p>Consultez vos fiches de paiement et le détail de votre rémunération.</p>
   </div>
@@ -53,27 +45,27 @@
       </div>
     </div>
   </div>
-  {% endif %}
+  {% endif %} {# ← close employee stats here #}
 
   <div class="pf-section">
-    <div class="pf-section-label">Fiches de Paiement</div>
-    
+    <div class="pf-section-label">{{ isHistory ? 'Historique complet' : 'Mois en cours' }}</div>
     <div class="pf-divider"></div>
-     <div style="display:flex; justify-content:flex-end; gap:16px; align-items:center; margin-bottom:1.5rem">
-  <h2>{{ isHistory ? 'Toutes mes fiches' : 'Ma fiche du mois' }}</h2>
-  
-  {% if isHistory %}
-    <a href="{{ path('worker_fiches') }}" 
-       style="background:#6C63FF;color:white;padding:9px 18px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">
-      ← Mois en cours
-    </a>
-  {% else %}
-    <a href="{{ path('worker_fiches_history') }}" 
-   style="background:#6C63FF;color:white;padding:9px 18px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:6px;">
-  📋 Voir tout l'historique
-    </a>
-  {% endif %}
-</div>
+
+    <div style="display:flex; justify-content:flex-start; gap:16px; align-items:center; margin-bottom:1.5rem">
+      <h2>{{ isHistory ? 'Toutes mes fiches' : 'Ma fiche du mois' }}</h2>
+      {% if isHistory %}
+        <a href="{{ path('worker_fiches') }}"
+           style="background:#6C63FF;color:white;padding:9px 18px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">
+          ← Mois en cours
+        </a>
+      {% else %}
+        <a href="{{ path('worker_fiches_history') }}"
+           style="background:#6C63FF;color:white;padding:9px 18px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;display:inline-flex;align-items:center;gap:6px;">
+          📋 Voir tout l'historique
+        </a>
+      {% endif %}
+    </div>
+
     <table style="width:100%;border-collapse:collapse;margin-top:1rem;">
       <thead>
         <tr style="border-bottom:.5px solid var(--border)">
@@ -114,11 +106,15 @@
             </a>
           </td>
         </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" style="padding:40px;text-align:center;color:var(--text-dim)">
+            Aucune fiche disponible pour ce mois.
+          </td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
-    </div>
-    {% endif %}
   </div>
 
 </div>
