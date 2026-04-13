@@ -1,0 +1,55 @@
+{% extends 'admin_base.html.twig' %}
+{% block title %}Inscriptions — {{ formation.titre }}{% endblock %}
+{% block page_icon %}👥{% endblock %}
+{% block page_title %}Inscriptions — {{ formation.titre }}{% endblock %}
+{% block topbar_actions %}
+    <a href="{{ path('dash_formation_index') }}" class="admin-tool-btn">← Retour</a>
+{% endblock %}
+
+{% block body %}
+<div class="admin-quick-cards" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.5rem">
+    <div class="quick-card">
+        <div class="quick-card-icon" style="background:rgba(108,99,255,.1)">👥</div>
+        <div class="quick-card-title">Total inscrits</div>
+        <div style="font-size:1.6rem;font-weight:700;color:#1a1730">{{ inscriptions|length }}</div>
+    </div>
+    <div class="quick-card">
+        <div class="quick-card-icon" style="background:rgba(34,197,94,.1)">🎟</div>
+        <div class="quick-card-title">Places restantes</div>
+        <div style="font-size:1.6rem;font-weight:700;color:#16a34a">{{ formation.placeDisponible }}</div>
+    </div>
+    <div class="quick-card">
+        <div class="quick-card-icon" style="background:rgba(75,139,245,.1)">📊</div>
+        <div class="quick-card-title">Capacité maximale</div>
+        <div style="font-size:1.6rem;font-weight:700;color:#2563eb">{{ formation.capaciteMax }}</div>
+    </div>
+</div>
+
+<div class="admin-table-section">
+    <div class="admin-table-header">
+        <div class="admin-table-title">
+            Liste des inscrits
+            <span class="admin-count-badge">{{ inscriptions|length }}</span>
+        </div>
+    </div>
+    {% if inscriptions is empty %}
+        <div style="text-align:center;color:#9999b8;padding:2rem">Aucune inscription pour cette formation.</div>
+    {% else %}
+    <table class="admin-table">
+        <thead><tr>
+            <th>#</th><th>Nom</th><th>Email</th><th>Date d'inscription</th>
+        </tr></thead>
+        <tbody>
+        {% for insc in inscriptions %}
+        <tr>
+            <td class="admin-table-muted">{{ loop.index }}</td>
+            <td class="admin-table-name">{{ insc.nomParticipant ?? '—' }}</td>
+            <td class="admin-table-muted">{{ insc.emailParticipant ?? '—' }}</td>
+            <td class="admin-table-muted">{{ insc.dateInscription|date('d/m/Y H:i') }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endblock %}

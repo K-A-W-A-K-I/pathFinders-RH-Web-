@@ -21,6 +21,11 @@ class FichesPaiementType extends AbstractType
                 'choice_label' => function (Employee $employee) {
                     return $employee->getUtilisateur()->getNom() . ' ' . $employee->getUtilisateur()->getPrenom();
                 },
+                'query_builder' => function (\App\Repository\EmployeeRepository $repo) {
+                    return $repo->createQueryBuilder('e')
+                        ->innerJoin('e.utilisateur', 'u')
+                        ->orderBy('u.nom', 'ASC');
+                },
                 'label' => 'Employé',
                 'placeholder' => '-- Choisir --',
             ])

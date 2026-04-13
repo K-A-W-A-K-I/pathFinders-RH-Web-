@@ -1,0 +1,82 @@
+{% extends 'admin_base.html.twig' %}
+{% block title %}Modules de {{ formation.titre }} — Dashboard{% endblock %}
+{% block page_icon %}📄{% endblock %}
+{% block page_title %}Modules — {{ formation.titre }}{% endblock %}
+{% block topbar_actions %}
+    <a href="{{ path('dash_contenu_new_for_formation', {formationId: formation.idFormation}) }}" class="btn btn-primary" style="background:linear-gradient(135deg,#6C63FF,#9D6BFF);border:none;border-radius:10px;padding:10px 20px;font-weight:600;text-decoration:none;color:#fff;">+ Nouveau module</a>
+    <a href="{{ path('dash_formation_index') }}" class="admin-tool-btn">← Retour</a>
+{% endblock %}
+
+{% block body %}
+<div class="admin-table-section">
+    <div class="admin-table-header">
+        <div class="admin-table-title">
+            Modules de contenu
+            <span class="admin-count-badge">{{ modules|length }}</span>
+        </div>
+        <div class="admin-table-actions">
+            <input type="text" id="search-modules" placeholder="Rechercher..." class="admin-search-input" oninput="filterModules(this.value)">
+            <select id="sort-modules" class="admin-search-input" style="width:auto" onchange="sortModules(this.value)">
+                <option value="ordre-asc">Ordre ↑</option>
+                <option value="ordre-desc">Ordre ↓</option>
+                <option value="nom-asc">Nom A→Z</option>
+                <option value="nom-desc">Nom Z→A</option>
+            </select>
+        </div>
+    </div>
+
+    {% if modules is empty %}
+        <div style="text-align:center;color:#9999b8;padding:2rem">
+            Aucun module. <a href="{{ path('dash_contenu_new_for_formation', {formationId: formation.idFormation}) }}" style="color:#6C63FF">Créer le premier →</a>
+        </div>
+    {% else %}
+    <table class="admin-table">
+        <thead><tr>
+            <th style="width:70px">Ordre</th><th>Nom du module</th><th>Contenu</th><th style="text-align:right">Actions</th>
+        </tr></thead>
+        <tbody>
+        {% for module in modules %}
+        <tr>
+            <td>
+                <span style="background:#6C63FF;color:#fff;width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">{{ module.ordre ?? '—' }}</span>
+            </td>
+            <td class="admin-table-name">{{ module.nom }}</td>
+            <td class="admin-table-muted" style="max-width:300px;font-size:13px">{{ module.contenu ? module.contenu|slice(0,80) ~ (module.contenu|length > 80 ? '...' : '') : '—' }}</td>
+            <td>
+                <div class="admin-row-actions" style="justify-content:flex-end">
+                    <a href="{{ path('dash_contenu_edit', {id: module.idContenu}) }}" class="admin-action-btn">✏️ Modifier</a>
+                    <form method="post" action="{{ path('dash_contenu_delete', {id: module.idContenu}) }}" onsubmit="return confirm('Supprimer ?')" style="display:inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete_contenu_' ~ module.idContenu) }}">
+                        <button type="submit" class="admin-action-btn admin-action-delete">🗑</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+function filterModules(q) {
+    const query = q.toLowerCase();
+    document.querySelectorAll('.admin-table tbody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
+    });
+}
+function sortModules(val) {
+    const [field, dir] = val.split('-');
+    const tbody = document.querySelector('.admin-table tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((a, b) => {
+        let av = field === 'ordre' ? parseInt(a.cells[0].textContent) || 0 : a.cells[1].textContent.trim().toLowerCase();
+        let bv = field === 'ordre' ? parseInt(b.cells[0].textContent) || 0 : b.cells[1].textContent.trim().toLowerCase();
+        return dir === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
+    });
+    rows.forEach(r => tbody.appendChild(r));
+}
+</script>
+{% endblock %}

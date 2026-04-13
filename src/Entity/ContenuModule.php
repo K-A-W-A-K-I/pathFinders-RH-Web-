@@ -2,12 +2,9 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
-use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-
 use App\Repository\ContenuModuleRepository;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ContenuModuleRepository::class)]
 #[ORM\Table(name: 'contenu_module')]
@@ -15,80 +12,37 @@ class ContenuModule
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private ?int $id_contenu = null;
+    #[ORM\Column(name: 'id_contenu')]
+    private ?int $idContenu = null;
 
-    public function getId_contenu(): ?int
-    {
-        return $this->id_contenu;
-    }
-
-    public function setId_contenu(int $id_contenu): self
-    {
-        $this->id_contenu = $id_contenu;
-        return $this;
-    }
-
-    #[ORM\ManyToOne(targetEntity: Formation::class, inversedBy: 'contenuModules')]
-    #[ORM\JoinColumn(name: 'id_formation', referencedColumnName: 'id_formation')]
+    #[ORM\ManyToOne(inversedBy: 'contenuModules')]
+    #[ORM\JoinColumn(name: 'id_formation', referencedColumnName: 'id_formation', nullable: false)]
+    #[Assert\NotNull(message: 'La formation est obligatoire.')]
     private ?Formation $formation = null;
 
-    public function getFormation(): ?Formation
-    {
-        return $this->formation;
-    }
-
-    public function setFormation(?Formation $formation): self
-    {
-        $this->formation = $formation;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'string', nullable: true)]
+    #[ORM\Column(length: 200)]
+    #[Assert\NotBlank(message: 'Le nom du module est obligatoire.')]
+    #[Assert\Length(min: 2, max: 200, minMessage: 'Minimum 2 caractères.', maxMessage: 'Maximum 200 caractères.')]
     private ?string $nom = null;
 
-    public function getNom(): ?string
-    {
-        return $this->nom;
-    }
-
-    public function setNom(?string $nom): self
-    {
-        $this->nom = $nom;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'text', nullable: false)]
+    #[ORM\Column(type: 'text', nullable: true)]
     private ?string $contenu = null;
 
-    public function getContenu(): ?string
-    {
-        return $this->contenu;
-    }
-
-    public function setContenu(string $contenu): self
-    {
-        $this->contenu = $contenu;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'integer', nullable: false)]
+    #[ORM\Column(type: 'integer', nullable: true)]
+    #[Assert\PositiveOrZero(message: 'L\'ordre doit être un nombre positif ou zéro.')]
     private ?int $ordre = null;
 
-    public function getOrdre(): ?int
-    {
-        return $this->ordre;
-    }
+    public function getIdContenu(): ?int { return $this->idContenu; }
 
-    public function setOrdre(int $ordre): self
-    {
-        $this->ordre = $ordre;
-        return $this;
-    }
+    public function getFormation(): ?Formation { return $this->formation; }
+    public function setFormation(?Formation $formation): static { $this->formation = $formation; return $this; }
 
-    public function getIdContenu(): ?int
-    {
-        return $this->id_contenu;
-    }
+    public function getNom(): ?string { return $this->nom; }
+    public function setNom(string $nom): static { $this->nom = $nom; return $this; }
 
+    public function getContenu(): ?string { return $this->contenu; }
+    public function setContenu(?string $contenu): static { $this->contenu = $contenu; return $this; }
+
+    public function getOrdre(): ?int { return $this->ordre; }
+    public function setOrdre(?int $ordre): static { $this->ordre = $ordre; return $this; }
 }

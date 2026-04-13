@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\FichePaie;
 
 use App\Entity\FichesPaiement;
 use App\Form\FichesPaiementType;
@@ -38,7 +38,28 @@ public function new(Request $request, EntityManagerInterface $em, FichesPaiement
         }
         dd('end of errors');
     }
+    if ($form->isSubmitted() && !$form->isValid()) {
+        foreach ($form->getErrors(true) as $error) {
+            dump($error->getMessage());
+        }
+        dd('end of errors');
+    }
 
+    if ($form->isSubmitted() && $form->isValid()) {
+        $employee = $fiche->getEmployee();
+        $date = $fiche->getDatePaiement();
+
+        // ── CHECK: only one fiche per employee per month ──
+        if ($date && $repo->findOneBy([
+            'employee' => $employee,
+            'date_paiement' => new \DateTime($date->format('Y-m-01')) // match the first day of month
+        ])) {
+            $this->addFlash('error', 'Une fiche pour ce mois existe déjà pour cet employé.pour des changements, veuillez éditer la fiche existante.');
+            return $this->redirectToRoute('fiche_new');
+        }
+
+        $salaireMensuel = $employee->getSalaire() ?? 0;
+        $salaireAnnuel = $salaireMensuel * 12;
     if ($form->isSubmitted() && $form->isValid()) {
         $employee = $fiche->getEmployee();
         $date = $fiche->getDatePaiement();
@@ -57,14 +78,24 @@ public function new(Request $request, EntityManagerInterface $em, FichesPaiement
 
         $taxe = FichesPaiement::calculerTaxe($salaireAnnuel);
         $fiche->setMontantTaxe($taxe);
+        $taxe = FichesPaiement::calculerTaxe($salaireAnnuel);
+        $fiche->setMontantTaxe($taxe);
 
+        $score = $employee->getScore() ?? 0;
+        $deduction = ((100 - $score) / 100) * $salaireMensuel * 0.1;
+        $fiche->setMontantDeduction(round(abs($deduction), 2));
         $score = $employee->getScore() ?? 0;
         $deduction = ((100 - $score) / 100) * $salaireMensuel * 0.1;
         $fiche->setMontantDeduction(round(abs($deduction), 2));
 
         $em->persist($fiche);
         $em->flush();
+        $em->persist($fiche);
+        $em->flush();
 
+        $this->addFlash('success', 'Fiche créée avec succès !');
+        return $this->redirectToRoute('fiche_index');
+    }
         $this->addFlash('success', 'Fiche créée avec succès !');
         return $this->redirectToRoute('fiche_index');
     }

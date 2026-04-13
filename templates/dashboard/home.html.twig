@@ -1,0 +1,298 @@
+{% extends 'admin_base.html.twig' %}
+{% block title %}Tableau de bord — PathFinder{% endblock %}
+{% block page_icon %}🎓{% endblock %}
+{% block page_title %}Gestion des Formations{% endblock %}
+
+{% block stylesheets %}
+<style>
+.dash-tabs{display:flex;gap:.5rem;margin-bottom:24px;border-bottom:2px solid var(--border);padding-bottom:0}
+.dash-tab{padding:10px 22px;font-size:14px;font-weight:600;color:var(--text-light);cursor:pointer;border-radius:8px 8px 0 0;border:none;background:transparent;font-family:'DM Sans',sans-serif;transition:color .2s;border-bottom:2px solid transparent;margin-bottom:-2px}
+.dash-tab:hover{color:var(--primary)}
+.dash-tab.active{color:var(--primary);border-bottom-color:var(--primary);background:var(--primary-light)}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.stat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:28px}
+.stat-card{background:var(--white);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);animation:fadeUp .4s ease both}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(108,99,255,.12)}
+.stat-num{font-family:'Sora',sans-serif;font-size:2rem;font-weight:700;color:var(--text-dark)}
+.stat-label{font-size:13px;color:var(--text-light);margin-top:.2rem}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="admin-quick-cards" style="grid-template-columns:repeat(3,1fr);margin-bottom:1.5rem">
+  <div class="quick-card">
+    <div class="quick-card-icon" style="background:rgba(245,158,11,.1)">📂</div>
+    <div class="quick-card-title">Catégories</div>
+    <div style="font-size:1.8rem;font-weight:700;color:#1a1730">{{ nbCategories }}</div>
+  </div>
+  <div class="quick-card">
+    <div class="quick-card-icon" style="background:rgba(108,99,255,.1)">🎓</div>
+    <div class="quick-card-title">Formations</div>
+    <div style="font-size:1.8rem;font-weight:700;color:#1a1730">{{ nbFormations }}</div>
+  </div>
+  <div class="quick-card">
+    <div class="quick-card-icon" style="background:rgba(34,197,94,.1)">✅</div>
+    <div class="quick-card-title">Inscriptions</div>
+    <div style="font-size:1.8rem;font-weight:700;color:#1a1730">{{ nbInscriptions }}</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="dash-tabs">
+  <button class="dash-tab active" onclick="showTab('categories')">📂 Catégories</button>
+  <button class="dash-tab" onclick="showTab('formations')">🎓 Formations</button>
+  <button class="dash-tab" onclick="showTab('inscriptions')">✅ Inscriptions</button>
+</div>
+
+{# ── TAB CATÉGORIES ── #}
+<div id="tab-categories" class="tab-panel active">
+  <div class="admin-table-section">
+    <div class="admin-table-header">
+      <div class="admin-table-title">
+        Catégories
+        <span class="admin-count-badge">{{ categories|length }}</span>
+      </div>
+      <div class="admin-table-actions">
+        <input type="text" id="search-cat" placeholder="Rechercher..." class="admin-search-input" oninput="filterTable('tbl-cat', this.value)">
+        <select id="sort-cat" class="admin-search-input" style="width:auto" onchange="sortCategories(this.value)">
+          <option value="nom-asc">Nom (A-Z)</option>
+          <option value="nom-desc">Nom (Z-A)</option>
+          <option value="formations-asc">Formations ↑</option>
+          <option value="formations-desc">Formations ↓</option>
+        </select>
+        <a href="{{ path('dash_categorie_new') }}" class="btn btn-primary" style="background:linear-gradient(135deg,#6C63FF,#9D6BFF);border:none;border-radius:10px;padding:8px 18px;font-weight:600;text-decoration:none;color:#fff;">+ Nouvelle</a>
+      </div>
+    </div>
+    {% if categories is empty %}
+      <p style="color:#9999b8;text-align:center;padding:2rem">Aucune catégorie. <a href="{{ path('dash_categorie_new') }}" style="color:#6C63FF">Créer la première →</a></p>
+    {% else %}
+      <table class="admin-table" id="tbl-cat">
+        <thead><tr>
+          <th>Nom</th><th>Description</th><th>Image</th><th>Formations</th><th style="text-align:right">Actions</th>
+        </tr></thead>
+        <tbody>
+          {% for cat in categories %}
+            <tr>
+              <td class="admin-table-name">{{ cat.nomCategorie }}</td>
+              <td class="admin-table-muted" style="max-width:200px;font-size:13px">{{ cat.description ? cat.description|slice(0,60) ~ '...' : '—' }}</td>
+              <td>
+                {% if cat.image %}
+                  <img src="{{ asset('uploads/categories/' ~ cat.image) }}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px" onerror="this.style.display='none'">
+                {% else %}<span class="admin-table-muted">—</span>{% endif %}
+              </td>
+              <td><span class="admin-badge admin-badge-blue">{{ cat.formations|length }}</span></td>
+              <td>
+                <div class="admin-row-actions" style="justify-content:flex-end">
+                  <button type="button" class="admin-action-btn" style="color:#16a34a;border-color:rgba(34,197,94,.3)" data-catid="{{ cat.idCategorie }}">📋 Formations</button>
+                  <a href="{{ path('dash_categorie_edit', {id: cat.idCategorie}) }}" class="admin-action-btn">✏️ Modifier</a>
+                  <form method="post" action="{{ path('dash_categorie_delete', {id: cat.idCategorie}) }}" onsubmit="return confirm('Supprimer ?')" style="display:inline">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete_cat_' ~ cat.idCategorie) }}">
+                    <button type="submit" class="admin-action-btn admin-action-delete">🗑 Supprimer</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+</div>
+
+{# ── TAB FORMATIONS ── #}
+<div id="tab-formations" class="tab-panel">
+  <div class="admin-table-section">
+    <div class="admin-table-header">
+      <div class="admin-table-title">
+        Formations
+        <span class="admin-count-badge">{{ formations|length }}</span>
+      </div>
+      <div class="admin-table-actions">
+        <input type="text" id="search-form" placeholder="Rechercher..." class="admin-search-input" oninput="filterTable('tbl-form', this.value)">
+        <select id="filter-cat" class="admin-search-input" style="width:auto" onchange="filterByCat(this.value)">
+          <option value="">Toutes catégories</option>
+          {% for cat in categories %}
+            <option value="{{ cat.idCategorie }}">{{ cat.nomCategorie }}</option>
+          {% endfor %}
+        </select>
+        <select id="sort-form" class="admin-search-input" style="width:auto" onchange="sortFormations(this.value)">
+          <option value="titre-asc">Titre (A-Z)</option>
+          <option value="titre-desc">Titre (Z-A)</option>
+          <option value="duree-asc">Durée ↑</option>
+          <option value="duree-desc">Durée ↓</option>
+          <option value="places-asc">Places ↑</option>
+          <option value="places-desc">Places ↓</option>
+        </select>
+        <a href="{{ path('dash_formation_new') }}" class="btn btn-primary" style="background:linear-gradient(135deg,#6C63FF,#9D6BFF);border:none;border-radius:10px;padding:8px 18px;font-weight:600;text-decoration:none;color:#fff;">+ Nouvelle</a>
+      </div>
+    </div>
+    {% if formations is empty %}
+      <p style="color:#9999b8;text-align:center;padding:2rem">Aucune formation. <a href="{{ path('dash_formation_new') }}" style="color:#6C63FF">Créer la première →</a></p>
+    {% else %}
+      <table class="admin-table" id="tbl-form">
+        <thead><tr>
+          <th>Titre</th><th>Catégorie</th><th>Formateur</th><th>Durée</th><th>Places</th><th>Dates</th><th style="text-align:right">Actions</th>
+        </tr></thead>
+        <tbody>
+          {% for f in formations %}
+            <tr data-catid="{{ f.categorie.idCategorie }}">
+              <td class="admin-table-name">{{ f.titre }}</td>
+              <td><span class="admin-badge admin-badge-blue">{{ f.categorie.nomCategorie }}</span></td>
+              <td class="admin-table-muted">{{ f.formateur ?? '—' }}</td>
+              <td class="admin-table-muted">{{ f.dureeHeures ? f.dureeHeures ~ 'h' : '—' }}</td>
+              <td>
+                {% if f.placeDisponible > 0 %}
+                  <span class="admin-badge admin-badge-green">{{ f.placeDisponible }}/{{ f.capaciteMax }}</span>
+                {% else %}
+                  <span class="admin-badge" style="background:rgba(239,68,68,.1);color:#dc2626">Complet</span>
+                {% endif %}
+              </td>
+              <td class="admin-table-muted" style="font-size:12px">
+                {{ f.dateDebut ? f.dateDebut|date('d/m/Y') : '—' }} → {{ f.dateFin ? f.dateFin|date('d/m/Y') : '—' }}
+              </td>
+              <td>
+                <div class="admin-row-actions" style="justify-content:flex-end">
+                  <a href="{{ path('dash_formation_inscriptions', {id: f.idFormation}) }}" class="admin-action-btn" style="color:#16a34a;border-color:rgba(34,197,94,.3)">👥 Inscrits</a>
+                  <a href="{{ path('dash_contenu_by_formation', {formationId: f.idFormation}) }}" class="admin-action-btn">📄 Modules</a>
+                  <a href="{{ path('dash_formation_edit', {id: f.idFormation}) }}" class="admin-action-btn">✏️ Modifier</a>
+                  <form method="post" action="{{ path('dash_formation_delete', {id: f.idFormation}) }}" onsubmit="return confirm('Supprimer ?')" style="display:inline">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete_form_' ~ f.idFormation) }}">
+                    <button type="submit" class="admin-action-btn admin-action-delete">🗑</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+</div>
+
+{# ── TAB INSCRIPTIONS ── #}
+<div id="tab-inscriptions" class="tab-panel">
+  <div class="admin-table-section">
+    <div class="admin-table-header">
+      <div class="admin-table-title">
+        Toutes les inscriptions
+        <span class="admin-count-badge">{{ nbInscriptions }}</span>
+      </div>
+      <div class="admin-table-actions">
+        <input type="text" placeholder="Rechercher..." class="admin-search-input" oninput="filterTable('tbl-insc', this.value)">
+      </div>
+    </div>
+    {% if allInscriptions is empty %}
+      <p style="color:#9999b8;text-align:center;padding:2rem">Aucune inscription pour le moment.</p>
+    {% else %}
+      <table class="admin-table" id="tbl-insc">
+        <thead><tr>
+          <th>#</th><th>Participant</th><th>Email</th><th>Formation</th><th>Date</th>
+        </tr></thead>
+        <tbody>
+          {% for insc in allInscriptions %}
+            <tr>
+              <td class="admin-table-muted">{{ loop.index }}</td>
+              <td class="admin-table-name">{{ insc.nomParticipant ?? '—' }}</td>
+              <td class="admin-table-muted">{{ insc.emailParticipant ?? '—' }}</td>
+              <td><span class="admin-badge admin-badge-blue">{{ insc.formation.titre }}</span></td>
+              <td class="admin-table-muted">{{ insc.dateInscription|date('d/m/Y H:i') }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+<script>
+function showTab(name) {
+  document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.dash-tab').forEach(t => {
+    if (t.getAttribute('onclick') && t.getAttribute('onclick').includes("'" + name + "'")) {
+      t.classList.add('active');
+    }
+  });
+}
+
+function filterTable(tableId, q) {
+  document.querySelectorAll('#' + tableId + ' tbody tr').forEach(row => {
+    row.style.display = row.innerText.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+
+function filterByCat(catId) {
+  document.querySelectorAll('#tbl-form tbody tr').forEach(row => {
+    row.style.display = (!catId || row.dataset.catid === catId) ? '' : 'none';
+  });
+}
+
+function sortCategories(sortValue) {
+  const [field, dir] = sortValue.split('-');
+  const tbody = document.querySelector('#tbl-cat tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  
+  rows.sort((a, b) => {
+    let valA, valB;
+    if (field === 'nom') {
+      valA = a.cells[0].textContent.trim().toLowerCase();
+      valB = b.cells[0].textContent.trim().toLowerCase();
+    } else if (field === 'formations') {
+      valA = parseInt(a.cells[3].textContent.trim()) || 0;
+      valB = parseInt(b.cells[3].textContent.trim()) || 0;
+    }
+    
+    if (dir === 'asc') return valA > valB ? 1 : -1;
+    return valA < valB ? 1 : -1;
+  });
+  
+  rows.forEach(row => tbody.appendChild(row));
+}
+
+function sortFormations(sortValue) {
+  const [field, dir] = sortValue.split('-');
+  const tbody = document.querySelector('#tbl-form tbody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  
+  rows.sort((a, b) => {
+    let valA, valB;
+    if (field === 'titre') {
+      valA = a.cells[0].textContent.trim().toLowerCase();
+      valB = b.cells[0].textContent.trim().toLowerCase();
+    } else if (field === 'duree') {
+      valA = parseFloat(a.cells[3].textContent.replace('h', '').trim()) || 0;
+      valB = parseFloat(b.cells[3].textContent.replace('h', '').trim()) || 0;
+    } else if (field === 'places') {
+      const textA = a.cells[4].textContent.trim();
+      const textB = b.cells[4].textContent.trim();
+      valA = textA.includes('Complet') ? 0 : parseInt(textA.split('/')[0]) || 0;
+      valB = textB.includes('Complet') ? 0 : parseInt(textB.split('/')[0]) || 0;
+    }
+    
+    if (dir === 'asc') return valA > valB ? 1 : -1;
+    return valA < valB ? 1 : -1;
+  });
+  
+  rows.forEach(row => tbody.appendChild(row));
+}
+
+// Boutons "Formations" dans l'onglet catégories
+document.querySelectorAll('[data-catid]').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const catId = this.dataset.catid;
+    showTab('formations');
+    const sel = document.getElementById('filter-cat');
+    if (sel) { sel.value = catId; filterByCat(catId); }
+  });
+});
+
+// Lire le tab depuis l'URL
+const urlParams = new URLSearchParams(window.location.search);
+const tab = urlParams.get('tab');
+if (tab) showTab(tab);
+</script>
+{% endblock %}

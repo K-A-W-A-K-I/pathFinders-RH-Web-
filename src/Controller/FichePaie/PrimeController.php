@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller;
+namespace App\Controller\FichePaie;
 
 use App\Entity\Prime;
 use App\Entity\FichesPaiement;
@@ -169,10 +169,24 @@ class PrimeController extends AbstractController
 
     // ── WORKER VIEW ───────────────────────────────────
     #[Route('/mes-primes', name: 'worker_primes')]
-    public function workerIndex(PrimeRepository $repo): Response
-    {
+    public function workerIndex(
+        PrimeRepository $repo,
+        \App\Repository\EmployeeRepository $employeeRepo
+    ): Response {
+        $user     = $this->getUser();
+        $employee = $user ? $employeeRepo->findOneBy(['utilisateur' => $user]) : null;
+
+        $primes = [];
+        if ($employee) {
+            foreach ($employee->getFichesPaiements() as $fiche) {
+                foreach ($fiche->getPrimes() as $prime) {
+                    $primes[] = $prime;
+                }
+            }
+        }
+
         return $this->render('worker/primes.html.twig', [
-            'primes' => $repo->findAll()
+            'primes' => $primes,
         ]);
     }
 }

@@ -2,12 +2,9 @@
 
 namespace App\Entity;
 
+use App\Repository\CategorieEvenementRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-
-use App\Repository\CategorieEvenementRepository;
 
 #[ORM\Entity(repositoryClass: CategorieEvenementRepository::class)]
 #[ORM\Table(name: 'categorie_evenement')]
@@ -15,96 +12,22 @@ class CategorieEvenement
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private ?int $id_categorie_evenement = null;
+    #[ORM\Column(name: 'id_categorie_evenement', type: Types::INTEGER)]
+    private ?int $id = null;
 
-    public function getId_categorie_evenement(): ?int
-    {
-        return $this->id_categorie_evenement;
-    }
+    #[ORM\Column(name: 'nom_categorie', type: Types::STRING, length: 100)]
+    private ?string $nomCategorie = null;
 
-    public function setId_categorie_evenement(int $id_categorie_evenement): self
-    {
-        $this->id_categorie_evenement = $id_categorie_evenement;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $nom_categorie = null;
-
-    public function getNom_categorie(): ?string
-    {
-        return $this->nom_categorie;
-    }
-
-    public function setNom_categorie(string $nom_categorie): self
-    {
-        $this->nom_categorie = $nom_categorie;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'text', nullable: true)]
+    #[ORM\Column(name: 'description', type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
-    public function getDescription(): ?string
-    {
-        return $this->description;
-    }
+    public function getId(): ?int { return $this->id; }
 
-    public function setDescription(?string $description): self
-    {
-        $this->description = $description;
-        return $this;
-    }
+    public function getNomCategorie(): ?string { return $this->nomCategorie; }
+    public function setNomCategorie(string $nomCategorie): static { $this->nomCategorie = $nomCategorie; return $this; }
 
-    #[ORM\OneToMany(targetEntity: Evenement::class, mappedBy: 'categorieEvenement')]
-    private Collection $evenements;
+    public function getDescription(): ?string { return $this->description; }
+    public function setDescription(?string $description): static { $this->description = $description; return $this; }
 
-    public function __construct()
-    {
-        $this->evenements = new ArrayCollection();
-    }
-
-    /**
-     * @return Collection<int, Evenement>
-     */
-    public function getEvenements(): Collection
-    {
-        if (!$this->evenements instanceof Collection) {
-            $this->evenements = new ArrayCollection();
-        }
-        return $this->evenements;
-    }
-
-    public function addEvenement(Evenement $evenement): self
-    {
-        if (!$this->getEvenements()->contains($evenement)) {
-            $this->getEvenements()->add($evenement);
-        }
-        return $this;
-    }
-
-    public function removeEvenement(Evenement $evenement): self
-    {
-        $this->getEvenements()->removeElement($evenement);
-        return $this;
-    }
-
-    public function getIdCategorieEvenement(): ?int
-    {
-        return $this->id_categorie_evenement;
-    }
-
-    public function getNomCategorie(): ?string
-    {
-        return $this->nom_categorie;
-    }
-
-    public function setNomCategorie(string $nom_categorie): static
-    {
-        $this->nom_categorie = $nom_categorie;
-
-        return $this;
-    }
-
+    public function __toString(): string { return $this->nomCategorie ?? ''; }
 }

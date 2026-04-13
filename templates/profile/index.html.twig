@@ -1,0 +1,64 @@
+{% extends 'client/base_client.html.twig' %}
+{% block title %}Mon Profil{% endblock %}
+{% block nav_candidatures %}{% endblock %}
+
+{% block body %}
+<div class="pf-hero">
+  <div class="pf-hero-bg"></div>
+  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>Espace candidat</div>
+    <h1>Mon <span>Profil</span></h1>
+    <p>Gérez vos informations personnelles, votre CV et votre lettre de motivation.</p>
+  </div>
+</div>
+
+<div class="pf-content">
+  <div class="pf-section" style="display:grid;grid-template-columns:200px 1fr;gap:2rem;align-items:start">
+    <div style="text-align:center">
+      <div style="width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,#6C63FF,#9D6BFF);display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#fff;margin:0 auto 1rem">
+        {{ user.fullName|slice(0,1)|upper }}
+      </div>
+      <div style="font-family:Sora,sans-serif;font-weight:700;font-size:1.1rem;color:var(--text)">{{ user.fullName }}</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-top:4px">{{ user.email }}</div>
+      <span style="display:inline-block;margin-top:8px;padding:3px 12px;border-radius:100px;font-size:11px;font-weight:600;background:rgba(108,99,255,.15);color:#6C63FF">
+        {{ user.role == 'ROLE_CANDIDAT' ? 'Candidat' : (user.role == 'ROLE_ADMIN' ? 'Admin' : user.role) }}
+      </span>
+    </div>
+    <div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem">
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Téléphone</div>
+          <div style="font-size:15px;color:var(--text)">{{ user.telephone ?? '—' }}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">Statut</div>
+          <div style="font-size:15px;color:var(--text)">{{ user.statut ?? 'actif' }}</div>
+        </div>
+      </div>
+
+      {% if candidat %}
+      <div style="border-top:.5px solid var(--border);padding-top:1.2rem;margin-top:.5rem">
+        <div style="font-size:13px;font-weight:600;color:var(--text-muted);margin-bottom:.8rem;text-transform:uppercase;letter-spacing:.06em">Documents</div>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap">
+          {% if candidat.cvPath %}
+            <a href="{{ asset(candidat.cvPath) }}" target="_blank" class="pf-btn-details">📄 Voir mon CV</a>
+          {% else %}
+            <span style="font-size:13px;color:var(--text-muted)">Aucun CV uploadé</span>
+          {% endif %}
+        </div>
+        {% if candidat.lettreMotivation %}
+        <div style="margin-top:1rem;padding:1rem;background:var(--surface);border:.5px solid var(--border);border-radius:10px;font-size:14px;color:var(--text-muted);line-height:1.6">
+          {{ candidat.lettreMotivation|nl2br }}
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <div style="margin-top:1.5rem">
+        <a href="{{ path('profile_edit') }}" class="pf-btn-details">✏️ Modifier mon profil</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

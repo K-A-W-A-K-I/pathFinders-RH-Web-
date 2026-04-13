@@ -1,0 +1,85 @@
+{% extends 'admin_base.html.twig' %}
+{% block title %}Gestion des Entretiens{% endblock %}
+{% block page_icon %}🎓{% endblock %}
+{% block page_title %}Gestion des Entretiens{% endblock %}
+
+{% block topbar_actions %}
+    <a href="{{ path('entretien_admin') }}" class="btn btn-secondary">🔄 Rafraîchir</a>
+{% endblock %}
+
+{% block body %}
+
+{# ── Filter bar ── #}
+<div class="admin-filter-row">
+    <form method="get" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        {% for opt in ['Tous', 'En attente', 'Confirmés', 'Refusés'] %}
+            <a href="?statut={{ opt }}"
+               class="admin-filter-chip {{ filter == opt ? 'active' : '' }}">
+                {{ opt }}
+            </a>
+        {% endfor %}
+        <span class="admin-count-badge" style="margin-left:auto">{{ entretiens|length }} entretien(s)</span>
+    </form>
+</div>
+
+{# ── Table ── #}
+<div class="admin-table-section">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>CANDIDAT</th>
+                <th>OFFRE</th>
+                <th>DATE & HEURE</th>
+                <th>STATUT</th>
+                <th>NOTES</th>
+                <th>ACTIONS</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% if entretiens is empty %}
+            <tr><td colspan="6" class="empty-cell">Aucun entretien pour le moment.</td></tr>
+        {% else %}
+            {% for e in entretiens %}
+            <tr>
+                <td class="admin-table-name">{{ e.candidat.fullName }}</td>
+                <td class="admin-table-muted">{{ e.offre.titre }}</td>
+                <td class="admin-table-muted">{{ e.dateEntretien|date('d/m/Y H:i') }}</td>
+                <td><span class="admin-status-dot {{ e.statut == 'CONFIRME' ? 'dot-active' : (e.statut == 'REFUSE' ? 'dot-refuse' : 'dot-pending') }}">● {{ e.statutLabel }}</span></td>
+                <td class="admin-table-muted">{{ e.notes ?? '—' }}</td>
+                <td>
+                    <div class="admin-row-actions">
+                        {% if e.statut != 'CONFIRME' %}
+                        <form method="post" action="{{ path('entretien_update_statut', {id: e.id}) }}" class="inline-form" onsubmit="return promptNotes(this)">
+                            <input type="hidden" name="statut" value="CONFIRME">
+                            <input type="hidden" name="notes" class="notes-input">
+                            <button type="submit" class="btn btn-sm btn-success">✅ Confirmer</button>
+                        </form>
+                        {% endif %}
+                        {% if e.statut != 'REFUSE' %}
+                        <form method="post" action="{{ path('entretien_update_statut', {id: e.id}) }}" class="inline-form" onsubmit="return promptNotes(this)">
+                            <input type="hidden" name="statut" value="REFUSE">
+                            <input type="hidden" name="notes" class="notes-input">
+                            <button type="submit" class="btn btn-sm btn-danger">❌ Refuser</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<div class="info-banner" style="margin-top:16px">
+    💡 Confirmez ou refusez les demandes d'entretien. Les créneaux confirmés bloquent automatiquement les autres candidats.
+</div>
+
+<script>
+function promptNotes(form) {
+    const notes = prompt('Notes (facultatif) :') ?? '';
+    form.querySelector('.notes-input').value = notes;
+    return true;
+}
+</script>
+{% endblock %}

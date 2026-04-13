@@ -1,0 +1,63 @@
+{% extends 'admin_base.html.twig' %}
+{% block title %}Catégories — Dashboard{% endblock %}
+{% block page_icon %}📂{% endblock %}
+{% block page_title %}Gestion des Catégories{% endblock %}
+{% block topbar_actions %}
+    <a href="{{ path('dash_categorie_new') }}" class="btn btn-primary" style="background:linear-gradient(135deg,#6C63FF,#9D6BFF);border:none;border-radius:10px;padding:10px 20px;font-weight:600;text-decoration:none;color:#fff;">+ Nouvelle catégorie</a>
+{% endblock %}
+
+{% block body %}
+<div class="admin-table-section">
+    <div class="admin-table-header">
+        <div class="admin-table-title">
+            Catégories de formations
+            <span class="admin-count-badge">{{ categories|length }}</span>
+        </div>
+        <div class="admin-table-actions">
+            <form method="get" style="display:flex;gap:8px;align-items:center">
+                <input type="text" name="q" value="{{ q }}" placeholder="Rechercher..." class="admin-search-input">
+                <select name="sort" class="admin-search-input" style="width:auto">
+                    <option value="nom" {% if sort == 'nom' %}selected{% endif %}>Nom (A→Z)</option>
+                    <option value="id" {% if sort == 'id' %}selected{% endif %}>ID</option>
+                </select>
+                <button type="submit" class="admin-tool-btn">Filtrer</button>
+                {% if q %}<a href="{{ path('dash_categorie_index') }}" class="admin-tool-btn">✕</a>{% endif %}
+            </form>
+        </div>
+    </div>
+
+    {% if categories is empty %}
+        <div style="text-align:center;color:#9999b8;padding:2rem">Aucune catégorie trouvée.</div>
+    {% else %}
+    <table class="admin-table">
+        <thead><tr>
+            <th>Nom</th><th>Description</th><th>Image</th><th>Formations</th><th style="text-align:right">Actions</th>
+        </tr></thead>
+        <tbody>
+        {% for cat in categories %}
+        <tr>
+            <td class="admin-table-name">{{ cat.nomCategorie }}</td>
+            <td class="admin-table-muted" style="max-width:220px;font-size:13px">{{ cat.description ? cat.description|slice(0,60) ~ '...' : '—' }}</td>
+            <td>
+                {% if cat.image %}
+                    <img src="{{ asset('uploads/categories/' ~ cat.image) }}" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:6px" onerror="this.style.display='none'">
+                {% else %}<span class="admin-table-muted">—</span>{% endif %}
+            </td>
+            <td><span class="admin-badge admin-badge-blue">{{ cat.formations|length }} formation(s)</span></td>
+            <td>
+                <div class="admin-row-actions" style="justify-content:flex-end">
+                    <a href="{{ path('client_formations_by_categorie', {id: cat.idCategorie}) }}" class="admin-action-btn" title="Voir formations">📋 Formations</a>
+                    <a href="{{ path('dash_categorie_edit', {id: cat.idCategorie}) }}" class="admin-action-btn">✏️ Modifier</a>
+                    <form method="post" action="{{ path('dash_categorie_delete', {id: cat.idCategorie}) }}" onsubmit="return confirm('Supprimer ?')" style="display:inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete_cat_' ~ cat.idCategorie) }}">
+                        <button type="submit" class="admin-action-btn admin-action-delete">🗑 Supprimer</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endblock %}

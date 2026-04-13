@@ -2,12 +2,12 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
-use Doctrine\ORM\Mapping as ORM;
+use App\Repository\OffreRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-
-use App\Repository\OffreRepository;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 #[ORM\Entity(repositoryClass: OffreRepository::class)]
 #[ORM\Table(name: 'offres')]
@@ -15,297 +15,101 @@ class Offre
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private ?int $id_offre = null;
+    #[ORM\Column(name: 'id_offre')]
+    private ?int $id = null;
 
-    public function getId_offre(): ?int
-    {
-        return $this->id_offre;
-    }
-
-    public function setId_offre(int $id_offre): self
-    {
-        $this->id_offre = $id_offre;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'string', nullable: false)]
+    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Le titre est obligatoire.')]
+    #[Assert\Length(min: 3, max: 255, minMessage: 'Le titre doit contenir au moins {{ limit }} caractères.', maxMessage: 'Le titre ne peut pas dépasser {{ limit }} caractères.')]
     private ?string $titre = null;
 
-    public function getTitre(): ?string
-    {
-        return $this->titre;
-    }
-
-    public function setTitre(string $titre): self
-    {
-        $this->titre = $titre;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'text', nullable: false)]
+    #[ORM\Column(type: 'text')]
+    #[Assert\NotBlank(message: 'La description est obligatoire.')]
+    #[Assert\Length(min: 10, minMessage: 'La description doit contenir au moins {{ limit }} caractères.')]
     private ?string $description = null;
 
-    public function getDescription(): ?string
-    {
-        return $this->description;
-    }
-
-    public function setDescription(string $description): self
-    {
-        $this->description = $description;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'string', nullable: true)]
+    #[ORM\Column(length: 100)]
+    #[Assert\NotBlank(message: 'Le domaine est obligatoire.')]
+    #[Assert\Choice(choices: ['IT', 'Finance', 'Marketing', 'RH', 'Vente', 'Production'], message: 'Domaine invalide.')]
     private ?string $domaine = null;
 
-    public function getDomaine(): ?string
-    {
-        return $this->domaine;
-    }
+    #[ORM\Column(name: 'type_contrat', length: 50)]
+    #[Assert\NotBlank(message: 'Le type de contrat est obligatoire.')]
+    #[Assert\Choice(choices: ['CDI', 'CDD', 'Stage', 'Freelance'], message: 'Type de contrat invalide.')]
+    private ?string $typeContrat = null;
 
-    public function setDomaine(?string $domaine): self
-    {
-        $this->domaine = $domaine;
-        return $this;
-    }
+    #[ORM\Column(name: 'salaire_min')]
+    #[Assert\NotNull(message: 'Le salaire minimum est obligatoire.')]
+    #[Assert\PositiveOrZero(message: 'Le salaire minimum doit être positif ou nul.')]
+    private int $salaireMin = 0;
 
-    #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $type_contrat = null;
+    #[ORM\Column(name: 'salaire_max')]
+    #[Assert\NotNull(message: 'Le salaire maximum est obligatoire.')]
+    #[Assert\PositiveOrZero(message: 'Le salaire maximum doit être positif ou nul.')]
+    private int $salaireMax = 0;
 
-    public function getType_contrat(): ?string
-    {
-        return $this->type_contrat;
-    }
+    #[ORM\Column(name: 'score_minimum')]
+    #[Assert\NotNull(message: 'Le score minimum est obligatoire.')]
+    #[Assert\Range(min: 0, max: 100, notInRangeMessage: 'Le score minimum doit être entre {{ min }} et {{ max }}.')]
+    private int $scoreMinimum = 50;
 
-    public function setType_contrat(?string $type_contrat): self
-    {
-        $this->type_contrat = $type_contrat;
-        return $this;
-    }
+    #[ORM\Column(name: 'duree_test_minutes')]
+    #[Assert\NotNull(message: 'La durée du test est obligatoire.')]
+    #[Assert\Positive(message: 'La durée du test doit être supérieure à 0.')]
+    #[Assert\Range(min: 5, max: 180, notInRangeMessage: 'La durée doit être entre {{ min }} et {{ max }} minutes.')]
+    private int $dureeTestMinutes = 30;
 
-    #[ORM\Column(type: 'integer', nullable: true)]
-    private ?int $salaire_min = null;
+    #[ORM\Column(length: 20)]
+    #[Assert\Choice(choices: ['active', 'inactive', 'cloturee'], message: 'Statut invalide.')]
+    private string $statut = 'active';
 
-    public function getSalaire_min(): ?int
-    {
-        return $this->salaire_min;
-    }
+    #[ORM\Column(name: 'date_publication', type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $datePublication = null;
 
-    public function setSalaire_min(?int $salaire_min): self
-    {
-        $this->salaire_min = $salaire_min;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'integer', nullable: true)]
-    private ?int $salaire_max = null;
-
-    public function getSalaire_max(): ?int
-    {
-        return $this->salaire_max;
-    }
-
-    public function setSalaire_max(?int $salaire_max): self
-    {
-        $this->salaire_max = $salaire_max;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'integer', nullable: false)]
-    private ?int $score_minimum = null;
-
-    public function getScore_minimum(): ?int
-    {
-        return $this->score_minimum;
-    }
-
-    public function setScore_minimum(int $score_minimum): self
-    {
-        $this->score_minimum = $score_minimum;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'integer', nullable: false)]
-    private ?int $duree_test_minutes = null;
-
-    public function getDuree_test_minutes(): ?int
-    {
-        return $this->duree_test_minutes;
-    }
-
-    public function setDuree_test_minutes(int $duree_test_minutes): self
-    {
-        $this->duree_test_minutes = $duree_test_minutes;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $statut = null;
-
-    public function getStatut(): ?string
-    {
-        return $this->statut;
-    }
-
-    public function setStatut(?string $statut): self
-    {
-        $this->statut = $statut;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'datetime', nullable: false)]
-    private ?\DateTimeInterface $date_publication = null;
-
-    public function getDate_publication(): ?\DateTimeInterface
-    {
-        return $this->date_publication;
-    }
-
-    public function setDate_publication(\DateTimeInterface $date_publication): self
-    {
-        $this->date_publication = $date_publication;
-        return $this;
-    }
-
-    #[ORM\OneToMany(targetEntity: Candidature::class, mappedBy: 'offre')]
-    private Collection $candidatures;
-
-    /**
-     * @return Collection<int, Candidature>
-     */
-    public function getCandidatures(): Collection
-    {
-        if (!$this->candidatures instanceof Collection) {
-            $this->candidatures = new ArrayCollection();
-        }
-        return $this->candidatures;
-    }
-
-    public function addCandidature(Candidature $candidature): self
-    {
-        if (!$this->getCandidatures()->contains($candidature)) {
-            $this->getCandidatures()->add($candidature);
-        }
-        return $this;
-    }
-
-    public function removeCandidature(Candidature $candidature): self
-    {
-        $this->getCandidatures()->removeElement($candidature);
-        return $this;
-    }
-
-    #[ORM\OneToMany(targetEntity: Question::class, mappedBy: 'offre')]
+    #[ORM\OneToMany(mappedBy: 'offre', targetEntity: Question::class, cascade: ['remove'])]
     private Collection $questions;
+
+    #[ORM\OneToMany(mappedBy: 'offre', targetEntity: Candidature::class, cascade: ['remove'])]
+    private Collection $candidatures;
 
     public function __construct()
     {
+        $this->questions    = new ArrayCollection();
         $this->candidatures = new ArrayCollection();
-        $this->questions = new ArrayCollection();
+        $this->datePublication = new \DateTime();
     }
 
-    /**
-     * @return Collection<int, Question>
-     */
-    public function getQuestions(): Collection
+    public function getId(): ?int { return $this->id; }
+    public function getTitre(): ?string { return $this->titre; }
+    public function setTitre(string $titre): static { $this->titre = $titre; return $this; }
+    public function getDescription(): ?string { return $this->description; }
+    public function setDescription(string $description): static { $this->description = $description; return $this; }
+    public function getDomaine(): ?string { return $this->domaine; }
+    public function setDomaine(string $domaine): static { $this->domaine = $domaine; return $this; }
+    public function getTypeContrat(): ?string { return $this->typeContrat; }
+    public function setTypeContrat(string $typeContrat): static { $this->typeContrat = $typeContrat; return $this; }
+    public function getSalaireMin(): int { return $this->salaireMin; }
+    public function setSalaireMin(int $salaireMin): static { $this->salaireMin = $salaireMin; return $this; }
+    public function getSalaireMax(): int { return $this->salaireMax; }
+    public function setSalaireMax(int $salaireMax): static { $this->salaireMax = $salaireMax; return $this; }
+    public function getScoreMinimum(): int { return $this->scoreMinimum; }
+    public function setScoreMinimum(int $scoreMinimum): static { $this->scoreMinimum = $scoreMinimum; return $this; }
+    public function getDureeTestMinutes(): int { return $this->dureeTestMinutes; }
+    public function setDureeTestMinutes(int $dureeTestMinutes): static { $this->dureeTestMinutes = $dureeTestMinutes; return $this; }
+    public function getStatut(): string { return $this->statut; }
+    public function setStatut(string $statut): static { $this->statut = $statut; return $this; }
+    public function getDatePublication(): ?\DateTimeInterface { return $this->datePublication; }
+    public function setDatePublication(?\DateTimeInterface $datePublication): static { $this->datePublication = $datePublication; return $this; }
+    public function getQuestions(): Collection { return $this->questions; }
+    public function getCandidatures(): Collection { return $this->candidatures; }
+
+    #[Assert\Callback]
+    public function validateSalaires(ExecutionContextInterface $context): void
     {
-        if (!$this->questions instanceof Collection) {
-            $this->questions = new ArrayCollection();
+        if ($this->salaireMax < $this->salaireMin) {
+            $context->buildViolation('Le salaire maximum doit être supérieur ou égal au salaire minimum.')
+                ->atPath('salaireMax')
+                ->addViolation();
         }
-        return $this->questions;
     }
-
-    public function addQuestion(Question $question): self
-    {
-        if (!$this->getQuestions()->contains($question)) {
-            $this->getQuestions()->add($question);
-        }
-        return $this;
-    }
-
-    public function removeQuestion(Question $question): self
-    {
-        $this->getQuestions()->removeElement($question);
-        return $this;
-    }
-
-    public function getIdOffre(): ?int
-    {
-        return $this->id_offre;
-    }
-
-    public function getTypeContrat(): ?string
-    {
-        return $this->type_contrat;
-    }
-
-    public function setTypeContrat(?string $type_contrat): static
-    {
-        $this->type_contrat = $type_contrat;
-
-        return $this;
-    }
-
-    public function getSalaireMin(): ?int
-    {
-        return $this->salaire_min;
-    }
-
-    public function setSalaireMin(?int $salaire_min): static
-    {
-        $this->salaire_min = $salaire_min;
-
-        return $this;
-    }
-
-    public function getSalaireMax(): ?int
-    {
-        return $this->salaire_max;
-    }
-
-    public function setSalaireMax(?int $salaire_max): static
-    {
-        $this->salaire_max = $salaire_max;
-
-        return $this;
-    }
-
-    public function getScoreMinimum(): ?int
-    {
-        return $this->score_minimum;
-    }
-
-    public function setScoreMinimum(int $score_minimum): static
-    {
-        $this->score_minimum = $score_minimum;
-
-        return $this;
-    }
-
-    public function getDureeTestMinutes(): ?int
-    {
-        return $this->duree_test_minutes;
-    }
-
-    public function setDureeTestMinutes(int $duree_test_minutes): static
-    {
-        $this->duree_test_minutes = $duree_test_minutes;
-
-        return $this;
-    }
-
-    public function getDatePublication(): ?\DateTime
-    {
-        return $this->date_publication;
-    }
-
-    public function setDatePublication(\DateTime $date_publication): static
-    {
-        $this->date_publication = $date_publication;
-
-        return $this;
-    }
-
 }

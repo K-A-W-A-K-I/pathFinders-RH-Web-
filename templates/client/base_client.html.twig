@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}PathFinder{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ 'now'|date('U') }}">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    :root{--primary:#6C63FF;--accent:#9D6BFF;--blue:#4B8BF5;--teal:#1D9E75;--red:#E24B4A}
+    [data-theme="dark"]{--bg:#09090f;--bg2:#0e0e18;--surface:rgba(255,255,255,0.03);--surface-hover:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.08);--border-hover:rgba(255,255,255,0.14);--text:#e8e6f0;--text-muted:rgba(232,230,240,0.55);--text-dim:rgba(232,230,240,0.35);--nav-bg:rgba(9,9,15,0.85);--hero-h1:#ffffff;--stat-num:#ffffff}
+    [data-theme="light"]{--bg:#f0f0f8;--bg2:#e8e8f4;--surface:rgba(255,255,255,0.85);--surface-hover:rgba(255,255,255,1);--border:rgba(108,99,255,0.12);--border-hover:rgba(108,99,255,0.28);--text:#1a1830;--text-muted:rgba(26,24,48,0.6);--text-dim:rgba(26,24,48,0.38);--nav-bg:rgba(240,240,248,0.9);--hero-h1:#1a1830;--stat-num:#1a1830}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s}
+    .pf-nav{display:flex;align-items:center;justify-content:space-between;padding:0 2.5rem;height:62px;background:var(--nav-bg);backdrop-filter:blur(20px);border-bottom:.5px solid var(--border);position:sticky;top:0;z-index:100;transition:background .3s,border-color .3s}
+    .pf-logo{display:flex;align-items:center;gap:10px;font-family:'Sora',sans-serif;font-weight:700;font-size:16px;color:var(--text);text-decoration:none}
+    .pf-logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--primary),var(--accent));border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .pf-nav-center{display:flex;align-items:center;gap:4px}
+    .pf-nav-link{padding:7px 18px;font-size:14px;color:var(--text-muted);border-radius:8px;transition:all .2s;text-decoration:none;font-weight:500}
+    .pf-nav-link:hover{color:var(--text);background:var(--surface)}
+    .pf-nav-link.active{color:#fff;background:var(--primary)}
+    .pf-nav-right{display:flex;align-items:center;gap:10px}
+    .pf-theme-btn{width:36px;height:36px;border-radius:50%;border:.5px solid var(--border);background:var(--surface);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+    .pf-theme-btn:hover{background:var(--surface-hover)}
+    .pf-btn-ghost{padding:7px 18px;border-radius:8px;border:.5px solid var(--border);background:transparent;color:var(--text);font-size:13.5px;font-family:'DM Sans',sans-serif;cursor:pointer;text-decoration:none;transition:all .2s}
+    .pf-btn-ghost:hover{background:var(--surface)}
+    .pf-btn-primary{padding:7px 20px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;font-size:13.5px;font-family:'DM Sans',sans-serif;cursor:pointer;text-decoration:none;font-weight:500}
+    .pf-hero{position:relative;padding:5rem 2.5rem 4rem;overflow:hidden;background:linear-gradient(180deg,var(--bg2) 0%,var(--bg) 100%)}
+    [data-theme="dark"] .pf-hero{background:linear-gradient(180deg,#0d0d1a 0%,var(--bg) 100%)}
+    .pf-hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 55% 50% at 15% 60%,rgba(108,99,255,.2) 0%,transparent 70%),radial-gradient(ellipse 40% 40% at 85% 25%,rgba(157,107,255,.13) 0%,transparent 65%)}
+    .pf-hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:40px 40px;mask-image:linear-gradient(to bottom,transparent,rgba(0,0,0,.4) 20%,rgba(0,0,0,.4) 80%,transparent)}
+    .pf-hero-inner{position:relative;max-width:760px}
+    .pf-hero-badge{display:inline-flex;align-items:center;gap:8px;padding:5px 14px 5px 8px;border-radius:100px;border:.5px solid rgba(108,99,255,.4);background:rgba(108,99,255,.1);font-size:12.5px;color:rgba(180,170,255,.95);margin-bottom:1.8rem;font-family:'Sora',sans-serif;animation:fadeUp .5s ease both}
+    [data-theme="light"] .pf-hero-badge{color:var(--primary);background:rgba(108,99,255,.08)}
+    .pf-hero-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--primary);box-shadow:0 0 8px rgba(108,99,255,.8)}
+    .pf-hero h1{font-family:'Sora',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:700;line-height:1.1;color:var(--hero-h1);letter-spacing:-.025em;margin-bottom:1.2rem;animation:fadeUp .55s .1s ease both}
+    .pf-hero h1 span{background:linear-gradient(135deg,var(--accent),var(--primary) 50%,var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .pf-hero p{font-size:16px;line-height:1.7;color:var(--text-muted);max-width:560px;font-weight:300;animation:fadeUp .55s .2s ease both}
+    .pf-content{max-width:1100px;margin:0 auto;padding:3rem 2.5rem 6rem}
+    .pf-section{background:var(--surface);border:.5px solid var(--border);border-radius:20px;padding:2.5rem;margin-bottom:2rem;animation:fadeUp .55s .3s ease both;transition:background .3s,border-color .3s;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+    [data-theme="light"] .pf-section{box-shadow:0 2px 12px rgba(108,99,255,.06)}
+    .pf-section-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--primary);margin-bottom:.6rem;font-family:'Sora',sans-serif;opacity:.85}
+    .pf-section h2{font-family:'Sora',sans-serif;font-size:1.4rem;font-weight:600;color:var(--text);margin-bottom:1.2rem;letter-spacing:-.02em}
+    .pf-divider{width:36px;height:2px;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:2px;margin-bottom:1.4rem}
+    .pf-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin-bottom:2rem}
+    .pf-card{background:var(--surface);border:.5px solid var(--border);border-radius:18px;padding:1.8rem;position:relative;overflow:hidden;transition:border-color .25s,background .25s,box-shadow .25s;box-shadow:0 1px 3px rgba(0,0,0,.06);text-decoration:none;color:var(--text);display:block}
+    .pf-card:hover{background:var(--surface-hover);border-color:var(--border-hover);box-shadow:0 4px 20px rgba(108,99,255,.1);transform:translateY(-2px)}
+    .pf-card h3{font-family:'Sora',sans-serif;font-size:1rem;font-weight:600;color:var(--text);margin-bottom:.5rem}
+    .pf-card p{font-size:13.5px;line-height:1.65;color:var(--text-muted);font-weight:300}
+    .pf-card-img{width:100%;height:140px;object-fit:cover;border-radius:10px;margin-bottom:1rem;background:linear-gradient(135deg,rgba(108,99,255,.2),rgba(157,107,255,.1))}
+    .pf-card-img-placeholder{width:100%;height:140px;border-radius:10px;margin-bottom:1rem;background:linear-gradient(135deg,rgba(108,99,255,.15),rgba(157,107,255,.08));display:flex;align-items:center;justify-content:center;font-size:2.5rem}
+    .pf-badge{display:inline-block;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:600;font-family:'Sora',sans-serif;margin-top:.8rem}
+    .pf-badge-purple{background:rgba(108,99,255,.15);color:var(--primary);border:.5px solid rgba(108,99,255,.3)}
+    .pf-badge-green{background:rgba(29,158,117,.12);color:var(--teal);border:.5px solid rgba(29,158,117,.25)}
+    .pf-badge-red{background:rgba(226,75,74,.12);color:var(--red);border:.5px solid rgba(226,75,74,.25)}
+    .pf-btn-details{display:inline-block;margin-top:1rem;padding:8px 18px;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;text-decoration:none;border-radius:10px;font-size:13px;font-weight:600;font-family:'Sora',sans-serif;transition:transform .2s,box-shadow .2s;box-shadow:0 2px 8px rgba(108,99,255,.25)}
+    .pf-btn-details:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(108,99,255,.4)}
+    a[href*="module_detail"]:hover{background:var(--surface-hover);border-color:var(--border-hover);transform:translateX(4px)}
+    .pf-search-bar{display:flex;gap:.8rem;margin-bottom:1.5rem;flex-wrap:wrap;align-items:center}
+    .pf-input{padding:9px 16px;border-radius:10px;border:.5px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .2s;min-width:220px}
+    .pf-input:focus{border-color:var(--primary)}
+    .pf-select{padding:9px 16px;border-radius:10px;border:.5px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;cursor:pointer}
+    .pf-btn-search{padding:9px 20px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;font-weight:500}
+    .pf-footer{padding:1.5rem 2.5rem;border-top:.5px solid var(--border);text-align:center;font-size:12.5px;color:var(--text-dim)}
+    .flash{padding:.75rem 1.25rem;margin:.5rem 1rem;border-radius:8px;font-size:14px}
+    .flash-success{background:rgba(29,158,117,.15);border:1px solid rgba(29,158,117,.3);color:#1D9E75}
+    .flash-error{background:rgba(226,75,74,.15);border:1px solid rgba(226,75,74,.3);color:#E24B4A}
+    .flash-warning{background:rgba(255,180,0,.12);border:1px solid rgba(255,180,0,.25);color:#FFB400}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+  {% block stylesheets %}{% endblock %}
+</head>
+<body>
+
+{% for type, messages in app.flashes %}
+  {% for message in messages %}
+    <div class="flash flash-{{ type }}">{{ message }}</div>
+  {% endfor %}
+{% endfor %}
+
+<nav class="pf-nav">
+  <a href="{{ path('app_home') }}" class="pf-logo">
+    <img src="{{ asset('logowhite.png') }}" alt="PathFinder" style="height:32px;">
+    <span style="font-family:'Sora',sans-serif;font-weight:700;font-size:16px;color:var(--text)">PathFinder</span>
+  </a>
+  <div class="pf-nav-center">
+    <a href="{{ path('app_about') }}" class="pf-nav-link {% block nav_about %}{% endblock %}">À propos</a>
+    <a href="{{ path('offre_list') }}" class="pf-nav-link {% block nav_offres %}{% endblock %}">Offres</a>
+    <a href="{{ path('client_categories') }}" class="pf-nav-link {% block nav_categories %}{% endblock %}">Formations</a>
+    <a href="{{ path('user_evenement_index') }}" class="pf-nav-link {% block nav_evenements %}{% endblock %}">Événements</a>
+    <a href="{{ path('candidature_mes') }}" class="pf-nav-link {% block nav_candidatures %}{% endblock %}">Mes candidatures</a>
+    <a href="{{ path('reclamation_index') }}" class="pf-nav-link {% block nav_reclamations %}{% endblock %}">Réclamations</a>
+  </div>
+  <div class="pf-nav-right">
+    <button class="pf-theme-btn" id="themeToggle" title="Changer le thème">🌙</button>
+    {% if app.user %}
+      <a href="{{ path('profile_index') }}" class="pf-btn-ghost" style="display:flex;align-items:center;gap:6px">
+        <span style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6C63FF,#9D6BFF);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff">{{ app.user.fullName|slice(0,1)|upper }}</span>
+        {{ app.user.fullName|split(' ')|first }}
+      </a>
+      <a href="{{ path('auth_logout') }}" class="pf-btn-ghost">Déconnexion</a>
+    {% else %}
+      <a href="{{ path('auth_login') }}" class="pf-btn-ghost">Connexion</a>
+      <a href="{{ path('auth_register') }}" class="pf-btn-primary">S'inscrire</a>
+    {% endif %}
+  </div>
+</nav>
+
+{% block hero %}
+{% if block('hero_title') is defined and block('hero_title') is not empty %}
+<div style="position:relative;padding:5.5rem 2.5rem 4rem;overflow:hidden;background:linear-gradient(160deg,#070710 0%,#0d0d1a 40%,var(--bg) 100%);">
+  <div style="position:absolute;width:560px;height:560px;border-radius:50%;filter:blur(80px);pointer-events:none;background:radial-gradient(circle,rgba(108,99,255,.22) 0%,transparent 70%);top:-180px;left:-100px;"></div>
+  <div style="position:absolute;width:420px;height:420px;border-radius:50%;filter:blur(80px);pointer-events:none;background:radial-gradient(circle,rgba(157,107,255,.16) 0%,transparent 70%);bottom:-120px;right:5%;"></div>
+  <div style="position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);background-size:52px 52px;mask-image:linear-gradient(to bottom,transparent 0%,black 15%,black 85%,transparent 100%);"></div>
+  <div style="position:relative;max-width:760px;">
+    <div style="display:inline-flex;align-items:center;gap:8px;padding:5px 16px 5px 9px;border-radius:100px;border:.5px solid rgba(108,99,255,.35);background:rgba(108,99,255,.08);font-size:12px;font-weight:600;color:#6C63FF;font-family:'Sora',sans-serif;letter-spacing:.03em;margin-bottom:1.4rem;">
+      <div style="width:7px;height:7px;border-radius:50%;background:#6C63FF;box-shadow:0 0 0 0 rgba(108,99,255,.7);animation:pulseRing 2s ease-in-out infinite;"></div>
+      PathFinder
+    </div>
+    <h1 style="font-family:'Sora',sans-serif;font-size:clamp(2.2rem,4.5vw,3.4rem);font-weight:700;line-height:1.1;letter-spacing:-.03em;color:#fff;margin-bottom:.9rem;">
+      {% block hero_title %}{% endblock %}
+    </h1>
+    <p style="font-size:15.5px;line-height:1.7;color:rgba(232,230,240,0.55);max-width:480px;font-weight:300;">
+      {% block hero_sub %}{% endblock %}
+    </p>
+  </div>
+</div>
+<style>
+@keyframes pulseRing{0%,100%{box-shadow:0 0 0 0 rgba(108,99,255,.7)}50%{box-shadow:0 0 0 6px rgba(108,99,255,0)}}
+</style>
+{% endif %}
+{% endblock %}
+
+{% block body %}{% endblock %}
+
+<div class="pf-footer">© 2026 PathFinders · All rights reserved.</div>
+
+<script>
+const btn = document.getElementById('themeToggle');
+const html = document.documentElement;
+const saved = localStorage.getItem('pf-theme') || 'dark';
+html.setAttribute('data-theme', saved);
+btn.textContent = saved === 'dark' ? '🌙' : '☀️';
+btn.addEventListener('click', () => {
+  const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  btn.textContent = next === 'dark' ? '🌙' : '☀️';
+  localStorage.setItem('pf-theme', next);
+});
+</script>
+{% block javascripts %}{% endblock %}
+</body>
+</html>

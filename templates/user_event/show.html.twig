@@ -1,0 +1,529 @@
+{% extends 'client/base_client.html.twig' %}
+
+{% block title %}{{ evenement.titre }} — PathFinder{% endblock %}
+{% block nav_evenements %}active{% endblock %}
+{% block page_title %}{% endblock %}
+{% block page_subtitle %}{% endblock %}
+
+{% block body %}
+<style>
+    .ue-page-head { display:none; }
+    .ue-main { padding-top:0; max-width:100%; padding-left:0; padding-right:0; padding-bottom:0; }
+
+    /* ─── CINEMATIC HERO ─── */
+    .evd-hero {
+        position:relative; overflow:hidden;
+        min-height:380px; display:flex; align-items:flex-end;
+    }
+    .evd-hero-img {
+        position:absolute; inset:0;
+        background:linear-gradient(135deg,#0f0c1a 0%,#1a1040 40%,#3a1f6e 70%,#6C63FF 100%);
+    }
+    .evd-hero-img img { width:100%;height:100%;object-fit:cover;opacity:.65; }
+    /* Layered gradient veil */
+    .evd-hero-veil {
+        position:absolute; inset:0;
+        background:
+            linear-gradient(to top, rgba(9,9,15,1) 0%, rgba(9,9,15,.7) 30%, rgba(9,9,15,.1) 70%, transparent 100%),
+            linear-gradient(135deg, rgba(108,99,255,.25) 0%, transparent 60%);
+        pointer-events:none;
+    }
+    /* Animated orbs */
+    .evd-hero-orb {
+        position:absolute; border-radius:50%; filter:blur(70px); pointer-events:none;
+        animation:orbDrift 10s ease-in-out infinite alternate;
+    }
+    .evd-hero-orb-1 { width:500px;height:500px;background:rgba(108,99,255,.2);top:-150px;right:-50px;animation-duration:13s; }
+    .evd-hero-orb-2 { width:320px;height:320px;background:rgba(157,107,255,.15);bottom:0;left:10%;animation-duration:9s;animation-delay:-3s; }
+    @keyframes orbDrift { 0%{transform:translate(0,0)} 100%{transform:translate(24px,18px)} }
+    /* Dot grid */
+    .evd-hero-dots {
+        position:absolute; inset:0; pointer-events:none;
+        background-image: radial-gradient(rgba(255,255,255,.08) 1px, transparent 1px);
+        background-size:28px 28px;
+        mask-image:linear-gradient(to bottom, transparent, rgba(0,0,0,.6) 30%, rgba(0,0,0,.6) 70%, transparent);
+    }
+    /* Hero content */
+    .evd-hero-content {
+        position:relative;z-index:2;
+        max-width:1160px;width:100%;margin:0 auto;
+        padding:2.5rem 2.5rem 3rem;
+    }
+    .evd-hero-back {
+        display:inline-flex;align-items:center;gap:7px;
+        color:rgba(255,255,255,.6);font-size:13px;font-weight:500;
+        text-decoration:none;font-family:'DM Sans',sans-serif;
+        background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);
+        backdrop-filter:blur(8px);
+        padding:6px 16px 6px 12px;border-radius:100px;
+        transition:all .2s;margin-bottom:2.2rem;display:inline-flex;
+    }
+    .evd-hero-back:hover { background:rgba(255,255,255,.14);color:#fff; }
+    .evd-hero-badges { display:flex;flex-wrap:wrap;gap:7px;margin-bottom:1.1rem; }
+    .evd-badge {
+        display:inline-flex;align-items:center;font-size:11px;font-weight:700;
+        padding:4px 12px;border-radius:100px;font-family:'Sora',sans-serif;letter-spacing:.03em;
+        backdrop-filter:blur(8px);
+    }
+    .evd-badge-cat    { background:rgba(108,99,255,.3);color:#d4cfff;border:1px solid rgba(108,99,255,.4); }
+    .evd-badge-actif  { background:rgba(34,197,94,.25);color:#86efac;border:1px solid rgba(34,197,94,.35); }
+    .evd-badge-complet{ background:rgba(245,158,11,.25);color:#fcd34d;border:1px solid rgba(245,158,11,.35); }
+    .evd-badge-annule { background:rgba(239,68,68,.25);color:#fca5a5;border:1px solid rgba(239,68,68,.35); }
+    .evd-badge-termine{ background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.15); }
+    .evd-badge-type   { background:rgba(29,158,117,.25);color:#6ee7b7;border:1px solid rgba(29,158,117,.35); }
+    .evd-badge-default{ background:rgba(108,99,255,.25);color:#c4b5fd;border:1px solid rgba(108,99,255,.35); }
+    .evd-hero-title {
+        font-family:'Sora',sans-serif;
+        font-size:clamp(2rem,4.5vw,3.2rem);
+        font-weight:800;line-height:1.08;
+        letter-spacing:-.035em;
+        color:#ffffff;
+        text-shadow:0 2px 30px rgba(0,0,0,.5);
+        max-width:820px;
+    }
+    .evd-hero-divider {
+        width:48px;height:3px;margin-top:1.1rem;
+        background:linear-gradient(90deg,var(--primary),var(--accent),var(--blue));
+        border-radius:3px;
+    }
+
+    /* ─── LAYOUT ─── */
+    .evd-layout {
+        max-width:1160px;margin:0 auto;
+        padding:2.5rem 2.5rem 5rem;
+        display:grid;
+        grid-template-columns:1fr 340px;
+        gap:24px;
+        align-items:start;
+    }
+    @media (max-width:900px) {
+        .evd-layout { grid-template-columns:1fr; }
+        .evd-sidebar { order:-1; }
+        .evd-hero { min-height:280px; }
+        .evd-hero-content { padding:1.8rem 1.4rem 2.2rem; }
+    }
+
+    /* ─── CARDS SHARED ─── */
+    .evd-card {
+        background:var(--surface,rgba(255,255,255,.88));
+        border:.5px solid var(--border,#e5e7ef);
+        border-radius:22px;
+        overflow:hidden;
+        box-shadow:0 2px 12px rgba(0,0,0,.05);
+        margin-bottom:20px;
+        animation:evdFadeUp .5s ease both;
+    }
+    .evd-card:nth-child(1){animation-delay:.05s}
+    .evd-card:nth-child(2){animation-delay:.12s}
+    .evd-card:nth-child(3){animation-delay:.19s}
+    [data-theme="light"] .evd-card { box-shadow:0 2px 20px rgba(108,99,255,.07); }
+    .evd-card-topbar { height:3px;background:linear-gradient(90deg,var(--primary),var(--accent),var(--blue)); }
+    .evd-card-head {
+        padding:20px 24px 0;
+        display:flex;align-items:center;gap:10px;
+        font-family:'Sora',sans-serif;font-size:12px;font-weight:700;
+        letter-spacing:.1em;text-transform:uppercase;color:var(--primary);opacity:.8;
+    }
+    .evd-card-head i { font-size:14px; }
+    .evd-card-body { padding:16px 24px 24px; }
+    @keyframes evdFadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ─── DESCRIPTION ─── */
+    .evd-desc {
+        font-size:15px;line-height:1.8;
+        color:var(--text-muted,#6b7280);font-weight:300;
+    }
+
+    /* ─── INFO TILES ─── */
+    .evd-tiles {
+        display:grid;
+        grid-template-columns:repeat(2,1fr);
+        gap:12px;
+    }
+    .evd-tile {
+        background:var(--bg,#f4f5fb);
+        border:1px solid var(--border,#e5e7ef);
+        border-radius:16px;
+        padding:16px 18px;
+        position:relative;overflow:hidden;
+        transition:transform .2s,box-shadow .2s;
+    }
+    .evd-tile:hover { transform:translateY(-2px);box-shadow:0 8px 22px rgba(108,99,255,.1); }
+    .evd-tile-glow {
+        position:absolute;top:-20px;right:-20px;
+        width:70px;height:70px;border-radius:50%;
+        filter:blur(22px);opacity:.14;pointer-events:none;
+    }
+    .evd-tile-label {
+        font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+        color:var(--text-light,#9ca3af);margin-bottom:8px;
+        display:flex;align-items:center;gap:6px;
+    }
+    .evd-tile-label i { font-size:12px;color:var(--primary); }
+    .evd-tile-value {
+        font-family:'Sora',sans-serif;font-size:1.05rem;font-weight:700;
+        color:var(--text-dark,#1a1d2e);
+    }
+
+    /* ─── STAT RING CARDS ─── */
+    .evd-stats-row {
+        display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
+    }
+    .evd-stat {
+        background:var(--bg,#f4f5fb);
+        border:1px solid var(--border,#e5e7ef);
+        border-radius:16px;
+        padding:20px 16px;
+        text-align:center;
+        transition:transform .2s,box-shadow .2s;
+        position:relative;overflow:hidden;
+    }
+    .evd-stat:hover { transform:translateY(-2px);box-shadow:0 8px 22px rgba(108,99,255,.1); }
+    .evd-stat-ring {
+        width:60px;height:60px;border-radius:50%;
+        background:conic-gradient(var(--primary) var(--pct,0deg), var(--border,#e5e7ef) 0);
+        display:flex;align-items:center;justify-content:center;
+        margin:0 auto 12px;
+        position:relative;
+    }
+    .evd-stat-ring::before {
+        content:'';position:absolute;inset:7px;
+        background:var(--bg,#f4f5fb);border-radius:50%;
+    }
+    .evd-stat-icon { position:relative;z-index:1;font-size:18px;color:var(--primary); }
+    .evd-stat-value {
+        font-family:'Sora',sans-serif;font-size:1.9rem;font-weight:800;
+        color:var(--primary);letter-spacing:-.04em;line-height:1;
+    }
+    .evd-stat-label { font-size:10.5px;color:var(--text-light,#9ca3af);margin-top:5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase; }
+    .evd-stat-sub { font-size:11.5px;color:var(--text-muted,#6b7280);margin-top:4px; }
+
+    /* ─── SIDEBAR ─── */
+    .evd-sidebar .evd-card { margin-bottom:16px; }
+
+    /* Registration card */
+    .evd-reg-card {
+        background:linear-gradient(145deg,var(--primary) 0%,var(--accent) 100%);
+        border-radius:22px;padding:24px;
+        color:white;
+        box-shadow:0 8px 28px rgba(108,99,255,.35);
+        animation:evdFadeUp .5s .08s ease both;
+        margin-bottom:16px;
+        position:relative;overflow:hidden;
+    }
+    .evd-reg-card::before {
+        content:'';position:absolute;top:-40px;right:-40px;
+        width:160px;height:160px;border-radius:50%;
+        background:rgba(255,255,255,.08);pointer-events:none;
+    }
+    .evd-reg-card::after {
+        content:'';position:absolute;bottom:-30px;left:-20px;
+        width:120px;height:120px;border-radius:50%;
+        background:rgba(255,255,255,.06);pointer-events:none;
+    }
+    .evd-reg-price-label { font-size:12px;opacity:.75;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px; }
+    .evd-reg-price {
+        font-family:'Sora',sans-serif;font-size:2.6rem;font-weight:800;
+        line-height:1;letter-spacing:-.04em;margin-bottom:4px;
+    }
+    .evd-reg-price sub { font-size:.9rem;font-weight:600;opacity:.8;vertical-align:sub; }
+    .evd-reg-price-free { font-size:1.6rem;font-weight:800;letter-spacing:-.02em; }
+    .evd-reg-subtitle { font-size:13px;opacity:.7;margin-bottom:20px; }
+    .evd-reg-btn {
+        display:flex;align-items:center;justify-content:center;gap:9px;
+        width:100%;padding:14px 20px;border-radius:14px;border:none;
+        background:white;color:var(--primary);
+        font-size:14px;font-weight:700;font-family:'DM Sans',sans-serif;
+        cursor:pointer;transition:all .2s;
+        box-shadow:0 4px 16px rgba(0,0,0,.15);
+        position:relative;z-index:1;
+    }
+    .evd-reg-btn:hover { background:rgba(255,255,255,.9);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.2); }
+    .evd-reg-btn:disabled { background:rgba(255,255,255,.4);color:rgba(255,255,255,.7);cursor:not-allowed;transform:none;box-shadow:none; }
+    .evd-fav-btn-full {
+        display:flex;align-items:center;justify-content:center;gap:9px;
+        width:100%;padding:12px 20px;border-radius:14px;
+        border:2px solid rgba(255,255,255,.3);
+        background:transparent;color:white;
+        font-size:13.5px;font-weight:600;font-family:'DM Sans',sans-serif;
+        cursor:pointer;transition:all .2s;
+        position:relative;z-index:1;margin-top:10px;text-decoration:none;
+    }
+    .evd-fav-btn-full:hover { background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.5); }
+    .evd-fav-btn-full.is-active { background:linear-gradient(135deg,#f59e0b,#ea580c);border-color:transparent;box-shadow:0 4px 16px rgba(245,158,11,.35); }
+
+    /* Quick info sidebar */
+    .evd-quick-info { display:grid;gap:10px; }
+    .evd-qi-line {
+        display:flex;align-items:center;gap:12px;
+        padding:11px 14px;
+        background:var(--bg,#f4f5fb);
+        border:.5px solid var(--border,#e5e7ef);
+        border-radius:12px;
+        font-size:13.5px;color:var(--text-mid,#4b5563);
+        transition:border-color .2s;
+    }
+    .evd-qi-line:hover { border-color:rgba(108,99,255,.28); }
+    .evd-qi-icon {
+        width:32px;height:32px;border-radius:8px;
+        background:var(--primary-light,#ede9ff);
+        display:flex;align-items:center;justify-content:center;
+        font-size:14px;color:var(--primary);flex-shrink:0;
+    }
+    .evd-qi-content {}
+    .evd-qi-label { font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-light,#9ca3af); }
+    .evd-qi-value { font-size:13.5px;font-weight:600;color:var(--text-dark,#1a1d2e); }
+
+    @media (max-width:640px) {
+        .evd-layout { padding:1.5rem 1.2rem 3.5rem; }
+        .evd-tiles { grid-template-columns:1fr; }
+        .evd-stats-row { grid-template-columns:1fr 1fr; }
+    }
+</style>
+
+{# ── CINEMATIC HERO ── #}
+<div class="evd-hero">
+    <div class="evd-hero-img">
+        {% if evenement.imagePath %}
+            <img src="{{ asset(evenement.imagePath) }}" alt="{{ evenement.titre }}">
+        {% endif %}
+    </div>
+    <div class="evd-hero-veil"></div>
+    <div class="evd-hero-orb evd-hero-orb-1"></div>
+    <div class="evd-hero-orb evd-hero-orb-2"></div>
+    <div class="evd-hero-dots"></div>
+
+    <div class="evd-hero-content">
+        <a href="{{ path('user_evenement_index') }}" class="evd-hero-back">
+            <i class="bi bi-arrow-left"></i> Retour aux événements
+        </a>
+        <div class="evd-hero-badges">
+            {% if evenement.categorie %}
+                <span class="evd-badge evd-badge-cat">{{ evenement.categorie.nomCategorie }}</span>
+            {% endif %}
+            <span class="evd-badge evd-badge-{{ evenement.statut|lower }}">{{ evenement.statut }}</span>
+            <span class="evd-badge evd-badge-type">{{ evenement.typeEvenement }}</span>
+        </div>
+        <h1 class="evd-hero-title">{{ evenement.titre }}</h1>
+        <div class="evd-hero-divider"></div>
+    </div>
+</div>
+
+{# ── LAYOUT ── #}
+<div class="evd-layout">
+
+    {# ── MAIN COLUMN ── #}
+    <div class="evd-main">
+
+        {# Description #}
+        <div class="evd-card">
+            <div class="evd-card-topbar"></div>
+            <div class="evd-card-head"><i class="bi bi-file-text"></i> Description</div>
+            <div class="evd-card-body">
+                <p class="evd-desc">{{ evenement.description ?: 'Aucune description disponible pour cet événement.' }}</p>
+            </div>
+        </div>
+
+        {# Info tiles #}
+        <div class="evd-card">
+            <div class="evd-card-topbar" style="background:linear-gradient(90deg,#4B8BF5,var(--primary));"></div>
+            <div class="evd-card-head"><i class="bi bi-info-circle"></i> Informations clés</div>
+            <div class="evd-card-body">
+                <div class="evd-tiles">
+                    <div class="evd-tile">
+                        <div class="evd-tile-glow" style="background:#6C63FF;"></div>
+                        <div class="evd-tile-label"><i class="bi bi-calendar-check"></i> Date de début</div>
+                        <div class="evd-tile-value">{{ evenement.dateDebut|date('d/m/Y') }}</div>
+                    </div>
+                    <div class="evd-tile">
+                        <div class="evd-tile-glow" style="background:#4B8BF5;"></div>
+                        <div class="evd-tile-label"><i class="bi bi-calendar-x"></i> Date de fin</div>
+                        <div class="evd-tile-value">{{ evenement.dateFin|date('d/m/Y') }}</div>
+                    </div>
+                    <div class="evd-tile">
+                        <div class="evd-tile-glow" style="background:#9D6BFF;"></div>
+                        <div class="evd-tile-label"><i class="bi bi-geo-alt"></i> Lieu</div>
+                        <div class="evd-tile-value" style="font-size:.95rem;">{{ evenement.lieu ?: '—' }}</div>
+                    </div>
+                    <div class="evd-tile">
+                        <div class="evd-tile-glow" style="background:#1D9E75;"></div>
+                        <div class="evd-tile-label"><i class="bi bi-currency-dollar"></i> Tarif</div>
+                        <div class="evd-tile-value" style="color:{% if evenement.prix and evenement.prix > 0 %}var(--text-dark){% else %}#16a34a{% endif %};">
+                            {% if evenement.prix and evenement.prix > 0 %}{{ evenement.prix }} TND{% else %}Gratuit{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# Stats #}
+        <div class="evd-card">
+            <div class="evd-card-topbar" style="background:linear-gradient(90deg,var(--accent),var(--teal,#1D9E75));"></div>
+            <div class="evd-card-head"><i class="bi bi-bar-chart-line"></i> Statistiques</div>
+            <div class="evd-card-body">
+                <div class="evd-stats-row">
+                    <div class="evd-stat">
+                        <div class="evd-stat-ring" style="--pct: 180deg;">
+                            <i class="bi bi-people-fill evd-stat-icon"></i>
+                        </div>
+                        <div class="evd-stat-value">{{ evenement.placesReservees }}</div>
+                        <div class="evd-stat-label">Places réservées</div>
+                        <div class="evd-stat-sub">inscrits</div>
+                    </div>
+                    <div class="evd-stat">
+                        <div class="evd-stat-ring" style="--pct: 120deg;">
+                            <i class="bi bi-ticket-fill evd-stat-icon"></i>
+                        </div>
+                        <div class="evd-stat-value">{{ evenement.placesRestantesCalculated }}</div>
+                        <div class="evd-stat-label">Places restantes</div>
+                        <div class="evd-stat-sub">disponibles</div>
+                    </div>
+                    <div class="evd-stat">
+                        <div class="evd-stat-ring" style="--pct: 90deg;">
+                            <i class="bi bi-clock-fill evd-stat-icon"></i>
+                        </div>
+                        <div class="evd-stat-value">{{ evenement.dureeJours }}</div>
+                        <div class="evd-stat-label">Durée</div>
+                        <div class="evd-stat-sub">jour{{ evenement.dureeJours > 1 ? 's' : '' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    {# ── SIDEBAR ── #}
+    <div class="evd-sidebar">
+
+        {# Registration card #}
+        <div class="evd-reg-card">
+            <div class="evd-reg-price-label">Tarif d'entrée</div>
+            {% if evenement.prix and evenement.prix > 0 %}
+                <div class="evd-reg-price">{{ evenement.prix }}<sub> TND</sub></div>
+            {% else %}
+                <div class="evd-reg-price"><span class="evd-reg-price-free">✦ Gratuit</span></div>
+            {% endif %}
+            <div class="evd-reg-subtitle">{{ isRegistered ? 'Vous êtes inscrit à cet événement' : (evenement.isFull ? 'Événement complet' : 'Réservez votre place maintenant') }}</div>
+
+            <form method="post" action="{{ path('user_evenement_register', {id: evenement.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('register_evenement_' ~ evenement.id) }}">
+                <button type="button" class="evd-reg-btn"
+                    {% if isRegistered or evenement.isFull %}disabled{% endif %}
+                    onclick="openUserConfirm(this)"
+                    data-confirm-title="Confirmer l'inscription ?"
+                    data-confirm-text="Vous allez vous inscrire à &quot;{{ evenement.titre|e('html_attr') }}&quot;. Cette action réserve votre place."
+                    data-confirm-icon="bi-person-check-fill"
+                    data-confirm-icon-class="pf-confirm-icon-accent"
+                    data-confirm-button="Confirmer"
+                    data-confirm-button-class="btn-ev-primary">
+                    {% if isRegistered %}
+                        <i class="bi bi-check-circle-fill"></i> Déjà inscrit
+                    {% elseif evenement.isFull %}
+                        <i class="bi bi-x-circle-fill"></i> Événement complet
+                    {% else %}
+                        <i class="bi bi-person-plus-fill"></i> S'inscrire à l'événement
+                    {% endif %}
+                </button>
+            </form>
+
+            <form method="post" action="{{ path('user_evenement_toggle_favorite', {id: evenement.id}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('favorite_evenement_' ~ evenement.id) }}">
+                <button type="button"
+                    class="evd-fav-btn-full {{ isFavorite ? 'is-active' : '' }}"
+                    onclick="openUserConfirm(this)"
+                    data-confirm-title="{{ isFavorite ? 'Retirer des favoris ?' : 'Ajouter aux favoris ?' }}"
+                    data-confirm-text="{{ isFavorite ? 'L\'événement &quot;' ~ evenement.titre|e('html_attr') ~ '&quot; sera retiré de vos favoris.' : 'L\'événement &quot;' ~ evenement.titre|e('html_attr') ~ '&quot; sera ajouté à vos favoris.' }}"
+                    data-confirm-icon="{{ isFavorite ? 'bi-heartbreak-fill' : 'bi-star-fill' }}"
+                    data-confirm-icon-class="{{ isFavorite ? 'pf-confirm-icon-warning' : 'pf-confirm-icon-accent' }}"
+                    data-confirm-button="{{ isFavorite ? 'Retirer' : 'Ajouter' }}"
+                    data-confirm-button-class="{{ isFavorite ? 'btn-ev-secondary' : 'btn-ev-primary' }}">
+                    <i class="bi {{ isFavorite ? 'bi-star-fill' : 'bi-star' }}"></i>
+                    {{ isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris' }}
+                </button>
+            </form>
+        </div>
+
+        {# Quick info #}
+        <div class="evd-card">
+            <div class="evd-card-topbar"></div>
+            <div class="evd-card-head"><i class="bi bi-lightning-charge"></i> Résumé rapide</div>
+            <div class="evd-card-body">
+                <div class="evd-quick-info">
+                    <div class="evd-qi-line">
+                        <div class="evd-qi-icon"><i class="bi bi-calendar3"></i></div>
+                        <div class="evd-qi-content">
+                            <div class="evd-qi-label">Début</div>
+                            <div class="evd-qi-value">{{ evenement.dateDebut|date('d/m/Y') }}</div>
+                        </div>
+                    </div>
+                    <div class="evd-qi-line">
+                        <div class="evd-qi-icon"><i class="bi bi-calendar-check"></i></div>
+                        <div class="evd-qi-content">
+                            <div class="evd-qi-label">Fin</div>
+                            <div class="evd-qi-value">{{ evenement.dateFin|date('d/m/Y') }}</div>
+                        </div>
+                    </div>
+                    <div class="evd-qi-line">
+                        <div class="evd-qi-icon"><i class="bi bi-geo-alt-fill"></i></div>
+                        <div class="evd-qi-content">
+                            <div class="evd-qi-label">Lieu</div>
+                            <div class="evd-qi-value">{{ evenement.lieu ?: 'Non précisé' }}</div>
+                        </div>
+                    </div>
+                    <div class="evd-qi-line">
+                        <div class="evd-qi-icon"><i class="bi bi-clock"></i></div>
+                        <div class="evd-qi-content">
+                            <div class="evd-qi-label">Durée</div>
+                            <div class="evd-qi-value">{{ evenement.dureeJours }} jour{{ evenement.dureeJours > 1 ? 's' : '' }}</div>
+                        </div>
+                    </div>
+                    <div class="evd-qi-line">
+                        <div class="evd-qi-icon"><i class="bi bi-people"></i></div>
+                        <div class="evd-qi-content">
+                            <div class="evd-qi-label">Places restantes</div>
+                            <div class="evd-qi-value">{{ evenement.placesRestantesCalculated }}</div>
+                        </div>
+                    </div>
+                    {% if evenement.categorie %}
+                    <div class="evd-qi-line">
+                        <div class="evd-qi-icon"><i class="bi bi-tag"></i></div>
+                        <div class="evd-qi-content">
+                            <div class="evd-qi-label">Catégorie</div>
+                            <div class="evd-qi-value">{{ evenement.categorie.nomCategorie }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<div id="userConfirmModal" style="display:none;position:fixed;inset:0;z-index:999999;align-items:center;justify-content:center;">
+    <div id="pfModalBackdrop" style="position:fixed;inset:0;background:rgba(15,23,42,0.55);backdrop-filter:blur(4px);"></div>
+    <div id="pfModalInner" style="position:relative;z-index:1000000;background:white;border-radius:24px;max-width:440px;width:90%;padding:32px 28px;text-align:center;box-shadow:0 26px 70px rgba(15,23,42,0.22);">
+        <div id="userConfirmIcon" style="width:64px;height:64px;margin:0 auto 18px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;background:linear-gradient(135deg,#eef2ff,#ddd6fe);color:#2729aa;"><i class="bi bi-star-fill"></i></div>
+        <h5 id="userConfirmTitle" style="font-size:20px;font-weight:800;color:#010204;margin:0 0 8px;"></h5>
+        <p  id="userConfirmText"  style="font-size:13px;color:#64748b;line-height:1.6;margin:0 0 22px;"></p>
+        <div style="display:flex;justify-content:center;gap:10px;">
+            <button type="button" id="pfModalCancel" style="border:none;border-radius:10px;padding:11px 22px;font-size:13px;font-weight:700;cursor:pointer;background:#eef2ff;color:#2729aa;">Annuler</button>
+            <button type="button" id="userConfirmSubmit" style="border:none;border-radius:10px;padding:11px 22px;font-size:13px;font-weight:700;cursor:pointer;background:#2729aa;color:white;">Confirmer</button>
+        </div>
+    </div>
+</div>
+<script>
+let _pfPendingForm = null;
+function openUserConfirm(button) {
+    _pfPendingForm = button.closest('form');
+    document.getElementById('userConfirmTitle').textContent = button.dataset.confirmTitle || 'Confirmation';
+    document.getElementById('userConfirmText').innerHTML    = button.dataset.confirmText  || '';
+    document.getElementById('userConfirmModal').style.display = 'flex';
+}
+document.getElementById('pfModalBackdrop').addEventListener('click', () => { document.getElementById('userConfirmModal').style.display='none'; });
+document.getElementById('pfModalCancel').addEventListener('click',   () => { document.getElementById('userConfirmModal').style.display='none'; });
+document.getElementById('userConfirmSubmit').addEventListener('click', () => { if (_pfPendingForm) _pfPendingForm.submit(); });
+</script>
+{% endblock %}

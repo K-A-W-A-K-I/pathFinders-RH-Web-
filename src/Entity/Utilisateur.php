@@ -2,381 +2,96 @@
 
 namespace App\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-
 use App\Repository\UtilisateurRepository;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UtilisateurRepository::class)]
 #[ORM\Table(name: 'utilisateurs')]
-class Utilisateur
+#[UniqueEntity(fields: ['email'], message: 'Cette adresse email est déjà utilisée.')]
+class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private ?int $id_utilisateur = null;
+    #[ORM\Column(name: 'id_utilisateur')]
+    private ?int $id = null;
 
-    public function getId_utilisateur(): ?int
-    {
-        return $this->id_utilisateur;
-    }
-
-    public function setId_utilisateur(int $id_utilisateur): self
-    {
-        $this->id_utilisateur = $id_utilisateur;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $email = null;
-
-    public function getEmail(): ?string
-    {
-        return $this->email;
-    }
-
-    public function setEmail(string $email): self
-    {
-        $this->email = $email;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $mot_de_passe = null;
-
-    public function getMot_de_passe(): ?string
-    {
-        return $this->mot_de_passe;
-    }
-
-    public function setMot_de_passe(string $mot_de_passe): self
-    {
-        $this->mot_de_passe = $mot_de_passe;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'string', nullable: false)]
+    #[ORM\Column(length: 100)]
+    #[Assert\NotBlank(message: 'Le nom est obligatoire.')]
+    #[Assert\Length(min: 2, max: 100, minMessage: 'Le nom doit contenir au moins {{ limit }} caractères.')]
     private ?string $nom = null;
 
-    public function getNom(): ?string
-    {
-        return $this->nom;
-    }
-
-    public function setNom(string $nom): self
-    {
-        $this->nom = $nom;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'string', nullable: false)]
+    #[ORM\Column(length: 100)]
+    #[Assert\NotBlank(message: 'Le prénom est obligatoire.')]
+    #[Assert\Length(min: 2, max: 100, minMessage: 'Le prénom doit contenir au moins {{ limit }} caractères.')]
     private ?string $prenom = null;
 
-    public function getPrenom(): ?string
-    {
-        return $this->prenom;
-    }
+    #[ORM\Column(length: 180, unique: true)]
+    #[Assert\NotBlank(message: "L'email est obligatoire.")]
+    #[Assert\Email(message: "L'adresse email '{{ value }}' n'est pas valide.")]
+    private ?string $email = null;
 
-    public function setPrenom(string $prenom): self
-    {
-        $this->prenom = $prenom;
-        return $this;
-    }
+    #[ORM\Column(name: 'mot_de_passe')]
+    private string $password = '';
 
-    #[ORM\Column(type: 'string', nullable: true)]
+    #[ORM\Column(length: 20, nullable: true)]
+    private ?string $role = 'ROLE_USER';
+
+    #[ORM\Column(length: 20, nullable: true)]
+    private ?string $statut = 'actif';
+
+    #[ORM\Column(length: 20, nullable: true)]
     private ?string $telephone = null;
 
-    public function getTelephone(): ?string
-    {
-        return $this->telephone;
-    }
+    // Colonnes Java existantes — mappées pour éviter les diffs de schéma
+    #[ORM\Column(name: 'date_creation', type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $dateCreation = null;
 
-    public function setTelephone(?string $telephone): self
-    {
-        $this->telephone = $telephone;
-        return $this;
-    }
+    #[ORM\Column(name: 'imageUrl', length: 255, nullable: true)]
+    private ?string $imageUrl = null;
 
-    #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $statut = null;
+    #[ORM\Column(name: 'totp_secret', length: 255, nullable: true)]
+    private ?string $totpSecret = null;
 
-    public function getStatut(): ?string
-    {
-        return $this->statut;
-    }
+    #[ORM\Column(name: 'two_factor_enabled', nullable: true)]
+    private ?bool $twoFactorEnabled = false;
 
-    public function setStatut(?string $statut): self
-    {
-        $this->statut = $statut;
-        return $this;
-    }
+    #[ORM\Column(name: 'face_data', type: 'text', nullable: true)]
+    private ?string $faceData = null;
 
-    #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $role = null;
+    #[ORM\Column(name: 'reset_token', length: 255, nullable: true)]
+    private ?string $resetToken = null;
 
-    public function getRole(): ?string
-    {
-        return $this->role;
-    }
+    #[ORM\Column(name: 'reset_expiry', type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $resetExpiry = null;
 
-    public function setRole(string $role): self
-    {
-        $this->role = $role;
-        return $this;
-    }
+    // Non mappé — utilisé uniquement pendant l'inscription
+    private ?string $plainPassword = null;
 
-    #[ORM\Column(type: 'datetime', nullable: false)]
-    private ?\DateTimeInterface $date_creation = null;
+    public function getId(): ?int { return $this->id; }
+    public function getNom(): ?string { return $this->nom; }
+    public function setNom(string $nom): static { $this->nom = $nom; return $this; }
+    public function getPrenom(): ?string { return $this->prenom; }
+    public function setPrenom(string $prenom): static { $this->prenom = $prenom; return $this; }
+    public function getEmail(): ?string { return $this->email; }
+    public function setEmail(string $email): static { $this->email = $email; return $this; }
+    public function getPassword(): string { return $this->password; }
+    public function setPassword(string $password): static { $this->password = $password; return $this; }
+    public function getPlainPassword(): ?string { return $this->plainPassword; }
+    public function setPlainPassword(?string $p): static { $this->plainPassword = $p; return $this; }
+    public function getRole(): ?string { return $this->role; }
+    public function setRole(?string $role): static { $this->role = $role; return $this; }
+    public function getStatut(): ?string { return $this->statut; }
+    public function setStatut(?string $statut): static { $this->statut = $statut; return $this; }
+    public function getTelephone(): ?string { return $this->telephone; }
+    public function setTelephone(?string $telephone): static { $this->telephone = $telephone; return $this; }
+    public function getFullName(): string { return trim(($this->prenom ?? '') . ' ' . ($this->nom ?? '')); }
 
-    public function getDate_creation(): ?\DateTimeInterface
-    {
-        return $this->date_creation;
-    }
-
-    public function setDate_creation(\DateTimeInterface $date_creation): self
-    {
-        $this->date_creation = $date_creation;
-        return $this;
-    }
-
- 
-
-    
-
-    #[ORM\OneToMany(targetEntity: Absence::class, mappedBy: 'utilisateur')]
-    private Collection $absences;
-
-    /**
-     * @return Collection<int, Absence>
-     */
-    public function getAbsences(): Collection
-    {
-        if (!$this->absences instanceof Collection) {
-            $this->absences = new ArrayCollection();
-        }
-        return $this->absences;
-    }
-
-    public function addAbsence(Absence $absence): self
-    {
-        if (!$this->getAbsences()->contains($absence)) {
-            $this->getAbsences()->add($absence);
-        }
-        return $this;
-    }
-
-    public function removeAbsence(Absence $absence): self
-    {
-        $this->getAbsences()->removeElement($absence);
-        return $this;
-    }
-
-    #[ORM\OneToMany(targetEntity: Candidat::class, mappedBy: 'utilisateur')]
-    private Collection $candidats;
-
-    /**
-     * @return Collection<int, Candidat>
-     */
-    public function getCandidats(): Collection
-    {
-        if (!$this->candidats instanceof Collection) {
-            $this->candidats = new ArrayCollection();
-        }
-        return $this->candidats;
-    }
-
-    public function addCandidat(Candidat $candidat): self
-    {
-        if (!$this->getCandidats()->contains($candidat)) {
-            $this->getCandidats()->add($candidat);
-        }
-        return $this;
-    }
-
-    public function removeCandidat(Candidat $candidat): self
-    {
-        $this->getCandidats()->removeElement($candidat);
-        return $this;
-    }
-
-    #[ORM\OneToMany(targetEntity: Conge::class, mappedBy: 'utilisateur')]
-    private Collection $conges;
-
-    /**
-     * @return Collection<int, Conge>
-     */
-    public function getConges(): Collection
-    {
-        if (!$this->conges instanceof Collection) {
-            $this->conges = new ArrayCollection();
-        }
-        return $this->conges;
-    }
-
-    public function addConge(Conge $conge): self
-    {
-        if (!$this->getConges()->contains($conge)) {
-            $this->getConges()->add($conge);
-        }
-        return $this;
-    }
-
-    public function removeConge(Conge $conge): self
-    {
-        $this->getConges()->removeElement($conge);
-        return $this;
-    }
-
-    #[ORM\OneToMany(targetEntity: Employee::class, mappedBy: 'utilisateur')]
-    private Collection $employees;
-
-    /**
-     * @return Collection<int, Employee>
-     */
-    public function getEmployees(): Collection
-    {
-        if (!$this->employees instanceof Collection) {
-            $this->employees = new ArrayCollection();
-        }
-        return $this->employees;
-    }
-
-    public function addEmployee(Employee $employee): self
-    {
-        if (!$this->getEmployees()->contains($employee)) {
-            $this->getEmployees()->add($employee);
-        }
-        return $this;
-    }
-
-    public function removeEmployee(Employee $employee): self
-    {
-        $this->getEmployees()->removeElement($employee);
-        return $this;
-    }
-
-    #[ORM\OneToMany(targetEntity: Evenement::class, mappedBy: 'utilisateur')]
-    private Collection $evenements;
-
-    /**
-     * @return Collection<int, Evenement>
-     */
-    public function getEvenements(): Collection
-    {
-        if (!$this->evenements instanceof Collection) {
-            $this->evenements = new ArrayCollection();
-        }
-        return $this->evenements;
-    }
-
-    public function addEvenement(Evenement $evenement): self
-    {
-        if (!$this->getEvenements()->contains($evenement)) {
-            $this->getEvenements()->add($evenement);
-        }
-        return $this;
-    }
-
-    public function removeEvenement(Evenement $evenement): self
-    {
-        $this->getEvenements()->removeElement($evenement);
-        return $this;
-    }
-
-    #[ORM\OneToOne(targetEntity: InscriptionEvenement::class, mappedBy: 'utilisateur')]
-    private ?InscriptionEvenement $inscriptionEvenement = null;
-
-    public function getInscriptionEvenement(): ?InscriptionEvenement
-    {
-        return $this->inscriptionEvenement;
-    }
-
-    public function setInscriptionEvenement(?InscriptionEvenement $inscriptionEvenement): self
-    {
-        $this->inscriptionEvenement = $inscriptionEvenement;
-        return $this;
-    }
-
-    #[ORM\OneToOne(targetEntity: InscriptionsFormation::class, mappedBy: 'utilisateur')]
-    private ?InscriptionsFormation $inscriptionsFormation = null;
-
-    public function getInscriptionsFormation(): ?InscriptionsFormation
-    {
-        return $this->inscriptionsFormation;
-    }
-
-    public function setInscriptionsFormation(?InscriptionsFormation $inscriptionsFormation): self
-    {
-        $this->inscriptionsFormation = $inscriptionsFormation;
-        return $this;
-    }
-
-    #[ORM\OneToMany(targetEntity: Planning::class, mappedBy: 'utilisateur')]
-    private Collection $plannings;
-
-    public function __construct()
-    {
-        $this->absences = new ArrayCollection();
-        $this->candidats = new ArrayCollection();
-        $this->conges = new ArrayCollection();
-        $this->employees = new ArrayCollection();
-        $this->evenements = new ArrayCollection();
-        $this->plannings = new ArrayCollection();
-    }
-
-    /**
-     * @return Collection<int, Planning>
-     */
-    public function getPlannings(): Collection
-    {
-        if (!$this->plannings instanceof Collection) {
-            $this->plannings = new ArrayCollection();
-        }
-        return $this->plannings;
-    }
-
-    public function addPlanning(Planning $planning): self
-    {
-        if (!$this->getPlannings()->contains($planning)) {
-            $this->getPlannings()->add($planning);
-        }
-        return $this;
-    }
-
-    public function removePlanning(Planning $planning): self
-    {
-        $this->getPlannings()->removeElement($planning);
-        return $this;
-    }
-
-    public function getIdUtilisateur(): ?int
-    {
-        return $this->id_utilisateur;
-    }
-
-    public function getMotDePasse(): ?string
-    {
-        return $this->mot_de_passe;
-    }
-
-    public function setMotDePasse(string $mot_de_passe): static
-    {
-        $this->mot_de_passe = $mot_de_passe;
-
-        return $this;
-    }
-
-    public function getDateCreation(): ?\DateTime
-    {
-        return $this->date_creation;
-    }
-
-    public function setDateCreation(\DateTime $date_creation): static
-    {
-        $this->date_creation = $date_creation;
-
-        return $this;
-    }
-
+    // UserInterface
+    public function getRoles(): array { return array_unique([$this->role ?? 'ROLE_USER', 'ROLE_USER']); }
+    public function getUserIdentifier(): string { return (string) $this->email; }
+    public function eraseCredentials(): void { $this->plainPassword = null; }
 }

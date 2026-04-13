@@ -1,0 +1,70 @@
+{% extends 'client/base_client.html.twig' %}
+{% block title %}{{ categorie.nomCategorie }} — PathFinder{% endblock %}
+{% block nav_categories %}active{% endblock %}
+
+{% block body %}
+<div class="pf-hero">
+  <div class="pf-hero-bg"></div>
+  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>{{ categorie.nomCategorie }}</div>
+    <h1>Formations <span>disponibles</span></h1>
+    <p>{{ categorie.description ?? 'Découvrez toutes les formations de cette catégorie.' }}</p>
+  </div>
+</div>
+
+<div class="pf-content">
+  <div style="margin-bottom:1rem">
+    <a href="{{ path('client_categories') }}" style="color:var(--text-muted);text-decoration:none;font-size:14px">← Retour aux catégories</a>
+  </div>
+
+  <div class="pf-section">
+    <form method="get" class="pf-search-bar" id="searchForm">
+      <input type="text" name="q" value="{{ q }}" placeholder="Rechercher une formation..." class="pf-input">
+      <select name="sort" class="pf-select" onchange="document.getElementById('searchForm').submit()">
+        <option value="titre" {% if sort == 'titre' %}selected{% endif %}>Trier par titre</option>
+        <option value="dureeHeures" {% if sort == 'dureeHeures' %}selected{% endif %}>Trier par durée</option>
+        <option value="placeDisponible" {% if sort == 'placeDisponible' %}selected{% endif %}>Trier par places</option>
+      </select>
+      <select name="dir" class="pf-select" onchange="document.getElementById('searchForm').submit()">
+        <option value="ASC" {% if dir == 'ASC' %}selected{% endif %}>Croissant</option>
+        <option value="DESC" {% if dir == 'DESC' %}selected{% endif %}>Décroissant</option>
+      </select>
+      <button type="submit" class="pf-btn-search">Rechercher</button>
+      {% if q %}<a href="{{ path('client_formations_by_categorie', {id: categorie.idCategorie}) }}" class="pf-btn-ghost" style="padding:9px 16px;border-radius:10px;text-decoration:none">✕ Effacer</a>{% endif %}
+    </form>
+  </div>
+
+  {% if formations is empty %}
+    <div class="pf-section" style="text-align:center;padding:3rem">
+      <p style="color:var(--text-muted);font-size:16px">Aucune formation trouvée{% if q %} pour "{{ q }}"{% endif %}.</p>
+    </div>
+  {% else %}
+    <div class="pf-cards">
+      {% for formation in formations %}
+        <div class="pf-card">
+          <div class="pf-card-img-placeholder">🎓</div>
+          <h3>{{ formation.titre }}</h3>
+          {% if formation.description %}
+            <p>{{ formation.description|slice(0, 90) }}{% if formation.description|length > 90 %}...{% endif %}</p>
+          {% endif %}
+          <div style="margin-top:.8rem;display:flex;flex-wrap:wrap;gap:.4rem">
+            {% if formation.formateur %}
+              <span class="pf-badge pf-badge-purple">👤 {{ formation.formateur }}</span>
+            {% endif %}
+            {% if formation.dureeHeures %}
+              <span class="pf-badge pf-badge-purple">⏱ {{ formation.dureeHeures }}h</span>
+            {% endif %}
+            {% if formation.placeDisponible > 0 %}
+              <span class="pf-badge pf-badge-green">{{ formation.placeDisponible }} place(s)</span>
+            {% else %}
+              <span class="pf-badge pf-badge-red">Complet</span>
+            {% endif %}
+          </div>
+          <a href="{{ path('client_formation_detail', {id: formation.idFormation}) }}" class="pf-btn-details">📋 Détails</a>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

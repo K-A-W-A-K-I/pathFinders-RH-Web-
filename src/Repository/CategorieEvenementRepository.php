@@ -16,28 +16,12 @@ class CategorieEvenementRepository extends ServiceEntityRepository
         parent::__construct($registry, CategorieEvenement::class);
     }
 
-    //    /**
-    //     * @return CategorieEvenement[] Returns an array of CategorieEvenement objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('c')
-    //            ->andWhere('c.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('c.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
-
-    //    public function findOneBySomeField($value): ?CategorieEvenement
-    //    {
-    //        return $this->createQueryBuilder('c')
-    //            ->andWhere('c.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    /** @return CategorieEvenement[] */
+    public function findAllOrdered(): array
+    {
+        return $this->createQueryBuilder('c')
+            ->orderBy('c.nomCategorie', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

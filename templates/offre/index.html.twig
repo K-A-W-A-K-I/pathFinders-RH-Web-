@@ -1,0 +1,118 @@
+{% extends 'admin_base.html.twig' %}
+{% block title %}Gestion des Offres{% endblock %}
+{% block page_icon %}📋{% endblock %}
+{% block page_title %}Gestion des Offres{% endblock %}
+
+{% block topbar_actions %}
+    <a href="{{ path('offre_new') }}" class="btn btn-primary">＋ Nouvelle Offre</a>
+{% endblock %}
+
+{% block body %}
+
+{# ── Quick action cards ── #}
+<div class="admin-quick-cards">
+    <div class="quick-card">
+        <div class="quick-card-icon" style="background:rgba(108,99,255,0.12)">📁</div>
+        <div class="quick-card-body">
+            <div class="quick-card-title">Consulter Candidatures</div>
+            <div class="quick-card-sub">Voir et gérer toutes les candidatures reçues par offre</div>
+        </div>
+        <a href="{{ path('admin_candidatures') }}" class="quick-card-btn">Voir →</a>
+        <span class="quick-card-badge">{{ offres|length }} offres</span>
+    </div>
+    <div class="quick-card">
+        <div class="quick-card-icon" style="background:rgba(245,158,11,0.12)">❓</div>
+        <div class="quick-card-body">
+            <div class="quick-card-title">Gestion des Questions</div>
+            <div class="quick-card-sub">Gérer les questions et les tests d'évaluation</div>
+        </div>
+        <a href="{{ path('offre_index') }}" class="quick-card-btn">Gérer →</a>
+        <span class="quick-card-badge quick-card-badge-amber">Tests actifs</span>
+    </div>
+    <div class="quick-card quick-card-featured">
+        <div class="quick-card-icon" style="background:rgba(239,68,68,0.12)">🤖</div>
+        <div class="quick-card-body">
+            <div class="quick-card-title" style="color:#f97316">Analyser CV par IA</div>
+            <div class="quick-card-sub">Gemini analyse le CV et attribue un score sur 100</div>
+        </div>
+        <button class="quick-card-btn quick-card-btn-orange">● Analyser</button>
+        <span class="quick-card-badge quick-card-badge-orange">IA Gemini</span>
+    </div>
+</div>
+
+{# ── Offres table ── #}
+<div class="admin-table-section">
+    <div class="admin-table-header">
+        <div class="admin-table-title">
+            Liste des Offres
+            <span class="admin-count-badge">{{ offres|length }} offres</span>
+        </div>
+        <div class="admin-table-actions">
+            <button class="admin-tool-btn">⊙ Filtrer</button>
+            <input type="text" placeholder="Rechercher..." class="admin-search-input" id="offreSearch">
+        </div>
+    </div>
+
+    {% if offres is empty %}
+        <div class="empty-state">
+            <div class="empty-icon">📄</div>
+            <p class="empty-title">Aucune offre créée</p>
+            <a href="{{ path('offre_new') }}" class="btn btn-primary">＋ Créer une offre</a>
+        </div>
+    {% else %}
+    <table class="admin-table" id="offreTable">
+        <thead>
+            <tr>
+                <th>TITRE</th>
+                <th>DOMAINE</th>
+                <th>CONTRAT</th>
+                <th>SALAIRE</th>
+                <th>SCORE MIN.</th>
+                <th>DURÉE TEST</th>
+                <th>STATUT</th>
+                <th>ACTIONS</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for offre in offres %}
+        <tr>
+            <td class="admin-table-name">{{ offre.titre }}</td>
+            <td><span class="admin-badge admin-badge-blue">{{ offre.domaine }}</span></td>
+            <td><span class="admin-badge admin-badge-green">{{ offre.typeContrat }}</span></td>
+            <td class="admin-table-muted">{{ offre.salaireMin }} – {{ offre.salaireMax }} DT</td>
+            <td>
+                <div class="admin-score-bar">
+                    <div class="admin-score-fill" style="width:{{ offre.scoreMinimum }}%"></div>
+                </div>
+                {{ offre.scoreMinimum }}%
+            </td>
+            <td class="admin-table-muted">{{ offre.dureeTestMinutes }} min</td>
+            <td>
+                <span class="admin-status-dot {{ offre.statut == 'active' ? 'dot-active' : 'dot-inactive' }}">
+                    ● {{ offre.statut }}
+                </span>
+            </td>
+            <td>
+                <div class="admin-row-actions">
+                    <a href="{{ path('offre_show', {id: offre.id}) }}" class="admin-action-btn" title="Voir">—</a>
+                    <form method="post" action="{{ path('offre_delete', {id: offre.id}) }}" onsubmit="return confirm('Supprimer ?')" style="display:inline">
+                        <button type="submit" class="admin-action-btn admin-action-delete" title="Supprimer">🗑</button>
+                    </form>
+                </div>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+
+<script>
+document.getElementById('offreSearch')?.addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('#offreTable tbody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

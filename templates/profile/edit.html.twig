@@ -1,0 +1,70 @@
+{% extends 'client/base_client.html.twig' %}
+{% block title %}Modifier mon profil{% endblock %}
+
+{% block body %}
+<div class="pf-hero">
+  <div class="pf-hero-bg"></div>
+  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>Espace candidat</div>
+    <h1>Modifier mon <span>Profil</span></h1>
+  </div>
+</div>
+
+<div class="pf-content">
+<div class="pf-section" style="max-width:700px">
+{% set inp = 'width:100%;padding:10px 14px;border:.5px solid var(--border);border-radius:9px;font-size:14px;font-family:DM Sans,sans-serif;background:var(--surface);color:var(--text);outline:none;' %}
+<form method="post" enctype="multipart/form-data" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+
+  <div>
+    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:5px">Nom *</label>
+    <input type="text" name="nom" value="{{ user.nom }}" style="{{ inp }}{{ errors.nom is defined ? 'border-color:#ef4444;' : '' }}" required>
+    {% if errors.nom is defined %}<div style="color:#E24B4A;font-size:12px;margin-top:3px">⚠ {{ errors.nom }}</div>{% endif %}
+  </div>
+
+  <div>
+    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:5px">Prénom *</label>
+    <input type="text" name="prenom" value="{{ user.prenom }}" style="{{ inp }}{{ errors.prenom is defined ? 'border-color:#ef4444;' : '' }}" required>
+    {% if errors.prenom is defined %}<div style="color:#E24B4A;font-size:12px;margin-top:3px">⚠ {{ errors.prenom }}</div>{% endif %}
+  </div>
+
+  <div style="grid-column:1/-1">
+    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:5px">Email</label>
+    <input type="email" value="{{ user.email }}" style="{{ inp }}opacity:.6" disabled>
+    <div style="font-size:11px;color:var(--text-muted);margin-top:3px">L'email ne peut pas être modifié.</div>
+  </div>
+
+  <div>
+    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:5px">Téléphone</label>
+    <input type="text" name="telephone" value="{{ user.telephone ?? '' }}" style="{{ inp }}">
+  </div>
+
+  <div>
+    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:5px">Nouveau mot de passe</label>
+    <input type="password" name="password" placeholder="Laisser vide pour ne pas changer" style="{{ inp }}{{ errors.password is defined ? 'border-color:#ef4444;' : '' }}">
+    {% if errors.password is defined %}<div style="color:#E24B4A;font-size:12px;margin-top:3px">⚠ {{ errors.password }}</div>{% endif %}
+  </div>
+
+  {% if candidat is not null %}
+  <div style="grid-column:1/-1">
+    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:5px">CV (PDF)</label>
+    <input type="file" name="cv" accept=".pdf,.doc,.docx" style="{{ inp }}padding:8px;">
+    {% if candidat.cvPath %}
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px">CV actuel: <a href="{{ asset(candidat.cvPath) }}" target="_blank" style="color:#6C63FF">Voir</a></div>
+    {% endif %}
+  </div>
+
+  <div style="grid-column:1/-1">
+    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:5px">Lettre de motivation</label>
+    <textarea name="lettre_motivation" rows="5" style="{{ inp }}resize:vertical">{{ candidat.lettreMotivation ?? '' }}</textarea>
+  </div>
+  {% endif %}
+
+  <div style="grid-column:1/-1;display:flex;gap:10px;margin-top:8px;padding-top:16px;border-top:.5px solid var(--border)">
+    <button type="submit" class="pf-btn-details">💾 Enregistrer</button>
+    <a href="{{ path('profile_index') }}" class="pf-btn-ghost" style="padding:8px 18px;border-radius:10px;text-decoration:none">Annuler</a>
+  </div>
+</form>
+</div>
+</div>
+{% endblock %}

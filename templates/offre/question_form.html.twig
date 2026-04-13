@@ -1,0 +1,109 @@
+{% extends 'admin_base.html.twig' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_icon %}❓{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block topbar_actions %}
+    <a href="{{ path('offre_show', {id: offre.id}) }}" class="btn btn-secondary">← Retour à l'offre</a>
+{% endblock %}
+
+{% block body %}
+<div class="form-card">
+    <h2 class="form-title">{{ title }}</h2>
+    <p class="form-subtitle">Offre : <strong>{{ offre.titre }}</strong></p>
+
+    {{ form_start(form, {attr: {class: 'symfony-form', id: 'questionForm'}}) }}
+
+        {% if not form.vars.valid and form.vars.submitted %}
+        <div class="form-errors-summary">
+            ⚠️ Veuillez corriger les erreurs ci-dessous avant de continuer.
+        </div>
+        {% endif %}
+
+        <div class="form-group form-full">
+            {{ form_label(form.question) }}
+            {{ form_widget(form.question, {attr: {class: form.question.vars.errors|length > 0 ? 'input-error' : ''}}) }}
+            {{ form_errors(form.question) }}
+        </div>
+
+        <div class="form-grid">
+            <div class="form-group">
+                {{ form_label(form.choix1) }}
+                {{ form_widget(form.choix1, {attr: {class: form.choix1.vars.errors|length > 0 ? 'input-error' : ''}}) }}
+                {{ form_errors(form.choix1) }}
+            </div>
+            <div class="form-group">
+                {{ form_label(form.choix2) }}
+                {{ form_widget(form.choix2, {attr: {class: form.choix2.vars.errors|length > 0 ? 'input-error' : ''}}) }}
+                {{ form_errors(form.choix2) }}
+            </div>
+            <div class="form-group">
+                {{ form_label(form.choix3) }}
+                {{ form_widget(form.choix3, {attr: {class: form.choix3.vars.errors|length > 0 ? 'input-error' : ''}}) }}
+                {{ form_errors(form.choix3) }}
+                <span class="field-hint">Optionnel</span>
+            </div>
+            <div class="form-group">
+                {{ form_label(form.choix4) }}
+                {{ form_widget(form.choix4, {attr: {class: form.choix4.vars.errors|length > 0 ? 'input-error' : ''}}) }}
+                {{ form_errors(form.choix4) }}
+                <span class="field-hint">Optionnel</span>
+            </div>
+            <div class="form-group">
+                {{ form_label(form.bonneReponse) }}
+                {{ form_widget(form.bonneReponse, {attr: {class: form.bonneReponse.vars.errors|length > 0 ? 'input-error' : ''}}) }}
+                {{ form_errors(form.bonneReponse) }}
+            </div>
+            <div class="form-group">
+                {{ form_label(form.points) }}
+                {{ form_widget(form.points, {attr: {class: form.points.vars.errors|length > 0 ? 'input-error' : ''}}) }}
+                {{ form_errors(form.points) }}
+                <span class="field-hint">Entre 1 et 100</span>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <a href="{{ path('offre_show', {id: offre.id}) }}" class="btn btn-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
+        </div>
+
+    {{ form_end(form) }}
+</div>
+
+<script>
+document.getElementById('questionForm').addEventListener('submit', function(e) {
+    let valid = true;
+
+    this.querySelectorAll('.client-error').forEach(el => el.remove());
+    this.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+
+    function showError(input, msg) {
+        input.classList.add('input-error');
+        const err = document.createElement('span');
+        err.className = 'form-error client-error';
+        err.textContent = msg;
+        input.parentNode.appendChild(err);
+        valid = false;
+    }
+
+    const question = this.querySelector('[name$="[question]"]');
+    if (question && question.value.trim().length < 5) showError(question, 'L\'énoncé doit contenir au moins 5 caractères.');
+
+    const choix1 = this.querySelector('[name$="[choix1]"]');
+    if (choix1 && choix1.value.trim() === '') showError(choix1, 'Le choix A est obligatoire.');
+
+    const choix2 = this.querySelector('[name$="[choix2]"]');
+    if (choix2 && choix2.value.trim() === '') showError(choix2, 'Le choix B est obligatoire.');
+
+    const bonne = this.querySelector('[name$="[bonneReponse]"]');
+    if (bonne && !bonne.value) showError(bonne, 'Veuillez sélectionner la bonne réponse.');
+
+    const points = this.querySelector('[name$="[points]"]');
+    if (points && (points.value === '' || parseInt(points.value) < 1 || parseInt(points.value) > 100)) {
+        showError(points, 'Les points doivent être entre 1 et 100.');
+    }
+
+    if (!valid) e.preventDefault();
+});
+</script>
+{% endblock %}

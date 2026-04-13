@@ -6,9 +6,6 @@ use App\Entity\Formation;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
-/**
- * @extends ServiceEntityRepository<Formation>
- */
 class FormationRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -16,28 +13,38 @@ class FormationRepository extends ServiceEntityRepository
         parent::__construct($registry, Formation::class);
     }
 
-    //    /**
-    //     * @return Formation[] Returns an array of Formation objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('f')
-    //            ->andWhere('f.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('f.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    public function search(string $q, ?int $categorieId = null, string $sort = 'titre', string $dir = 'ASC'): array
+    {
+        $qb = $this->createQueryBuilder('f')
+            ->join('f.categorie', 'c')
+            ->where('f.titre LIKE :q OR f.description LIKE :q OR f.formateur LIKE :q')
+            ->setParameter('q', '%' . $q . '%');
 
-    //    public function findOneBySomeField($value): ?Formation
-    //    {
-    //        return $this->createQueryBuilder('f')
-    //            ->andWhere('f.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+        if ($categorieId) {
+            $qb->andWhere('c.idCategorie = :cat')->setParameter('cat', $categorieId);
+        }
+
+        $allowed = ['titre', 'dureeHeures', 'placeDisponible'];
+        $field = in_array($sort, $allowed) ? 'f.' . $sort : 'f.titre';
+        $direction = $dir === 'DESC' ? 'DESC' : 'ASC';
+        $qb->orderBy($field, $direction);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    public function findByCategorieAndSort(?int $categorieId, string $sort = 'titre', string $dir = 'ASC'): array
+    {
+        $qb = $this->createQueryBuilder('f')->join('f.categorie', 'c');
+
+        if ($categorieId) {
+            $qb->where('c.idCategorie = :cat')->setParameter('cat', $categorieId);
+        }
+
+        $allowed = ['titre', 'dureeHeures', 'placeDisponible'];
+        $field = in_array($sort, $allowed) ? 'f.' . $sort : 'f.titre';
+        $direction = $dir === 'DESC' ? 'DESC' : 'ASC';
+        $qb->orderBy($field, $direction);
+
+        return $qb->getQuery()->getResult();
+    }
 }

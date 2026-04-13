@@ -18,12 +18,16 @@ security:
             form_login:
                 login_path: auth_login
                 check_path: auth_login_check
-                default_target_path: app_home
+                username_parameter: _username
+                password_parameter: _password
+                default_target_path: auth_login
             logout:
                 path: auth_logout
                 target: auth_login
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 604800
 
-    access_control: []
-    # Add your route restrictions here, e.g.:
-    # - { path: ^/admin, roles: ROLE_ADMIN }
-    # - { path: ^/dashboard, roles: ROLE_USER }
+    access_control:
+        - { path: ^/connexion, roles: PUBLIC_ACCESS }
+        - { path: ^/inscription, roles: PUBLIC_ACCESS }

@@ -1,0 +1,79 @@
+{% extends 'worker/base_worker.html.twig' %}
+{% block title %}Mes Formations — PathFinder{% endblock %}
+{% block nav_mes_formations %}active{% endblock %}
+
+{% block body %}
+<div class="pf-hero">
+  <div class="pf-hero-bg"></div>
+  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>Espace Employé</div>
+    <h1>Mes <span>Formations</span></h1>
+    <p>Suivez l'état de vos inscriptions aux formations professionnelles.</p>
+  </div>
+</div>
+
+<div class="pf-content">
+
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:2rem">
+    <div class="pf-section" style="padding:1.5rem;text-align:center">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Formations suivies</div>
+      <div style="font-size:2rem;font-weight:700;color:var(--stat-num)">{{ inscriptions|length }}</div>
+    </div>
+    <div class="pf-section" style="padding:1.5rem;text-align:center">
+      <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Heures totales</div>
+      <div style="font-size:2rem;font-weight:700;color:var(--primary)">
+        {% set totalH = 0 %}
+        {% for i in inscriptions %}{% if i.formation.dureeHeures %}{% set totalH = totalH + i.formation.dureeHeures %}{% endif %}{% endfor %}
+        {{ totalH }} <span style="font-size:1rem;color:var(--text-muted)">h</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="pf-section">
+    <div class="pf-section-label">Inscriptions</div>
+    <h2>Mes formations</h2>
+    <div class="pf-divider"></div>
+
+    {% if inscriptions is empty %}
+      <div style="text-align:center;padding:3rem;color:var(--text-muted)">
+        <div style="font-size:3rem;margin-bottom:1rem">🎓</div>
+        <p>Vous n'êtes inscrit à aucune formation pour le moment.</p>
+        <a href="{{ path('client_categories') }}" style="display:inline-block;margin-top:1rem;padding:10px 22px;background:linear-gradient(135deg,#6C63FF,#9D6BFF);color:#fff;border-radius:10px;text-decoration:none;font-weight:600">
+          Parcourir les formations →
+        </a>
+      </div>
+    {% else %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem">
+      {% for insc in inscriptions %}
+      {% set f = insc.formation %}
+      <div class="pf-card" style="display:block">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem">
+          <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,rgba(108,99,255,.2),rgba(157,107,255,.1));display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">🎓</div>
+          <div>
+            <div style="font-family:Sora,sans-serif;font-weight:600;font-size:15px;color:var(--text)">{{ f.titre }}</div>
+            <div style="font-size:12px;color:var(--text-muted)">{{ f.categorie.nomCategorie }}</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1rem">
+          {% if f.formateur %}
+            <span style="font-size:12px;color:var(--text-muted)">👤 {{ f.formateur }}</span>
+          {% endif %}
+          {% if f.dureeHeures %}
+            <span style="font-size:12px;color:var(--text-muted)">⏱ {{ f.dureeHeures }}h</span>
+          {% endif %}
+          {% if f.dateDebut %}
+            <span style="font-size:12px;color:var(--text-muted)">📅 {{ f.dateDebut|date('d/m/Y') }}</span>
+          {% endif %}
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11px;color:var(--text-dim)">Inscrit le {{ insc.dateInscription|date('d/m/Y') }}</span>
+          <span style="background:rgba(29,158,117,.12);border:.5px solid rgba(29,158,117,.25);color:#1D9E75;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600">✓ Inscrit</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

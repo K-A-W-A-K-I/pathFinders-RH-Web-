@@ -1,0 +1,98 @@
+{% extends 'client/base_client.html.twig' %}
+{% block title %}Planifier un entretien{% endblock %}
+
+{% block body %}
+<div class="scheduler-card">
+    <div class="scheduler-header">
+        <h2>📅 Planifier votre entretien</h2>
+        <p>Offre : {{ candidature.offre.titre }} | Domaine : {{ candidature.offre.domaine }}</p>
+    </div>
+
+    <div class="scheduler-body">
+        <p>🎉 Félicitations ! Choisissez un créneau pour votre entretien :</p>
+
+        <form method="post" action="{{ path('entretien_confirmer') }}" id="schedulerForm">
+            <input type="hidden" name="candidature_id" value="{{ candidature.id }}">
+            <input type="hidden" name="date_entretien" id="selectedDateInput">
+
+            <div class="date-picker-row">
+                <label>📆 Date :</label>
+                <input type="date" id="datePicker" min="{{ 'tomorrow'|date('Y-m-d') }}" class="filter-input">
+            </div>
+
+            <div class="slots-section">
+                <p><strong>⏰ Créneau horaire :</strong></p>
+                <p class="slots-hint">Les créneaux grisés sont déjà réservés.</p>
+                <div id="slotsContainer" class="slots-grid"></div>
+            </div>
+
+            <div class="selected-slot-display" id="selectedDisplay" style="display:none">
+                ✅ Créneau sélectionné : <strong id="selectedLabel"></strong>
+            </div>
+
+            <div class="scheduler-footer">
+                <a href="{{ path('candidature_mes') }}" class="btn btn-secondary">Annuler</a>
+                <button type="submit" class="btn btn-success" id="confirmBtn" disabled>✔ Confirmer le rendez-vous</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const bookedTs = {{ bookedTs|json_encode }};
+const SLOT_HOURS = [];
+for (let h = 9; h <= 17; h++) {
+    SLOT_HOURS.push(h + ':00');
+    if (h < 17) SLOT_HOURS.push(h + ':30');
+}
+
+function isBooked(dateStr, timeStr) {
+    const [h, m] = timeStr.split(':').map(Number);
+    const d = new Date(dateStr);
+    d.setHours(h, m, 0, 0);
+    const ts = d.getTime();
+    return bookedTs.some(b => Math.abs(b - ts) < 30 * 60 * 1000);
+}
+
+document.getElementById('datePicker').addEventListener('change', function() {
+    const dateStr = this.value;
+    const day = new Date(dateStr).getDay();
+    const container = document.getElementById('slotsContainer');
+    container.innerHTML = '';
+
+    if (day === 0 || day === 6) {
+        container.innerHTML = '<p style="color:#dc2626">Les week-ends ne sont pas disponibles.</p>';
+        return;
+    }
+
+    SLOT_HOURS.forEach(time => {
+        const booked = isBooked(dateStr, time);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.textContent = time;
+        btn.className = 'slot-btn' + (booked ? ' slot-booked' : ' slot-free');
+        btn.disabled = booked;
+        if (!booked) {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('slot-selected'));
+                btn.classList.add('slot-selected');
+                const [h, m] = time.split(':').map(Number);
+                const d = new Date(dateStr);
+                d.setHours(h, m, 0, 0);
+                document.getElementById('selectedDateInput').value = d.toISOString().slice(0, 19).replace('T', ' ');
+                document.getElementById('selectedLabel').textContent = dateStr.split('-').reverse().join('/') + ' ' + time;
+                document.getElementById('selectedDisplay').style.display = '';
+                document.getElementById('confirmBtn').disabled = false;
+            });
+        }
+        container.appendChild(btn);
+    });
+});
+
+// Trigger for tomorrow by default
+const tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+document.getElementById('datePicker').value = tomorrow.toISOString().split('T')[0];
+document.getElementById('datePicker').dispatchEvent(new Event('change'));
+</script>
+{% endblock %}

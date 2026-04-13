@@ -1,0 +1,328 @@
+{% extends 'client/base_client.html.twig' %}
+
+{% block title %}Événements — PathFinder{% endblock %}
+{% block nav_evenements %}active{% endblock %}
+{% block page_title %}{% endblock %}
+{% block page_subtitle %}{% endblock %}
+
+{% block body %}
+<style>
+    .ue-page-head { display: none; }
+    .ue-main { padding-top: 0; max-width: 100%; padding-left: 0; padding-right: 0; padding-bottom: 0; }
+
+    /* HERO */
+    .evl-hero {
+        position: relative; overflow: hidden;
+        padding: 5.5rem 2.5rem 4rem;
+        background: linear-gradient(160deg, var(--bg2,#ecedf8) 0%, var(--bg,#f4f5fb) 100%);
+    }
+    [data-theme="dark"] .evl-hero { background: linear-gradient(160deg,#070710 0%,#0d0d1a 40%,var(--bg) 100%); }
+    .evl-hero-blob {
+        position: absolute; border-radius: 50%;
+        filter: blur(80px); pointer-events: none;
+        animation: blobDrift 12s ease-in-out infinite alternate;
+    }
+    .evl-hero-blob-1 { width:560px;height:560px; background:radial-gradient(circle,rgba(108,99,255,.22) 0%,transparent 70%); top:-180px;left:-100px; animation-duration:14s; }
+    .evl-hero-blob-2 { width:420px;height:420px; background:radial-gradient(circle,rgba(157,107,255,.16) 0%,transparent 70%); bottom:-120px;right:5%; animation-duration:10s;animation-delay:-4s; }
+    .evl-hero-blob-3 { width:280px;height:280px; background:radial-gradient(circle,rgba(75,139,245,.12) 0%,transparent 70%); top:40%;right:25%; animation-duration:16s;animation-delay:-8s; }
+    @keyframes blobDrift { 0%{transform:translate(0,0) scale(1)} 100%{transform:translate(30px,20px) scale(1.08)} }
+    .evl-hero-grid {
+        position:absolute;inset:0;pointer-events:none;
+        background-image: linear-gradient(rgba(108,99,255,.04) 1px,transparent 1px), linear-gradient(90deg,rgba(108,99,255,.04) 1px,transparent 1px);
+        background-size:52px 52px;
+        mask-image:linear-gradient(to bottom,transparent 0%,black 15%,black 85%,transparent 100%);
+    }
+    [data-theme="dark"] .evl-hero-grid { background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px); }
+    .evl-hero-inner { position:relative;max-width:1160px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:40px;flex-wrap:wrap; }
+    .evl-hero-eyebrow {
+        display:inline-flex;align-items:center;gap:8px;
+        padding:5px 16px 5px 9px;border-radius:100px;
+        border:.5px solid rgba(108,99,255,.35);background:rgba(108,99,255,.08);
+        font-size:12px;font-weight:600;color:var(--primary);font-family:'Sora',sans-serif;letter-spacing:.03em;
+        margin-bottom:1.4rem;animation:evlFadeUp .5s ease both;
+    }
+    .evl-eyebrow-pulse { width:7px;height:7px;border-radius:50%;background:var(--primary);box-shadow:0 0 0 0 rgba(108,99,255,.7);animation:pulseRing 2s ease-in-out infinite; }
+    @keyframes pulseRing { 0%,100%{box-shadow:0 0 0 0 rgba(108,99,255,.7)} 50%{box-shadow:0 0 0 6px rgba(108,99,255,0)} }
+    .evl-hero h1 {
+        font-family:'Sora',sans-serif;font-size:clamp(2.2rem,4.5vw,3.4rem);font-weight:700;
+        line-height:1.1;letter-spacing:-.03em;color:var(--hero-h1,#1a1d2e);
+        margin-bottom:.9rem;animation:evlFadeUp .55s .1s ease both;
+    }
+    .evl-hero h1 em { font-style:normal;background:linear-gradient(135deg,#9D6BFF,#6C63FF 45%,#4B8BF5);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+    .evl-hero-sub { font-size:15.5px;line-height:1.7;color:var(--text-muted,#6b7280);max-width:480px;font-weight:300;animation:evlFadeUp .55s .2s ease both; }
+    .evl-hero-stats { display:flex;gap:20px;flex-shrink:0;animation:evlFadeUp .55s .3s ease both;flex-wrap:wrap; }
+    .evl-stat-bubble {
+        background:var(--surface,rgba(255,255,255,.8));border:.5px solid var(--border,#e5e7ef);
+        border-radius:20px;padding:20px 24px;text-align:center;min-width:100px;
+        backdrop-filter:blur(12px);transition:transform .2s,box-shadow .2s;
+    }
+    .evl-stat-bubble:hover { transform:translateY(-3px);box-shadow:0 10px 30px rgba(108,99,255,.14); }
+    .evl-stat-num { font-family:'Sora',sans-serif;font-size:2.2rem;font-weight:800;color:var(--hero-h1,#1a1d2e);letter-spacing:-.04em;line-height:1; }
+    .evl-stat-num sup { font-size:1rem;color:var(--primary);vertical-align:super; }
+    .evl-stat-label { font-size:11px;color:var(--text-dim,#9ca3af);margin-top:5px;font-weight:500;letter-spacing:.04em;text-transform:uppercase; }
+    @keyframes evlFadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+
+    /* CONTENT */
+    .evl-body { max-width:1160px;margin:0 auto;padding:2rem 2.5rem 5rem; }
+
+    /* FILTER */
+    .evl-filter-wrap {
+        background:var(--surface,rgba(255,255,255,.88));border:.5px solid var(--border,#e5e7ef);
+        border-radius:22px;padding:22px 26px;margin-bottom:1.8rem;
+        box-shadow:0 4px 24px rgba(108,99,255,.07);animation:evlFadeUp .5s .2s ease both;
+    }
+    .evl-filter-top { display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap; }
+    .evl-filter-field { display:flex;flex-direction:column;flex:1;min-width:180px; }
+    .evl-filter-label { font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--primary);margin-bottom:8px;font-family:'Sora',sans-serif; }
+    .evl-input-wrap { position:relative; }
+    .evl-input-icon { position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-light,#9ca3af);font-size:14px;pointer-events:none; }
+    .evl-input { width:100%;background:var(--bg,#f4f5fb);border:1px solid var(--border,#e5e7ef);border-radius:12px;padding:10px 14px 10px 38px;font-size:13.5px;font-family:'DM Sans',sans-serif;color:var(--text-dark,#1a1d2e);outline:none;transition:border-color .18s,box-shadow .18s; }
+    .evl-input:focus { border-color:var(--primary);box-shadow:0 0 0 3px rgba(108,99,255,.1); }
+    .evl-select { width:100%;background:var(--bg,#f4f5fb);border:1px solid var(--border,#e5e7ef);border-radius:12px;padding:10px 14px;font-size:13.5px;font-family:'DM Sans',sans-serif;color:var(--text-dark,#1a1d2e);outline:none;appearance:none;cursor:pointer;transition:border-color .18s,box-shadow .18s; }
+    .evl-select:focus { border-color:var(--primary);box-shadow:0 0 0 3px rgba(108,99,255,.1); }
+    .evl-filter-btns { display:flex;gap:8px; }
+    .evl-btn-filter { background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border:none;padding:11px 22px;border-radius:12px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:opacity .2s,transform .15s;box-shadow:0 4px 16px rgba(108,99,255,.3);white-space:nowrap; }
+    .evl-btn-filter:hover { opacity:.88;transform:translateY(-1px); }
+    .evl-btn-reset { background:var(--bg,#f4f5fb);color:var(--text-mid,#4b5563);border:1px solid var(--border,#e5e7ef);padding:11px 18px;border-radius:12px;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:all .18s;white-space:nowrap; }
+    .evl-btn-reset:hover { border-color:var(--primary);color:var(--primary); }
+
+    /* TABS */
+    .evl-tabs { display:flex;gap:8px;flex-wrap:wrap; }
+    .evl-tab { display:inline-flex;align-items:center;gap:8px;padding:9px 20px;border-radius:100px;border:.5px solid var(--border,#e5e7ef);background:var(--surface,rgba(255,255,255,.85));font-size:13px;font-weight:600;color:var(--text-muted,#6b7280);text-decoration:none;font-family:'DM Sans',sans-serif;transition:all .2s; }
+    .evl-tab:hover { border-color:rgba(108,99,255,.3);color:var(--primary); }
+    .evl-tab.active { background:linear-gradient(135deg,var(--primary),var(--accent));border-color:transparent;color:#fff;box-shadow:0 4px 16px rgba(108,99,255,.3); }
+    .evl-tab.fav-tab.active { background:linear-gradient(135deg,#f59e0b,#ea580c);box-shadow:0 4px 16px rgba(245,158,11,.3); }
+    .evl-tab-count { background:rgba(255,255,255,.22);border-radius:100px;padding:1px 8px;font-size:11px;font-weight:700; }
+    .evl-tab:not(.active) .evl-tab-count { background:rgba(108,99,255,.1);color:var(--primary); }
+    .evl-results-count { font-size:13px;color:var(--text-muted,#6b7280);font-family:'DM Sans',sans-serif; }
+    .evl-results-count strong { color:var(--text-dark,#1a1d2e);font-weight:700; }
+
+    /* GRID */
+    .evl-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:22px; }
+
+    /* CARD */
+    .evl-card { background:var(--surface,rgba(255,255,255,.88));border:.5px solid var(--border,#e5e7ef);border-radius:22px;overflow:hidden;position:relative;display:flex;flex-direction:column;transition:transform .25s cubic-bezier(.22,.68,0,1.2),border-color .25s,box-shadow .25s;box-shadow:0 2px 8px rgba(0,0,0,.04);animation:evlFadeUp .5s ease both; }
+    .evl-card:nth-child(1){animation-delay:.04s}.evl-card:nth-child(2){animation-delay:.09s}.evl-card:nth-child(3){animation-delay:.14s}.evl-card:nth-child(4){animation-delay:.19s}.evl-card:nth-child(5){animation-delay:.24s}.evl-card:nth-child(6){animation-delay:.29s}
+    .evl-card:hover { transform:translateY(-6px) scale(1.01);border-color:rgba(108,99,255,.3);box-shadow:0 16px 44px rgba(108,99,255,.13),0 4px 12px rgba(0,0,0,.05); }
+    .evl-card-stripe { height:3px;background:linear-gradient(90deg,var(--primary),var(--accent),var(--blue));opacity:0;transition:opacity .25s; }
+    .evl-card:hover .evl-card-stripe { opacity:1; }
+    .evl-card-media { height:178px;background:linear-gradient(135deg,#1a1d2e 0%,#3d3a8e 60%,#6C63FF 100%);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center; }
+    .evl-card-media img { width:100%;height:100%;object-fit:cover;transition:transform .5s ease; }
+    .evl-card:hover .evl-card-media img { transform:scale(1.06); }
+    .evl-card-media-emoji { font-size:52px;opacity:.5; }
+    .evl-card-media::after { content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.35) 0%,transparent 55%);pointer-events:none; }
+    .evl-card-fav-zone { position:absolute;top:12px;right:12px;z-index:2; }
+    .evl-fav-btn { width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;font-size:14px;background:rgba(255,255,255,.15);backdrop-filter:blur(10px);color:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;transition:all .2s; }
+    .evl-fav-btn:hover { background:rgba(245,158,11,.85);color:#fff;transform:scale(1.1); }
+    .evl-fav-btn.is-active { background:linear-gradient(135deg,#f59e0b,#ea580c);color:#fff;box-shadow:0 4px 14px rgba(245,158,11,.4); }
+    .evl-card-body { padding:20px 22px 22px;flex:1;display:flex;flex-direction:column; }
+    .evl-card-badges { display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px; }
+    .evl-badge { display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;padding:3px 10px;border-radius:100px;font-family:'Sora',sans-serif;letter-spacing:.02em; }
+    .evl-badge-cat    { background:var(--primary-light,#ede9ff);color:var(--primary); }
+    .evl-badge-actif  { background:#dcfce7;color:#16a34a; }
+    .evl-badge-complet{ background:#fef3c7;color:#d97706; }
+    .evl-badge-annule { background:#fee2e2;color:#dc2626; }
+    .evl-badge-termine{ background:#f1f5f9;color:#475569; }
+    .evl-badge-default{ background:var(--primary-light,#ede9ff);color:var(--primary); }
+    .evl-card-title { font-family:'Sora',sans-serif;font-size:15.5px;font-weight:700;color:var(--text-dark,#1a1d2e);letter-spacing:-.018em;line-height:1.3;margin-bottom:9px; }
+    .evl-card-desc { font-size:13px;line-height:1.65;color:var(--text-muted,#6b7280);font-weight:300;flex:1;margin-bottom:16px; }
+    .evl-card-meta { background:var(--bg,#f4f5fb);border:.5px solid var(--border,#e5e7ef);border-radius:12px;padding:10px 13px;margin-bottom:16px;display:grid;gap:6px; }
+    .evl-meta-line { font-size:12.5px;color:var(--text-mid,#4b5563);display:flex;align-items:center;gap:8px; }
+    .evl-meta-line i { color:var(--primary);font-size:12px;width:14px;text-align:center;flex-shrink:0; }
+    .evl-free-badge { color:#16a34a;font-weight:700; }
+    .evl-card-actions { display:flex;gap:9px; }
+    .evl-btn-detail { flex:1;border:none;border-radius:12px;padding:11px 12px;background:var(--primary-light,#ede9ff);color:var(--primary);font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:all .2s; }
+    .evl-btn-detail:hover { background:var(--primary);color:#fff;transform:translateY(-1px);box-shadow:0 4px 14px rgba(108,99,255,.28); }
+    .evl-btn-register { flex:1;border:none;border-radius:12px;padding:11px 12px;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:opacity .2s,transform .15s;box-shadow:0 4px 14px rgba(108,99,255,.28); }
+    .evl-btn-register:hover { opacity:.88;transform:translateY(-1px); }
+    .evl-btn-register:disabled { background:var(--border,#e5e7ef);color:var(--text-light,#9ca3af);box-shadow:none;cursor:not-allowed;transform:none;opacity:1; }
+    .evl-empty { grid-column:1/-1;background:var(--surface,rgba(255,255,255,.85));border:.5px dashed var(--border,#e5e7ef);border-radius:22px;padding:90px 30px;text-align:center;animation:evlFadeUp .5s ease both; }
+    .evl-empty-icon { font-size:56px;margin-bottom:18px; }
+    .evl-empty-title { font-family:'Sora',sans-serif;font-size:22px;font-weight:700;color:var(--text-dark,#1a1d2e);margin-bottom:8px; }
+    .evl-empty-sub { font-size:14px;color:var(--text-muted,#6b7280);font-weight:300; }
+    @media (max-width:640px) {
+        .evl-body{padding:1.5rem 1.2rem 3.5rem}.evl-hero{padding:4rem 1.4rem 3rem}.evl-grid{grid-template-columns:1fr}.evl-filter-field{min-width:100%}
+    }
+</style>
+
+<div class="pf-hero">
+  <div class="pf-hero-bg"></div>
+  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>Espace utilisateur</div>
+    <h1>Explorez les <span>événements</span></h1>
+    <p>Découvrez les événements actifs, ajoutez vos favoris et inscrivez-vous directement depuis votre espace.</p>
+  </div>
+</div>
+
+<div class="evl-body">
+    <form method="get" action="{{ path('user_evenement_index') }}" class="evl-filter-wrap" id="evlFilterForm">
+        {% if favoritesOnly %}<input type="hidden" name="favorites" value="1">{% endif %}
+        <div class="evl-filter-top">
+            <div class="evl-filter-field">
+                <div class="evl-filter-label">Recherche</div>
+                <div class="evl-input-wrap">
+                    <i class="bi bi-search evl-input-icon"></i>
+                    <input id="evlSearch" type="text" name="search" value="{{ search }}" placeholder="Titre, lieu, description…" class="evl-input">
+                </div>
+            </div>
+            <div class="evl-filter-field" style="max-width:220px;">
+                <div class="evl-filter-label">Catégorie</div>
+                <div class="evl-input-wrap">
+                    <select id="evlCategory" name="categorie" class="evl-select">
+                        <option value="">Toutes les catégories</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.id }}" {% if categorieId == cat.id %}selected{% endif %}>{{ cat.nomCategorie }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="evl-filter-btns">
+                <button type="submit" class="evl-btn-filter"><i class="bi bi-funnel-fill"></i> Filtrer</button>
+                <a href="{{ path('user_evenement_index') }}" class="evl-btn-reset"><i class="bi bi-x-circle"></i> Réinitialiser</a>
+            </div>
+        </div>
+    </form>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:1.6rem;">
+        <div class="evl-tabs">
+            <a href="{{ path('user_evenement_index', {search: search, categorie: categorieId}) }}" class="evl-tab {% if not favoritesOnly %}active{% endif %}">
+                <i class="bi bi-grid-3x3-gap-fill"></i> Tous les événements
+            </a>
+            <a href="{{ path('user_evenement_index', {search: search, categorie: categorieId, favorites: 1}) }}" class="evl-tab fav-tab {% if favoritesOnly %}active{% endif %}">
+                <i class="bi bi-star-fill"></i> Mes favoris
+                <span class="evl-tab-count">{{ favoriteCount }}</span>
+            </a>
+        </div>
+        <div class="evl-results-count">
+            <strong>{{ evenements|length }}</strong> événement{{ evenements|length > 1 ? 's' : '' }} trouvé{{ evenements|length > 1 ? 's' : '' }}
+        </div>
+    </div>
+
+    {% if evenements is empty %}
+        <div class="evl-grid">
+            <div class="evl-empty">
+                <div class="evl-empty-icon">📅</div>
+                <div class="evl-empty-title">Aucun événement trouvé</div>
+                <p class="evl-empty-sub">Essayez d'ajuster vos filtres ou de désactiver le mode favoris.</p>
+            </div>
+        </div>
+    {% else %}
+        <div class="evl-grid">
+            {% for evenement in evenements %}
+            <article class="evl-card">
+                <div class="evl-card-stripe"></div>
+                <div class="evl-card-media">
+                    {% if evenement.imagePath %}
+                        <img src="{{ asset(evenement.imagePath) }}" alt="{{ evenement.titre }}">
+                    {% else %}
+                        <div class="evl-card-media-emoji">🎪</div>
+                    {% endif %}
+                    <div class="evl-card-fav-zone">
+                        <form method="post" action="{{ path('user_evenement_toggle_favorite', {id: evenement.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('favorite_evenement_' ~ evenement.id) }}">
+                            <button type="button"
+                                class="evl-fav-btn {{ evenement.id in favoriteIds ? 'is-active' : '' }}"
+                                onclick="openUserConfirm(this)"
+                                data-confirm-title="{{ evenement.id in favoriteIds ? 'Retirer des favoris ?' : 'Ajouter aux favoris ?' }}"
+                                data-confirm-text="{{ evenement.id in favoriteIds ? 'L\'événement &quot;' ~ evenement.titre|e('html_attr') ~ '&quot; sera retiré de vos favoris.' : 'L\'événement &quot;' ~ evenement.titre|e('html_attr') ~ '&quot; sera ajouté à vos favoris.' }}"
+                                data-confirm-icon="{{ evenement.id in favoriteIds ? 'bi-heartbreak-fill' : 'bi-star-fill' }}"
+                                data-confirm-icon-class="{{ evenement.id in favoriteIds ? 'pf-confirm-icon-warning' : 'pf-confirm-icon-accent' }}"
+                                data-confirm-button="{{ evenement.id in favoriteIds ? 'Retirer' : 'Ajouter' }}"
+                                data-confirm-button-class="{{ evenement.id in favoriteIds ? 'btn-ev-secondary' : 'btn-ev-primary' }}"
+                                title="{{ evenement.id in favoriteIds ? 'Retirer des favoris' : 'Ajouter aux favoris' }}">
+                                <i class="bi {{ evenement.id in favoriteIds ? 'bi-star-fill' : 'bi-star' }}"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="evl-card-body">
+                    <div class="evl-card-badges">
+                        {% if evenement.categorie %}
+                            <span class="evl-badge evl-badge-cat">{{ evenement.categorie.nomCategorie }}</span>
+                        {% endif %}
+                        <span class="evl-badge evl-badge-{{ evenement.statut|lower }}">{{ evenement.statut }}</span>
+                    </div>
+                    <h3 class="evl-card-title">{{ evenement.titre }}</h3>
+                    <p class="evl-card-desc">
+                        {{ evenement.description ? evenement.description|slice(0,115) ~ (evenement.description|length > 115 ? '…' : '') : 'Aucune description disponible.' }}
+                    </p>
+                    <div class="evl-card-meta">
+                        <div class="evl-meta-line"><i class="bi bi-calendar3"></i> {{ evenement.dateDebut|date('d/m/Y') }} → {{ evenement.dateFin|date('d/m/Y') }}</div>
+                        <div class="evl-meta-line"><i class="bi bi-geo-alt-fill"></i> {{ evenement.lieu ?: 'Lieu non précisé' }}</div>
+                        <div class="evl-meta-line">
+                            <i class="bi bi-ticket-perforated-fill"></i>
+                            {{ evenement.placesRestantesCalculated }} place{{ evenement.placesRestantesCalculated > 1 ? 's' : '' }} ·
+                            {% if evenement.prix and evenement.prix > 0 %}{{ evenement.prix }} TND{% else %}<span class="evl-free-badge">Gratuit</span>{% endif %}
+                        </div>
+                    </div>
+                    <div class="evl-card-actions">
+                        <a href="{{ path('user_evenement_show', {id: evenement.id}) }}" class="evl-btn-detail">
+                            <i class="bi bi-eye"></i> Détails
+                        </a>
+                        <form method="post" action="{{ path('user_evenement_register', {id: evenement.id}) }}" style="flex:1;display:flex;">
+                            <input type="hidden" name="_token" value="{{ csrf_token('register_evenement_' ~ evenement.id) }}">
+                            <button type="button" class="evl-btn-register" style="flex:1;"
+                                {% if evenement.id in registeredIds or evenement.isFull %}disabled{% endif %}
+                                onclick="openUserConfirm(this)"
+                                data-confirm-title="Confirmer l'inscription ?"
+                                data-confirm-text="Vous allez vous inscrire à &quot;{{ evenement.titre|e('html_attr') }}&quot;. Cette action réserve votre place."
+                                data-confirm-icon="bi-person-check-fill"
+                                data-confirm-icon-class="pf-confirm-icon-accent"
+                                data-confirm-button="Confirmer"
+                                data-confirm-button-class="btn-ev-primary">
+                                {% if evenement.id in registeredIds %}
+                                    <i class="bi bi-check-circle-fill"></i> Inscrit
+                                {% elseif evenement.isFull %}
+                                    <i class="bi bi-x-circle"></i> Complet
+                                {% else %}
+                                    <i class="bi bi-person-plus-fill"></i> S'inscrire
+                                {% endif %}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+let evlDebounce;
+const evlForm = document.getElementById('evlFilterForm');
+document.getElementById('evlSearch')?.addEventListener('input', function () {
+    clearTimeout(evlDebounce);
+    evlDebounce = setTimeout(() => evlForm?.submit(), 320);
+});
+document.getElementById('evlCategory')?.addEventListener('change', () => evlForm?.submit());
+</script>
+
+{# ── Confirm modal ── #}
+<div id="userConfirmModal" style="display:none;position:fixed;inset:0;z-index:999999;align-items:center;justify-content:center;">
+    <div id="pfModalBackdrop" style="position:fixed;inset:0;background:rgba(15,23,42,0.55);backdrop-filter:blur(4px);"></div>
+    <div id="pfModalInner" style="position:relative;z-index:1000000;background:white;border-radius:24px;max-width:440px;width:90%;padding:32px 28px;text-align:center;box-shadow:0 26px 70px rgba(15,23,42,0.22);">
+        <div id="userConfirmIcon" style="width:64px;height:64px;margin:0 auto 18px;border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;background:linear-gradient(135deg,#eef2ff,#ddd6fe);color:#2729aa;"><i class="bi bi-star-fill"></i></div>
+        <h5 id="userConfirmTitle" style="font-size:20px;font-weight:800;color:#010204;margin:0 0 8px;"></h5>
+        <p  id="userConfirmText"  style="font-size:13px;color:#64748b;line-height:1.6;margin:0 0 22px;"></p>
+        <div style="display:flex;justify-content:center;gap:10px;">
+            <button type="button" id="pfModalCancel" style="border:none;border-radius:10px;padding:11px 22px;font-size:13px;font-weight:700;cursor:pointer;background:#eef2ff;color:#2729aa;">Annuler</button>
+            <button type="button" id="userConfirmSubmit" style="border:none;border-radius:10px;padding:11px 22px;font-size:13px;font-weight:700;cursor:pointer;background:#2729aa;color:white;">Confirmer</button>
+        </div>
+    </div>
+</div>
+<script>
+let _pfPendingForm = null;
+function openUserConfirm(button) {
+    _pfPendingForm = button.closest('form');
+    document.getElementById('userConfirmTitle').textContent = button.dataset.confirmTitle || 'Confirmation';
+    document.getElementById('userConfirmText').innerHTML    = button.dataset.confirmText  || '';
+    document.getElementById('userConfirmModal').style.display = 'flex';
+}
+document.getElementById('pfModalBackdrop').addEventListener('click', () => { document.getElementById('userConfirmModal').style.display='none'; });
+document.getElementById('pfModalCancel').addEventListener('click',   () => { document.getElementById('userConfirmModal').style.display='none'; });
+document.getElementById('userConfirmSubmit').addEventListener('click', () => { if (_pfPendingForm) _pfPendingForm.submit(); });
+</script>
+{% endblock %}

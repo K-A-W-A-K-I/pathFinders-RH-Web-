@@ -1,0 +1,21 @@
+{% extends 'client/base_client.html.twig' %}
+{% block title %}Résultat du Quiz{% endblock %}
+
+{% block body %}
+<div class="result-card {{ admis ? 'result-success' : 'result-fail' }}">
+    <div class="result-icon">{{ admis ? '🎉' : '😞' }}</div>
+    <h2 class="result-title">{{ admis ? 'Bonne performance !' : 'Score insuffisant' }}</h2>
+    <div class="result-score">{{ score }}%</div>
+    <p class="result-detail">Score minimum requis : {{ offre.scoreMinimum }}%</p>
+
+    {% if admis %}
+        <p class="result-msg">✅ Félicitations, votre candidature a été enregistrée.</p>
+        <a href="{{ path('entretien_planifier', {candidatureId: candidatureId}) }}" class="btn btn-primary btn-lg">
+            📅 Planifier mon entretien
+        </a>
+    {% else %}
+        <p class="result-msg">❌ Vous n'avez pas atteint le score minimum. Votre candidature a été enregistrée pour examen.</p>
+        <a href="{{ path('offre_list') }}" class="btn btn-secondary">Retour aux offres</a>
+    {% endif %}
+</div>
+{% endblock %}

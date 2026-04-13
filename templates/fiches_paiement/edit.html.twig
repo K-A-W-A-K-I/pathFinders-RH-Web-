@@ -1,4 +1,4 @@
-{% extends 'base.html.twig' %}
+{% extends 'admin_base.html.twig' %}
 {% block title %}Modifier Fiche — PathFinder{% endblock %}
 
 {% block body %}
@@ -25,12 +25,6 @@
       {{ form_label(form.type_paiement) }}
       {{ form_widget(form.type_paiement) }}
       {{ form_errors(form.type_paiement) }}
-    </div>
-
-    <div class="form-group">
-      {{ form_label(form.montant_taxe) }}
-      {{ form_widget(form.montant_taxe) }}
-      {{ form_errors(form.montant_taxe) }}
     </div>
 
     <div class="form-actions">

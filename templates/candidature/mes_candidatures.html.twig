@@ -1,0 +1,95 @@
+{% extends 'client/base_client.html.twig' %}
+{% block title %}Mes Candidatures{% endblock %}
+{% block nav_candidatures %}active{% endblock %}
+
+{% block body %}
+<div class="pf-hero">
+  <div class="pf-hero-bg"></div>
+  <div class="pf-hero-grid"></div>
+  <div class="pf-hero-inner">
+    <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>Espace candidat</div>
+    <h1>Mes <span>Candidatures</span></h1>
+    <p>Suivez l'état de vos candidatures aux offres d'emploi</p>
+  </div>
+</div>
+
+<div class="pf-content">
+<div class="stats-bar">
+    <div class="stat-card stat-total">
+        <span class="stat-icon">📋</span>
+        <span class="stat-number">{{ stats.total }}</span>
+        <span class="stat-label">Total</span>
+    </div>
+    <div class="stat-card stat-accepte">
+        <span class="stat-icon">✅</span>
+        <span class="stat-number">{{ stats.accepte }}</span>
+        <span class="stat-label">Acceptés</span>
+    </div>
+    <div class="stat-card stat-refuse">
+        <span class="stat-icon">❌</span>
+        <span class="stat-number">{{ stats.refuse }}</span>
+        <span class="stat-label">Refusés</span>
+    </div>
+    <div class="stat-card stat-attente">
+        <span class="stat-icon">⏳</span>
+        <span class="stat-number">{{ stats.attente }}</span>
+        <span class="stat-label">En attente</span>
+    </div>
+</div>
+
+{% if candidatures is empty %}
+    <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p class="empty-title">Aucune candidature pour l'instant</p>
+        <p class="empty-sub">Postulez à des offres pour suivre vos candidatures ici.</p>
+        <a href="{{ path('offre_list') }}" class="btn btn-primary">Voir les offres</a>
+    </div>
+{% else %}
+    <div class="candidatures-list">
+        {% for c in candidatures %}
+        {% set statut = c.statutAdmin %}
+        <div class="candidature-card {{ statut == 1 ? 'card-green' : (statut == -1 ? 'card-red' : 'card-amber') }}">
+            <div class="card-strip"></div>
+            <div class="card-inner">
+                <div class="card-left">
+                    <div class="card-offer-title">💼 {{ c.offre.titre }}</div>
+                    <span class="badge badge-domain">{{ c.offre.domaine }}</span>
+                    <div class="card-date">📅 {{ c.datePassage ? c.datePassage|date('d/m/Y') : '—' }}</div>
+                </div>
+
+                <div class="card-score-box">
+                    <div class="score-value">{{ c.score }}%</div>
+                    <div class="score-label">Score</div>
+                </div>
+
+                <div class="card-interview-box">
+                    {% set entretien = entretienByOffre[c.offre.id] ?? null %}
+                    {% if entretien %}
+                        <div class="interview-title">🗓️ Entretien planifié</div>
+                        <div class="interview-date">{{ entretien.dateEntretien|date('d/m/Y H:i') }}</div>
+                        <span class="badge {{ entretien.statutClass }}">{{ entretien.statutLabel }}</span>
+                        {% if entretien.statut != 'CONFIRME' %}
+                            <a href="{{ path('entretien_planifier', {candidatureId: c.id}) }}" class="btn btn-sm btn-secondary mt-1">🔄 Changer le créneau</a>
+                        {% endif %}
+                    {% else %}
+                        <div class="interview-title">🗓️ Entretien</div>
+                        {% if statut == 1 %}
+                            <a href="{{ path('entretien_planifier', {candidatureId: c.id}) }}" class="btn btn-sm btn-primary">Planifier</a>
+                        {% else %}
+                            <span class="interview-none">Pas encore planifié</span>
+                        {% endif %}
+                    {% endif %}
+                </div>
+
+                <div class="card-status">
+                    <span class="status-badge {{ c.statutClass }}">
+                        {{ statut == 1 ? '✅ ACCEPTÉ' : (statut == -1 ? '❌ REFUSÉ' : '⏳ EN ATTENTE') }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% endif %}
+</div>{# end pf-content #}
+{% endblock %}

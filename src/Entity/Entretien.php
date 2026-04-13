@@ -2,183 +2,81 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
-use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-
 use App\Repository\EntretienRepository;
+use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: EntretienRepository::class)]
 #[ORM\Table(name: 'entretiens')]
 class Entretien
 {
+    public const STATUT_EN_ATTENTE = 'EN_ATTENTE';
+    public const STATUT_CONFIRME   = 'CONFIRME';
+    public const STATUT_REFUSE     = 'REFUSE';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private ?int $id_entretien = null;
-
-    public function getId_entretien(): ?int
-    {
-        return $this->id_entretien;
-    }
-
-    public function setId_entretien(int $id_entretien): self
-    {
-        $this->id_entretien = $id_entretien;
-        return $this;
-    }
+    #[ORM\Column(name: 'id_entretien')]
+    private ?int $id = null;
 
     #[ORM\ManyToOne(targetEntity: Candidature::class, inversedBy: 'entretiens')]
-    #[ORM\JoinColumn(name: 'id_candidature', referencedColumnName: 'id_candidature')]
+    #[ORM\JoinColumn(name: 'id_candidature', referencedColumnName: 'id_candidature', nullable: false)]
     private ?Candidature $candidature = null;
 
-    public function getCandidature(): ?Candidature
-    {
-        return $this->candidature;
-    }
+    #[ORM\ManyToOne(targetEntity: Offre::class)]
+    #[ORM\JoinColumn(name: 'id_offre', referencedColumnName: 'id_offre', nullable: false)]
+    private ?Offre $offre = null;
 
-    public function setCandidature(?Candidature $candidature): self
-    {
-        $this->candidature = $candidature;
-        return $this;
-    }
+    #[ORM\ManyToOne(targetEntity: Candidat::class)]
+    #[ORM\JoinColumn(name: 'id_candidat', referencedColumnName: 'id_candidat', nullable: false)]
+    private ?Candidat $candidat = null;
 
-    #[ORM\Column(type: 'integer', nullable: false)]
-    private ?int $id_offre = null;
+    #[ORM\Column(name: 'date_entretien', type: 'datetime')]
+    private ?\DateTimeInterface $dateEntretien = null;
 
-    public function getId_offre(): ?int
-    {
-        return $this->id_offre;
-    }
-
-    public function setId_offre(int $id_offre): self
-    {
-        $this->id_offre = $id_offre;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'integer', nullable: false)]
-    private ?int $id_candidat = null;
-
-    public function getId_candidat(): ?int
-    {
-        return $this->id_candidat;
-    }
-
-    public function setId_candidat(int $id_candidat): self
-    {
-        $this->id_candidat = $id_candidat;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'datetime', nullable: false)]
-    private ?\DateTimeInterface $date_entretien = null;
-
-    public function getDate_entretien(): ?\DateTimeInterface
-    {
-        return $this->date_entretien;
-    }
-
-    public function setDate_entretien(\DateTimeInterface $date_entretien): self
-    {
-        $this->date_entretien = $date_entretien;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $statut = null;
-
-    public function getStatut(): ?string
-    {
-        return $this->statut;
-    }
-
-    public function setStatut(string $statut): self
-    {
-        $this->statut = $statut;
-        return $this;
-    }
+    #[ORM\Column(length: 20)]
+    private string $statut = self::STATUT_EN_ATTENTE;
 
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $notes = null;
 
-    public function getNotes(): ?string
+    #[ORM\Column(name: 'created_at', type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $createdAt = null;
+
+    public function __construct()
     {
-        return $this->notes;
+        $this->createdAt = new \DateTime();
     }
 
-    public function setNotes(?string $notes): self
+    public function getId(): ?int { return $this->id; }
+    public function getCandidature(): ?Candidature { return $this->candidature; }
+    public function setCandidature(?Candidature $candidature): static { $this->candidature = $candidature; return $this; }
+    public function getOffre(): ?Offre { return $this->offre; }
+    public function setOffre(?Offre $offre): static { $this->offre = $offre; return $this; }
+    public function getCandidat(): ?Candidat { return $this->candidat; }
+    public function setCandidat(?Candidat $candidat): static { $this->candidat = $candidat; return $this; }
+    public function getDateEntretien(): ?\DateTimeInterface { return $this->dateEntretien; }
+    public function setDateEntretien(?\DateTimeInterface $dateEntretien): static { $this->dateEntretien = $dateEntretien; return $this; }
+    public function getStatut(): string { return $this->statut; }
+    public function setStatut(string $statut): static { $this->statut = $statut; return $this; }
+    public function getNotes(): ?string { return $this->notes; }
+    public function setNotes(?string $notes): static { $this->notes = $notes; return $this; }
+    public function getCreatedAt(): ?\DateTimeInterface { return $this->createdAt; }
+
+    public function getStatutLabel(): string
     {
-        $this->notes = $notes;
-        return $this;
+        return match($this->statut) {
+            self::STATUT_CONFIRME => '✅ Confirmé',
+            self::STATUT_REFUSE   => '❌ Refusé',
+            default               => '⏳ En attente',
+        };
     }
 
-    #[ORM\Column(type: 'datetime', nullable: false)]
-    private ?\DateTimeInterface $created_at = null;
-
-    public function getCreated_at(): ?\DateTimeInterface
+    public function getStatutClass(): string
     {
-        return $this->created_at;
+        return match($this->statut) {
+            self::STATUT_CONFIRME => 'badge-confirme',
+            self::STATUT_REFUSE   => 'badge-refuse',
+            default               => 'badge-attente',
+        };
     }
-
-    public function setCreated_at(\DateTimeInterface $created_at): self
-    {
-        $this->created_at = $created_at;
-        return $this;
-    }
-
-    public function getIdEntretien(): ?int
-    {
-        return $this->id_entretien;
-    }
-
-    public function getIdOffre(): ?int
-    {
-        return $this->id_offre;
-    }
-
-    public function setIdOffre(int $id_offre): static
-    {
-        $this->id_offre = $id_offre;
-
-        return $this;
-    }
-
-    public function getIdCandidat(): ?int
-    {
-        return $this->id_candidat;
-    }
-
-    public function setIdCandidat(int $id_candidat): static
-    {
-        $this->id_candidat = $id_candidat;
-
-        return $this;
-    }
-
-    public function getDateEntretien(): ?\DateTime
-    {
-        return $this->date_entretien;
-    }
-
-    public function setDateEntretien(\DateTime $date_entretien): static
-    {
-        $this->date_entretien = $date_entretien;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): ?\DateTime
-    {
-        return $this->created_at;
-    }
-
-    public function setCreatedAt(\DateTime $created_at): static
-    {
-        $this->created_at = $created_at;
-
-        return $this;
-    }
-
 }
