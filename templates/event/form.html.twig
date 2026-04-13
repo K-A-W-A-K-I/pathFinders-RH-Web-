@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block body %}
-{{ form_start(form, {attr: {id: 'evenement-form'}}) }}
+{{ form_start(form, {attr: {id: 'evenement-form', novalidate: 'novalidate'}}) }}
 <div style="display:grid;grid-template-columns:1fr 320px;gap:1.5rem;max-width:1100px">
 
     {# Left #}
@@ -16,27 +16,31 @@
             <div style="font-size:13px;font-weight:700;color:#9999b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.2rem">ℹ Informations générales</div>
             {% set inp = 'width:100%;padding:10px 14px;border:1.5px solid #e2e5ea;border-radius:9px;font-size:14px;font-family:DM Sans,sans-serif;outline:none;' %}
 
-            <div style="margin-bottom:1rem">
+            <div class="fv-group" style="margin-bottom:1rem">
                 {{ form_label(form.titre) }}
-                {{ form_widget(form.titre, {attr: {style: inp}}) }}
+                {{ form_widget(form.titre, {attr: {style: inp, 'data-fv': 'titre', maxlength: 100}}) }}
+                <div class="fv-error" data-for="titre" style="display:none;color:#dc2626;font-size:12px;margin-top:3px"></div>
                 {% for e in form.titre.vars.errors %}<div style="color:#dc2626;font-size:12px;margin-top:3px">⚠ {{ e.message }}</div>{% endfor %}
             </div>
 
-            <div style="margin-bottom:1rem">
+            <div class="fv-group" style="margin-bottom:1rem">
                 {{ form_label(form.description) }}
-                {{ form_widget(form.description, {attr: {rows: 4, style: inp ~ 'resize:vertical;'}}) }}
+                {{ form_widget(form.description, {attr: {rows: 4, style: inp ~ 'resize:vertical;', 'data-fv': 'description', maxlength: 2000}}) }}
+                <div class="fv-error" data-for="description" style="display:none;color:#dc2626;font-size:12px;margin-top:3px"></div>
                 {% for e in form.description.vars.errors %}<div style="color:#dc2626;font-size:12px;margin-top:3px">⚠ {{ e.message }}</div>{% endfor %}
             </div>
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
-                <div>
+                <div class="fv-group">
                     {{ form_label(form.categorie) }}
-                    {{ form_widget(form.categorie, {attr: {style: inp}}) }}
+                    {{ form_widget(form.categorie, {attr: {style: inp, 'data-fv': 'categorie'}}) }}
+                    <div class="fv-error" data-for="categorie" style="display:none;color:#dc2626;font-size:12px;margin-top:3px"></div>
                     {% for e in form.categorie.vars.errors %}<div style="color:#dc2626;font-size:12px;margin-top:3px">⚠ {{ e.message }}</div>{% endfor %}
                 </div>
-                <div>
+                <div class="fv-group">
                     {{ form_label(form.typeEvenement) }}
-                    {{ form_widget(form.typeEvenement, {attr: {style: inp}}) }}
+                    {{ form_widget(form.typeEvenement, {attr: {style: inp, 'data-fv': 'typeEvenement'}}) }}
+                    <div class="fv-error" data-for="typeEvenement" style="display:none;color:#dc2626;font-size:12px;margin-top:3px"></div>
                     {% for e in form.typeEvenement.vars.errors %}<div style="color:#dc2626;font-size:12px;margin-top:3px">⚠ {{ e.message }}</div>{% endfor %}
                 </div>
             </div>
@@ -44,22 +48,24 @@
 
         <div class="admin-table-section" style="padding:28px;margin-bottom:1.5rem">
             <div style="font-size:13px;font-weight:700;color:#9999b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.2rem">📅 Dates et lieu</div>
-            {% set inp = 'width:100%;padding:10px 14px;border:1.5px solid #e2e5ea;border-radius:9px;font-size:14px;font-family:DM Sans,sans-serif;outline:none;' %}
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-                <div>
+                <div class="fv-group">
                     {{ form_label(form.dateDebut) }}
-                    {{ form_widget(form.dateDebut, {attr: {style: inp}}) }}
+                    {{ form_widget(form.dateDebut, {attr: {style: inp, 'data-fv': 'dateDebut'}}) }}
+                    <div class="fv-error" data-for="dateDebut" style="display:none;color:#dc2626;font-size:12px;margin-top:3px"></div>
                     {% for e in form.dateDebut.vars.errors %}<div style="color:#dc2626;font-size:12px;margin-top:3px">⚠ {{ e.message }}</div>{% endfor %}
                 </div>
-                <div>
+                <div class="fv-group">
                     {{ form_label(form.dateFin) }}
-                    {{ form_widget(form.dateFin, {attr: {style: inp}}) }}
+                    {{ form_widget(form.dateFin, {attr: {style: inp, 'data-fv': 'dateFin'}}) }}
+                    <div class="fv-error" data-for="dateFin" style="display:none;color:#dc2626;font-size:12px;margin-top:3px"></div>
                     {% for e in form.dateFin.vars.errors %}<div style="color:#dc2626;font-size:12px;margin-top:3px">⚠ {{ e.message }}</div>{% endfor %}
                 </div>
             </div>
-            <div>
+            <div class="fv-group">
                 {{ form_label(form.lieu) }}
-                {{ form_widget(form.lieu, {attr: {style: inp}}) }}
+                {{ form_widget(form.lieu, {attr: {style: inp, 'data-fv': 'lieu', maxlength: 100}}) }}
+                <div class="fv-error" data-for="lieu" style="display:none;color:#dc2626;font-size:12px;margin-top:3px"></div>
                 {% for e in form.lieu.vars.errors %}<div style="color:#dc2626;font-size:12px;margin-top:3px">⚠ {{ e.message }}</div>{% endfor %}
             </div>
         </div>
@@ -67,7 +73,8 @@
         <div class="admin-table-section" style="padding:28px">
             <div style="font-size:13px;font-weight:700;color:#9999b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.2rem">🖼 Image</div>
             {{ form_label(form.imageFile) }}
-            {{ form_widget(form.imageFile) }}
+            {{ form_widget(form.imageFile, {attr: {'data-fv': 'imageFile'}}) }}
+            <div class="fv-error" data-for="imageFile" style="display:none;color:#dc2626;font-size:12px;margin-top:3px"></div>
             <div style="font-size:12px;color:#9999b8;margin-top:4px">JPG, PNG, WEBP ou GIF — 4 Mo max{% if isEdit and evenement.imagePath %}. Laisser vide pour conserver l'image actuelle.{% endif %}</div>
             {% for e in form.imageFile.vars.errors %}<div style="color:#dc2626;font-size:12px;margin-top:3px">⚠ {{ e.message }}</div>{% endfor %}
             <div id="imgPreviewBox" style="{% if evenement.imagePath %}display:block{% else %}display:none{% endif %};margin-top:12px;text-align:center;">
@@ -80,15 +87,16 @@
     <div>
         <div class="admin-table-section" style="padding:24px;margin-bottom:1.5rem">
             <div style="font-size:13px;font-weight:700;color:#9999b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.2rem">👥 Capacité & Prix</div>
-            {% set inp = 'width:100%;padding:10px 14px;border:1.5px solid #e2e5ea;border-radius:9px;font-size:14px;font-family:DM Sans,sans-serif;outline:none;' %}
-            <div style="margin-bottom:1rem">
+            <div class="fv-group" style="margin-bottom:1rem">
                 {{ form_label(form.capaciteMax) }}
-                {{ form_widget(form.capaciteMax, {attr: {style: inp}}) }}
+                {{ form_widget(form.capaciteMax, {attr: {style: 'width:100%;padding:10px 14px;border:1.5px solid #e2e5ea;border-radius:9px;font-size:14px;font-family:DM Sans,sans-serif;outline:none;', 'data-fv': 'capaciteMax', min: 1, step: 1}}) }}
+                <div class="fv-error" data-for="capaciteMax" style="display:none;color:#dc2626;font-size:12px;margin-top:3px"></div>
                 {% for e in form.capaciteMax.vars.errors %}<div style="color:#dc2626;font-size:12px;margin-top:3px">⚠ {{ e.message }}</div>{% endfor %}
             </div>
-            <div>
+            <div class="fv-group">
                 {{ form_label(form.prix) }}
-                {{ form_widget(form.prix, {attr: {style: inp}}) }}
+                {{ form_widget(form.prix, {attr: {style: 'width:100%;padding:10px 14px;border:1.5px solid #e2e5ea;border-radius:9px;font-size:14px;font-family:DM Sans,sans-serif;outline:none;', 'data-fv': 'prix', step: '0.01', min: 0}}) }}
+                <div class="fv-error" data-for="prix" style="display:none;color:#dc2626;font-size:12px;margin-top:3px"></div>
                 <div style="font-size:12px;color:#9999b8;margin-top:3px">0.00 pour gratuit</div>
                 {% for e in form.prix.vars.errors %}<div style="color:#dc2626;font-size:12px;margin-top:3px">⚠ {{ e.message }}</div>{% endfor %}
             </div>
@@ -96,14 +104,13 @@
 
         <div class="admin-table-section" style="padding:24px;margin-bottom:1.5rem">
             <div style="font-size:13px;font-weight:700;color:#9999b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.2rem">🔘 Statut</div>
-            {% set inp = 'width:100%;padding:10px 14px;border:1.5px solid #e2e5ea;border-radius:9px;font-size:14px;font-family:DM Sans,sans-serif;outline:none;' %}
             {{ form_label(form.statut) }}
-            {{ form_widget(form.statut, {attr: {style: inp}}) }}
+            {{ form_widget(form.statut, {attr: {style: 'width:100%;padding:10px 14px;border:1.5px solid #e2e5ea;border-radius:9px;font-size:14px;font-family:DM Sans,sans-serif;outline:none;'}}) }}
         </div>
 
         <div class="admin-table-section" style="padding:24px">
-            <button type="submit" class="btn btn-primary" style="width:100%;background:linear-gradient(135deg,#6C63FF,#9D6BFF);border:none;border-radius:10px;padding:12px;font-weight:600;font-size:15px;color:#fff;cursor:pointer;margin-bottom:10px">
-                + {{ isEdit ? 'Enregistrer' : 'Créer l\'événement' }}
+            <button type="submit" id="submitBtn" style="width:100%;background:linear-gradient(135deg,#6C63FF,#9D6BFF);border:none;border-radius:10px;padding:12px;font-weight:600;font-size:15px;color:#fff;cursor:pointer;margin-bottom:10px">
+                {{ isEdit ? 'Enregistrer les modifications' : '+ Créer l\'événement' }}
             </button>
             <a href="{{ path('evenement_index') }}" class="admin-tool-btn" style="width:100%;justify-content:center;display:flex">✕ Annuler</a>
         </div>
@@ -114,17 +121,145 @@
 
 {% block javascripts %}
 <script>
-const imgInput = document.querySelector('input[type="file"]');
-if (imgInput) {
-    imgInput.addEventListener('change', function() {
-        const box = document.getElementById('imgPreviewBox');
-        const img = document.getElementById('imgPreview');
-        if (this.files && this.files[0]) {
-            const reader = new FileReader();
-            reader.onload = e => { img.src = e.target.result; box.style.display = 'block'; };
-            reader.readAsDataURL(this.files[0]);
+(function () {
+    const TODAY = new Date(); TODAY.setHours(0,0,0,0);
+
+    // ── Rules ────────────────────────────────────────────────────────────────
+    const rules = {
+        titre: (v) => {
+            if (!v.trim()) return 'Le titre est obligatoire.';
+            if (v.trim().length < 3) return 'Le titre doit contenir au moins 3 caractères.';
+            if (v.length > 100) return 'Le titre ne peut pas dépasser 100 caractères.';
+            return null;
+        },
+        description: (v) => {
+            if (v.length > 2000) return 'La description ne peut pas dépasser 2000 caractères.';
+            return null;
+        },
+        categorie: (v) => {
+            if (!v) return 'La catégorie est obligatoire.';
+            return null;
+        },
+        typeEvenement: (v) => {
+            if (!v) return 'Le type d\'événement est obligatoire.';
+            return null;
+        },
+        dateDebut: (v) => {
+            if (!v) return 'La date de début est obligatoire.';
+            const d = new Date(v);
+            if (isNaN(d)) return 'Date invalide.';
+            if (d < TODAY) return 'La date de début doit être aujourd\'hui ou dans le futur.';
+            return null;
+        },
+        dateFin: (v) => {
+            if (!v) return 'La date de fin est obligatoire.';
+            const d = new Date(v);
+            if (isNaN(d)) return 'Date invalide.';
+            // cross-field: compare with dateDebut
+            const debutInput = document.querySelector('[data-fv="dateDebut"]');
+            if (debutInput && debutInput.value) {
+                const debut = new Date(debutInput.value);
+                if (d < debut) return 'La date de fin doit être après ou égale à la date de début.';
+            }
+            return null;
+        },
+        lieu: (v) => {
+            if (v.length > 100) return 'Le lieu ne peut pas dépasser 100 caractères.';
+            return null;
+        },
+        capaciteMax: (v) => {
+            if (!v && v !== '0') return 'La capacité maximale est obligatoire.';
+            const n = parseInt(v, 10);
+            if (isNaN(n) || n < 1) return 'La capacité doit être un nombre entier positif (min. 1).';
+            return null;
+        },
+        prix: (v) => {
+            if (v === '' || v === null) return null; // optional
+            const n = parseFloat(v);
+            if (isNaN(n) || n < 0) return 'Le prix doit être positif ou nul.';
+            return null;
+        },
+        imageFile: (el) => {
+            if (!el.files || !el.files[0]) return null; // optional
+            const file = el.files[0];
+            const allowed = ['image/jpeg','image/png','image/webp','image/gif'];
+            if (!allowed.includes(file.type)) return 'Veuillez choisir une image valide (JPG, PNG, WEBP ou GIF).';
+            if (file.size > 4 * 1024 * 1024) return "L'image ne doit pas dépasser 4 Mo.";
+            return null;
+        },
+    };
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function showError(name, msg) {
+        const el = document.querySelector('[data-fv="' + name + '"]');
+        const err = document.querySelector('.fv-error[data-for="' + name + '"]');
+        if (!el || !err) return;
+        if (msg) {
+            el.style.borderColor = '#dc2626';
+            err.textContent = '⚠ ' + msg;
+            err.style.display = 'block';
+        } else {
+            el.style.borderColor = '#22c55e';
+            err.textContent = '';
+            err.style.display = 'none';
+        }
+    }
+
+    function validateField(name) {
+        const el = document.querySelector('[data-fv="' + name + '"]');
+        if (!el) return true;
+        const value = name === 'imageFile' ? el : (el.value ?? '');
+        const rule = rules[name];
+        if (!rule) return true;
+        const msg = rule(value);
+        showError(name, msg);
+        return !msg;
+    }
+
+    // ── Live validation on blur ──────────────────────────────────────────────
+    document.querySelectorAll('[data-fv]').forEach(function (el) {
+        const name = el.dataset.fv;
+        el.addEventListener('blur', function () { validateField(name); });
+        el.addEventListener('input', function () {
+            // only clear errors on input, don't re-show
+            const err = document.querySelector('.fv-error[data-for="' + name + '"]');
+            if (err && err.style.display !== 'none') validateField(name);
+        });
+    });
+
+    // when dateDebut changes, re-validate dateFin too
+    const debutEl = document.querySelector('[data-fv="dateDebut"]');
+    if (debutEl) debutEl.addEventListener('change', function () { validateField('dateFin'); });
+
+    // ── Submit guard ─────────────────────────────────────────────────────────
+    document.getElementById('evenement-form').addEventListener('submit', function (e) {
+        const fields = Object.keys(rules);
+        let valid = true;
+        fields.forEach(function (name) {
+            if (!validateField(name)) valid = false;
+        });
+        if (!valid) {
+            e.preventDefault();
+            // scroll to first error
+            const first = document.querySelector('.fv-error[style*="block"]');
+            if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     });
-}
+
+    // ── Image preview ─────────────────────────────────────────────────────────
+    const imgInput = document.querySelector('input[type="file"]');
+    if (imgInput) {
+        imgInput.addEventListener('change', function () {
+            validateField('imageFile');
+            const box = document.getElementById('imgPreviewBox');
+            const img = document.getElementById('imgPreview');
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) { img.src = e.target.result; box.style.display = 'block'; };
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+    }
+})();
 </script>
 {% endblock %}

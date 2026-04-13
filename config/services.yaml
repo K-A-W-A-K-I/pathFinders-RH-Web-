@@ -17,3 +17,13 @@ services:
     App\Service\FileUploader:
         arguments:
             $targetDirectory: '%images_categories_directory%'
+
+    App\Controller\Evenement\UserEventController:
+        arguments:
+            $stripeSecretKey: '%env(STRIPE_SECRET_KEY)%'
+
+    App\Service\EventMailer:
+        arguments:
+            $fromEmail: '%env(MAILER_FROM_EMAIL)%'
+            $fromName:  '%env(MAILER_FROM_NAME)%'
+            $appBaseUrl: '%env(APP_BASE_URL)%'
