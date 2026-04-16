@@ -13,9 +13,12 @@
     <div class="admin-table-header">
         <div class="admin-table-title">
             Candidatures reçues
-            <span class="admin-count-badge">{{ candidatures|length }}</span>
+            <span class="admin-count-badge">{{ candidatures.totalItemCount }}</span>
         </div>
         <div class="admin-table-actions">
+            <span style="font-size:13px;color:var(--text-light)">
+                Page {{ candidatures.currentPageNumber }} / {{ candidatures.pageCount }}
+            </span>
             <input type="text" placeholder="Rechercher..." class="admin-search-input" id="candidatSearch">
         </div>
     </div>
@@ -98,8 +101,124 @@
         {% endfor %}
         </tbody>
     </table>
+
+    {# ── Pagination ── #}
+    <div class="pagination-wrapper">
+        <div class="pagination-nav">
+            {% if candidatures.currentPageNumber > 1 %}
+                <a href="{{ path('admin_candidatures', {page: candidatures.currentPageNumber - 1}) }}" class="pagination-btn pagination-prev">
+                    ← Précédent
+                </a>
+            {% else %}
+                <span class="pagination-btn pagination-disabled">← Précédent</span>
+            {% endif %}
+
+            <div class="pagination-current">
+                <span class="page-label">Page</span>
+                <span class="page-number">{{ candidatures.currentPageNumber }}</span>
+                <span class="page-separator">/</span>
+                <span class="page-total">{{ candidatures.pageCount }}</span>
+            </div>
+
+            {% if candidatures.currentPageNumber < candidatures.pageCount %}
+                <a href="{{ path('admin_candidatures', {page: candidatures.currentPageNumber + 1}) }}" class="pagination-btn pagination-next">
+                    Suivant →
+                </a>
+            {% else %}
+                <span class="pagination-btn pagination-disabled">Suivant →</span>
+            {% endif %}
+        </div>
+        <div class="pagination-info">
+            {{ candidatures.currentPageNumber * 15 - 14 }}–{{ min(candidatures.currentPageNumber * 15, candidatures.totalItemCount) }} sur {{ candidatures.totalItemCount }} candidatures
+        </div>
+    </div>
+
     {% endif %}
 </div>
+
+<style>
+.pagination-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 32px 0 16px;
+    margin-top: 24px;
+}
+
+.pagination-nav {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.pagination-btn {
+    padding: 12px 32px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    background: #1e1b3a;
+    color: white;
+    border: none;
+    transition: all 0.2s;
+    min-width: 150px;
+    text-align: center;
+}
+
+.pagination-btn:hover:not(.pagination-disabled) {
+    background: #6C63FF;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(108, 99, 255, 0.4);
+}
+
+.pagination-disabled {
+    background: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+.pagination-current {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 28px;
+    background: white;
+    border: 2px solid #1e1b3a;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.page-label {
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.page-number {
+    color: #1e1b3a;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.page-separator {
+    color: #9ca3af;
+    font-size: 16px;
+}
+
+.page-total {
+    color: #4b5563;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.pagination-info {
+    font-size: 13px;
+    color: #6b7280;
+    text-align: center;
+}
+</style>
 
 {# ── Blacklist Modal ── #}
 <div id="blacklist-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
