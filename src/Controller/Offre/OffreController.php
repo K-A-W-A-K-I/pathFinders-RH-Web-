@@ -12,6 +12,7 @@ use App\Repository\EntretienRepository;
 use App\Repository\OffreRepository;
 use App\Repository\QuestionRepository;
 use App\Service\AiService;
+use App\Service\CandidatureMailer;
 use App\Service\ChartService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -48,16 +49,34 @@ class OffreController extends AbstractController
     }
 
     #[Route('/candidatures', name: 'admin_candidatures')]
-    public function adminCandidatures(CandidatureRepository $candidatureRepo, \App\Repository\CandidatRepository $candidatRepo): Response
-    {
-        $candidatures = $candidatureRepo->findAllWithRelations();
-        $candidats = array_map(fn($c) => $c->getCandidat(), $candidatures);
+    public function adminCandidatures(
+        Request $request,
+        CandidatureRepository $candidatureRepo,
+        CandidatRepository $candidatRepo,
+        \Knp\Component\Pager\PaginatorInterface $paginator
+    ): Response {
+        $query = $candidatureRepo->findAllWithRelationsQuery();
+
+        $pagination = $paginator->paginate(
+            $query,
+            $request->query->getInt('page', 1),
+            15  // 15 candidatures par page
+        );
+
+        // Hydrate names for current page items only
+        $candidats = array_map(fn($c) => $c->getCandidat(), iterator_to_array($pagination));
         $candidatRepo->hydrateNames($candidats);
 
-        $candidatures = array_values(array_filter($candidatures, fn($c) => trim($c->getCandidat()->getFullName()) !== ''));
+        // Filter out empty names
+        $validIds = [];
+        foreach ($pagination as $c) {
+            if (trim($c->getCandidat()->getFullName()) !== '') {
+                $validIds[] = $c->getId();
+            }
+        }
 
         return $this->render('offre/candidatures_admin.html.twig', [
-            'candidatures' => $candidatures,
+            'candidatures' => $pagination,
         ]);
     }
 
@@ -208,7 +227,9 @@ class OffreController extends AbstractController
         int $statut,
         Request $request,
         CandidatureRepository $repo,
-        EntityManagerInterface $em
+        CandidatRepository $candidatRepo,
+        EntityManagerInterface $em,
+        CandidatureMailer $mailer
     ): Response {
         $candidature = $repo->find($id);
         if ($candidature) {
@@ -231,6 +252,23 @@ class OffreController extends AbstractController
             }
 
             $em->flush();
+
+            // Envoyer email au candidat
+            try {
+                $candidat = $candidature->getCandidat();
+                $candidatRepo->hydrateNames([$candidat]);
+                $email = $candidat->getEmail();
+                $nom   = $candidat->getFullName() ?: 'Candidat';
+                if ($email) {
+                    if ($statut === 1) {
+                        $mailer->sendCandidatureAcceptee($candidature, $email, $nom);
+                    } elseif ($statut === -1) {
+                        $mailer->sendCandidatureRefusee($candidature, $email, $nom);
+                    }
+                }
+            } catch (\Throwable) {
+                // Ne pas bloquer si l'email échoue
+            }
         }
         $referer = $request->headers->get('referer');
         return $referer ? $this->redirect($referer) : $this->redirectToRoute('admin_candidatures');

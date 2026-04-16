@@ -17,3 +17,7 @@ services:
     App\Service\FileUploader:
         arguments:
             $targetDirectory: '%images_categories_directory%'
+
+    App\Service\CandidatureMailer:
+        arguments:
+            $fromEmail: '%env(MAILER_FROM)%'

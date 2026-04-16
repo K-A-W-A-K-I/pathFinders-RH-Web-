@@ -7,6 +7,7 @@ use App\Repository\CandidatRepository;
 use App\Repository\CandidatureRepository;
 use App\Repository\EntretienRepository;
 use App\Repository\OffreRepository;
+use App\Service\CandidatureMailer;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -104,7 +105,9 @@ class EntretienController extends AbstractController
         Entretien $entretien,
         Request $request,
         EntretienRepository $repo,
-        EntityManagerInterface $em
+        CandidatRepository $candidatRepo,
+        EntityManagerInterface $em,
+        CandidatureMailer $mailer
     ): Response {
         $statut = $request->request->get('statut');
         $notes  = $request->request->get('notes', '');
@@ -117,6 +120,21 @@ class EntretienController extends AbstractController
         $entretien->setStatut($statut);
         $entretien->setNotes($notes ?: null);
         $em->flush();
+
+        // Envoyer email de confirmation si entretien confirmé
+        if ($statut === Entretien::STATUT_CONFIRME) {
+            try {
+                $candidat = $entretien->getCandidat();
+                $candidatRepo->hydrateNames([$candidat]);
+                $email = $candidat->getEmail();
+                $nom   = $candidat->getFullName() ?: 'Candidat';
+                if ($email) {
+                    $mailer->sendEntretienConfirme($entretien, $email, $nom);
+                }
+            } catch (\Throwable) {
+                // Ne pas bloquer si l'email échoue
+            }
+        }
 
         $this->addFlash('success', 'Statut mis à jour.');
         return $this->redirectToRoute('entretien_admin');
