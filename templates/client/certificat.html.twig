@@ -1,0 +1,98 @@
+{% extends 'client/base_client.html.twig' %}
+{% block title %}Certificat — {{ formation.titre }}{% endblock %}
+
+{% block body %}
+<div class="pf-content" style="max-width:860px">
+
+  <div style="text-align:center;margin-bottom:2rem">
+    <a href="{{ path('client_formation_detail', {id: formation.idFormation}) }}" style="color:var(--text-muted);text-decoration:none;font-size:14px">← Retour à la formation</a>
+  </div>
+
+  {# ── Certificat ── #}
+  <div class="cert-wrapper" id="certificat">
+    <div class="cert-border-outer">
+      <div class="cert-border-inner">
+
+        <div class="cert-header">
+          <div class="cert-logo">🎓</div>
+          <div class="cert-org">PathFinder Academy</div>
+          <div class="cert-subtitle">CERTIFICAT DE RÉUSSITE</div>
+        </div>
+
+        <div class="cert-divider"></div>
+
+        <div class="cert-body">
+          <p class="cert-label">Ce certificat est décerné à</p>
+          <h1 class="cert-name">{{ nomParticipant }}</h1>
+          <p class="cert-label">pour avoir complété avec succès la formation</p>
+          <h2 class="cert-formation">{{ formation.titre }}</h2>
+
+          {% if formation.formateur %}
+            <p class="cert-formateur">Dispensée par <strong>{{ formation.formateur }}</strong></p>
+          {% endif %}
+          {% if formation.dureeHeures %}
+            <p class="cert-duree">Durée : {{ formation.dureeHeures }} heures</p>
+          {% endif %}
+        </div>
+
+        <div class="cert-divider"></div>
+
+        <div class="cert-footer">
+          <div class="cert-date">
+            <div class="cert-footer-label">Date d'obtention</div>
+            <div class="cert-footer-value">{{ dateObtention|date('d/m/Y') }}</div>
+          </div>
+          <div class="cert-seal">✅</div>
+          <div class="cert-sign">
+            <div class="cert-footer-label">Validé par</div>
+            <div class="cert-footer-value">PathFinder Academy</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  {# Bouton imprimer #}
+  <div style="text-align:center;margin-top:2rem">
+    <button onclick="window.print()" class="pf-btn-details" style="font-size:15px;padding:12px 32px">
+      🖨️ Imprimer / Télécharger en PDF
+    </button>
+  </div>
+
+</div>
+
+{% block stylesheets %}
+<style>
+.cert-wrapper{padding:2rem 1rem}
+.cert-border-outer{border:3px solid var(--primary);border-radius:20px;padding:6px;background:linear-gradient(135deg,rgba(108,99,255,.08),rgba(157,107,255,.05))}
+.cert-border-inner{border:1.5px solid rgba(108,99,255,.3);border-radius:16px;padding:3rem 4rem;background:var(--surface);text-align:center}
+
+.cert-header{margin-bottom:1.5rem}
+.cert-logo{font-size:3rem;margin-bottom:.5rem}
+.cert-org{font-family:'Sora',sans-serif;font-size:13px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--primary);margin-bottom:.4rem}
+.cert-subtitle{font-family:'Sora',sans-serif;font-size:22px;font-weight:700;color:var(--text);letter-spacing:.08em}
+
+.cert-divider{width:80px;height:2px;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:2px;margin:1.5rem auto}
+
+.cert-body{margin:1.5rem 0}
+.cert-label{font-size:14px;color:var(--text-muted);margin-bottom:.5rem}
+.cert-name{font-family:'Sora',sans-serif;font-size:2.2rem;font-weight:700;color:var(--text);margin:.5rem 0 1rem;background:linear-gradient(135deg,var(--accent),var(--primary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.cert-formation{font-family:'Sora',sans-serif;font-size:1.3rem;font-weight:600;color:var(--text);margin:.5rem 0}
+.cert-formateur,.cert-duree{font-size:13px;color:var(--text-muted);margin:.3rem 0}
+
+.cert-footer{display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem}
+.cert-footer-label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.cert-footer-value{font-family:'Sora',sans-serif;font-weight:600;font-size:14px;color:var(--text)}
+.cert-seal{font-size:2.5rem}
+
+@media print {
+  .pf-nav, .pf-footer, a[href], button { display: none !important; }
+  .cert-wrapper { padding: 0; }
+  .cert-border-outer { border-color: #6C63FF; }
+  .cert-name { -webkit-text-fill-color: #6C63FF; }
+  body { background: white; }
+}
+</style>
+{% endblock %}
+{% endblock %}

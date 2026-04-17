@@ -8,7 +8,21 @@
   <div class="pf-hero-inner">
     <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>{{ formation.titre }}</div>
     <h1><span>{{ module.nom }}</span></h1>
-    <p>Module {{ module.ordre ?? 'N/A' }} de la formation</p>
+    <p>Module {{ module.ordre ?? 'N/A' }} sur {{ totalModules }}</p>
+  </div>
+</div>
+
+{# ── Barre de progression sticky ── #}
+<div class="prog-bar-wrap">
+  <div class="prog-bar-inner">
+    <div class="prog-bar-info">
+      <span>📚 Progression de la formation</span>
+      <span class="prog-bar-pct">{{ progression }}%</span>
+    </div>
+    <div class="prog-bar-track">
+      <div class="prog-bar-fill" style="width: {{ progression }}%"></div>
+    </div>
+    <div class="prog-bar-sub">{{ nbVus }} module(s) consulté(s) sur {{ totalModules }}</div>
   </div>
 </div>
 
@@ -18,23 +32,87 @@
   </div>
 
   <div style="display:grid;grid-template-columns:3fr 1fr;gap:1.5rem;align-items:start">
-    <div class="pf-section">
-      <div class="pf-section-label">Contenu du module</div>
-      <h2>{{ module.nom }}</h2>
-      <div class="pf-divider"></div>
-      
-      {% if module.contenu %}
-        <div style="line-height:1.8;color:var(--text);white-space:pre-wrap;font-size:15px">{{ module.contenu }}</div>
-      {% else %}
-        <p style="color:var(--text-muted)">Aucun contenu disponible pour ce module.</p>
-      {% endif %}
+    <div>
+      <div class="pf-section">
+        <div class="pf-section-label">Contenu du module</div>
+        <h2>{{ module.nom }}</h2>
+        <div class="pf-divider"></div>
+
+        {# ── Boutons de contenu ── #}
+        <div style="display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:.8rem;align-items:center">
+          <span style="font-size:12px;color:var(--text-muted);font-weight:600;min-width:80px">Avec voix :</span>
+          <button class="mod-btn mod-btn-primary" onclick="translateModule('ar-sa')">🇸🇦 Arabe</button>
+          <button class="mod-btn mod-btn-primary" onclick="translateModule('fr-fr')">🇫🇷 Français</button>
+          <button class="mod-btn mod-btn-primary" onclick="translateModule('en-us')">🇬🇧 Anglais</button>
+          <button class="mod-btn" id="btnAnnulerVoix" onclick="stopVoix()" style="display:none;background:rgba(226,75,74,.15);color:#E24B4A;border-color:rgba(226,75,74,.3)">⏹ Annuler</button>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1.5rem;align-items:center">
+          <span style="font-size:12px;color:var(--text-muted);font-weight:600;min-width:80px">Sans voix :</span>
+          <button class="mod-btn" onclick="translateSilent('ar-sa')">🇸🇦 Arabe</button>
+          <button class="mod-btn" onclick="translateSilent('fr-fr')">🇫🇷 Français</button>
+          <button class="mod-btn" onclick="translateSilent('en-us')">🇬🇧 Anglais</button>
+          <button class="mod-btn mod-btn-primary" onclick="openPresentation()">📊 Présentation</button>
+          <button class="mod-btn" onclick="showVideoLangPicker()">🎬 Vidéo</button>        </div>
+
+        {# Modal présentation #}
+        <div id="presentationModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center">
+          <div style="width:90%;max-width:900px;height:85vh;background:#0f172a;border-radius:20px;border:1px solid rgba(108,99,255,.3);overflow:hidden;position:relative">
+            <button onclick="closePresentation()" style="position:absolute;top:12px;right:16px;z-index:10;background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px">✕</button>
+            <div id="loadingPresentation" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#a78bfa;gap:16px">
+              <div style="width:48px;height:48px;border:3px solid rgba(108,99,255,.3);border-top-color:#6C63FF;border-radius:50%;animation:spin 1s linear infinite"></div>
+              <p style="font-family:'Sora',sans-serif;font-size:14px">Génération de la présentation IA...</p>
+              <button onclick="closePresentation()" style="margin-top:8px;padding:8px 24px;border-radius:10px;border:.5px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:13px;cursor:pointer">✕ Annuler</button>
+            </div>
+            <iframe id="presentationFrame" style="display:none;width:100%;height:100%;border:none"></iframe>
+          </div>
+        </div>
+
+        {# Mini modal choix langue vidéo #}
+        <div id="videoLangModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center">
+          <div style="background:#0f172a;border-radius:20px;border:1px solid rgba(108,99,255,.3);padding:2rem;text-align:center;min-width:280px">
+            <div style="font-family:'Sora',sans-serif;font-size:16px;font-weight:600;color:#e2e8f0;margin-bottom:1.5rem">🎬 Choisir la langue de la vidéo</div>
+            <div style="display:flex;flex-direction:column;gap:.8rem">
+              <button onclick="selectVideoLang('fr-fr')" style="padding:12px 24px;border-radius:12px;border:1px solid rgba(167,139,250,.3);background:rgba(167,139,250,.1);color:#a78bfa;font-size:14px;font-weight:600;cursor:pointer">🇫🇷 Français</button>
+              <button onclick="selectVideoLang('ar-sa')" style="padding:12px 24px;border-radius:12px;border:1px solid rgba(167,139,250,.3);background:rgba(167,139,250,.1);color:#a78bfa;font-size:14px;font-weight:600;cursor:pointer">🇸🇦 Arabe</button>
+              <button onclick="selectVideoLang('en-us')" style="padding:12px 24px;border-radius:12px;border:1px solid rgba(167,139,250,.3);background:rgba(167,139,250,.1);color:#a78bfa;font-size:14px;font-weight:600;cursor:pointer">🇬🇧 Anglais</button>
+              <button onclick="document.getElementById('videoLangModal').style.display='none'" style="padding:10px 24px;border-radius:12px;border:.5px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.5);font-size:13px;cursor:pointer">Annuler</button>
+            </div>
+          </div>
+        </div>
+
+        {% if module.contenu %}
+          <div style="line-height:1.8;color:var(--text);white-space:pre-wrap;font-size:15px">{{ module.contenu }}</div>
+        {% else %}
+          <p style="color:var(--text-muted)">Aucun contenu disponible pour ce module.</p>
+        {% endif %}
+      </div>
+
+      {# Navigation prev / next #}
+      <div style="display:flex;justify-content:space-between;gap:1rem;margin-top:1rem">
+        {% if prevModule %}
+          <a href="{{ path('client_module_detail', {id: prevModule.idContenu}) }}" class="pf-btn-ghost" style="flex:1;text-align:center;padding:12px">
+            ← Module {{ prevModule.ordre }} : {{ prevModule.nom|slice(0,30) }}{% if prevModule.nom|length > 30 %}…{% endif %}
+          </a>
+        {% else %}
+          <div style="flex:1"></div>
+        {% endif %}
+        {% if nextModule %}
+          <a href="{{ path('client_module_detail', {id: nextModule.idContenu}) }}" class="pf-btn-details" style="flex:1;text-align:center;margin-top:0">
+            Module {{ nextModule.ordre }} : {{ nextModule.nom|slice(0,30) }}{% if nextModule.nom|length > 30 %}…{% endif %} →
+          </a>
+        {% else %}
+          <a href="{{ path('client_formation_detail', {id: formation.idFormation}) }}" class="pf-btn-details" style="flex:1;text-align:center;margin-top:0">
+            🎉 Formation terminée — Retour
+          </a>
+        {% endif %}
+      </div>
     </div>
 
     <div>
       <div class="pf-section" style="position:sticky;top:80px">
         <div class="pf-section-label">Informations</div>
         <h3 style="font-family:'Sora',sans-serif;margin-bottom:1rem;font-size:1rem">Détails du module</h3>
-        
+
         <div style="margin-bottom:1rem">
           <span style="color:var(--text-dim);font-size:12px;text-transform:uppercase;letter-spacing:.08em">Ordre</span>
           <p style="margin-top:.3rem;font-weight:500">Module {{ module.ordre ?? 'N/A' }}</p>
@@ -52,6 +130,17 @@
         </div>
         {% endif %}
 
+        {# Mini progression dans sidebar #}
+        <div style="margin-top:1.5rem">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-bottom:6px">
+            <span>Progression</span><span style="font-weight:700;color:var(--primary)">{{ progression }}%</span>
+          </div>
+          <div style="height:6px;background:var(--border);border-radius:10px;overflow:hidden">
+            <div style="height:100%;width:{{ progression }}%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:10px;transition:width .6s ease"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:4px">{{ nbVus }}/{{ totalModules }} modules vus</div>
+        </div>
+
         <a href="{{ path('client_formation_detail', {id: formation.idFormation}) }}" style="display:block;width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);text-align:center;text-decoration:none;font-size:13px;font-weight:600;margin-top:1.5rem;transition:background .2s">
           📚 Tous les modules
         </a>
@@ -59,4 +148,162 @@
     </div>
   </div>
 </div>
+
+{% block stylesheets %}
+<style>
+.prog-bar-wrap{background:var(--surface);border-bottom:.5px solid var(--border);padding:.8rem 2.5rem;position:sticky;top:62px;z-index:90;backdrop-filter:blur(12px)}
+.prog-bar-inner{max-width:1100px;margin:0 auto}
+.prog-bar-info{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--text-muted);margin-bottom:6px}
+.prog-bar-pct{font-family:'Sora',sans-serif;font-weight:700;color:var(--primary);font-size:14px}
+.prog-bar-track{height:8px;background:var(--border);border-radius:10px;overflow:hidden}
+.prog-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:10px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.prog-bar-sub{font-size:11px;color:var(--text-dim);margin-top:4px}
+.mod-btn{padding:8px 16px;border-radius:10px;border:.5px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .2s}
+.mod-btn:hover{background:var(--surface-hover);border-color:var(--border-hover)}
+.mod-btn:disabled{opacity:.5;cursor:not-allowed}
+.mod-btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border:none;font-weight:600}
+.mod-btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(108,99,255,.4)}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+const MODULE_CONTENU = {{ module.contenu|json_encode|raw }};
+const MODULE_TITRE   = {{ module.nom|json_encode|raw }};
+let currentLang = 'fr-fr';
+let texteOriginal = MODULE_CONTENU;
+
+// ── Traduction ──
+const translateUrl = '{{ path("client_translate") }}';
+const translateVoiceUrl = '{{ path("client_presentation_translate_voice") }}';
+let isTranslating = false;
+
+function stopVoix() {
+  const audio = document.getElementById('mod-audio');
+  if (audio) { audio.pause(); audio.currentTime = 0; }
+  document.getElementById('btnAnnulerVoix').style.display = 'none';
+}
+
+function translateModule(lang) {
+  if (isTranslating) return;
+  currentLang = lang;
+
+  isTranslating = true;
+  const el = document.querySelector('[style*="white-space:pre-wrap"]');
+  if (el) el.textContent = '⏳ Chargement audio...';
+  document.getElementById('btnAnnulerVoix').style.display = 'inline-block';
+
+  fetch(translateVoiceUrl, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ texte: texteOriginal, lang: lang })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.error) { if (el) el.textContent = '⚠ ' + data.error; return; }
+    if (el) el.textContent = data.translated;
+    if (data.audioBase64) {
+      let audio = document.getElementById('mod-audio');
+      if (!audio) {
+        audio = document.createElement('audio');
+        audio.id = 'mod-audio';
+        document.body.appendChild(audio);
+      }
+      audio.src = data.audioBase64;
+      audio.load();
+      audio.play().catch(() => {});
+      audio.onended = () => { document.getElementById('btnAnnulerVoix').style.display = 'none'; };
+    }
+  })
+  .catch(() => { if (el) el.textContent = '⚠ Erreur réseau'; })
+  .finally(() => { isTranslating = false; });
+}
+
+function closePresentation() {
+  document.getElementById('presentationModal').style.display = 'none';
+  document.getElementById('presentationFrame').srcdoc = '';
+}
+function translateSilent(lang) {
+  if (lang === 'fr-fr') {
+    const el = document.querySelector('[style*="white-space:pre-wrap"]');
+    if (el) el.textContent = texteOriginal;
+    return;
+  }
+  const el = document.querySelector('[style*="white-space:pre-wrap"]');
+  if (el) el.textContent = '⏳ Traduction en cours...';
+
+  fetch(translateUrl, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ texte: texteOriginal, lang: lang })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.translated && el) el.textContent = data.translated;
+    else if (data.error && el) el.textContent = '⚠ ' + data.error;
+  })
+  .catch(() => { if (el) el.textContent = '⚠ Erreur réseau'; });
+}
+function openPresentation() {
+  const modal = document.getElementById('presentationModal');
+  modal.style.display = 'flex';
+  document.getElementById('loadingPresentation').style.display = 'flex';
+  document.getElementById('presentationFrame').style.display = 'none';
+
+  fetch('{{ path("client_presentation_generate") }}', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      contenu: texteOriginal,
+      titre:   MODULE_TITRE,
+      lang:    currentLang
+    })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.error) { alert('Erreur: ' + data.error); closePresentation(); return; }
+    const frame = document.getElementById('presentationFrame');
+    frame.srcdoc = data.html;
+    document.getElementById('loadingPresentation').style.display = 'none';
+    frame.style.display = 'block';
+  })
+  .catch(e => { alert('Erreur réseau: ' + e); closePresentation(); });
+}
+
+// ── Vidéo D-ID ──
+function showVideoLangPicker() {
+  document.getElementById('videoLangModal').style.display = 'flex';
+}
+
+function selectVideoLang(lang) {
+  document.getElementById('videoLangModal').style.display = 'none';
+  openVideo(lang);
+}
+
+function openVideo(lang) {
+  const modal = document.getElementById('presentationModal');
+  modal.style.display = 'flex';
+  document.getElementById('loadingPresentation').style.display = 'flex';
+  document.getElementById('loadingPresentation').querySelector('p').textContent =
+    '🎬 Génération vidéo avatar IA... (30-90 secondes)';
+  document.getElementById('presentationFrame').style.display = 'none';
+
+  fetch('{{ path("client_video_generate") }}', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ contenu: texteOriginal, titre: MODULE_TITRE, lang: lang })
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.error) { alert('Erreur: ' + data.error); closePresentation(); return; }
+    const frame = document.getElementById('presentationFrame');
+    frame.srcdoc = data.html;
+    document.getElementById('loadingPresentation').style.display = 'none';
+    frame.style.display = 'block';
+  })
+  .catch(e => { alert('Erreur réseau: ' + e); closePresentation(); });
+}
+</script>
+{% endblock %}
 {% endblock %}

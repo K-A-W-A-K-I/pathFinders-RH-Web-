@@ -3,6 +3,47 @@
 {% block nav_categories %}active{% endblock %}
 
 {% block body %}
+
+{% if isInscrit and totalModules > 0 %}
+<div class="prog-bar-wrap">
+  <div class="prog-bar-inner">
+    <div class="prog-bar-info">
+      <span>📚 Votre progression dans cette formation</span>
+      <div style="display:flex;align-items:center;gap:1rem">
+        <span class="prog-bar-pct">{{ progression }}%</span>
+        {% if progression == 100 %}
+          <a href="{{ path('client_certificat', {id: formation.idFormation}) }}"
+             class="cert-btn cert-btn-active">
+            🎓 Certificat
+          </a>
+        {% else %}
+          <button disabled class="cert-btn cert-btn-disabled" title="Complétez tous les modules pour obtenir votre certificat">
+            🔒 Certificat
+          </button>
+        {% endif %}
+      </div>
+    </div>
+    <div class="prog-bar-track">
+      <div class="prog-bar-fill" style="width:{{ progression }}%"></div>
+    </div>
+    <div class="prog-bar-sub">{{ nbVus }} module(s) consulté(s) sur {{ totalModules }}{% if progression < 100 %} — Complétez tous les modules pour débloquer le certificat{% endif %}</div>
+  </div>
+</div>
+<style>
+.prog-bar-wrap{background:var(--surface);border-bottom:.5px solid var(--border);padding:.8rem 2.5rem;position:sticky;top:62px;z-index:90;backdrop-filter:blur(12px)}
+.prog-bar-inner{max-width:1100px;margin:0 auto}
+.prog-bar-info{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--text-muted);margin-bottom:6px}
+.prog-bar-pct{font-family:'Sora',sans-serif;font-weight:700;color:var(--primary);font-size:14px}
+.prog-bar-track{height:8px;background:var(--border);border-radius:10px;overflow:hidden}
+.prog-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:10px;transition:width .8s ease}
+.prog-bar-sub{font-size:11px;color:var(--text-dim);margin-top:4px}
+.cert-btn{padding:6px 16px;border-radius:8px;font-size:13px;font-weight:600;font-family:'Sora',sans-serif;cursor:pointer;text-decoration:none;transition:all .2s;white-space:nowrap}
+.cert-btn-active{background:linear-gradient(135deg,#1D9E75,#16a34a);color:#fff;border:none;box-shadow:0 2px 8px rgba(29,158,117,.35)}
+.cert-btn-active:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(29,158,117,.45)}
+.cert-btn-disabled{background:var(--surface);color:var(--text-dim);border:.5px solid var(--border);cursor:not-allowed;opacity:.6}
+</style>
+{% endif %}
+
 <div class="pf-hero">
   <div class="pf-hero-bg"></div><div class="pf-hero-grid"></div>
   <div class="pf-hero-inner">
@@ -38,15 +79,27 @@
           <div class="pf-section-label">Contenu de la formation</div>
           <h2>Modules</h2>
           <div class="pf-divider"></div>
-          {% if contenuModules is empty %}
+          {% if delaiDepasse %}
+            <div style="text-align:center;padding:2rem">
+              <div style="font-size:2rem;margin-bottom:.8rem">⏰</div>
+              <h3 style="font-family:'Sora',sans-serif;color:var(--red);margin-bottom:.5rem">Délai dépassé</h3>
+              <p style="color:var(--text-muted);font-size:14px;margin-bottom:1.5rem">La date de fin de cette formation est passée. Vous ne pouvez plus accéder aux modules.</p>
+              {% if progression < 100 %}
+                <button disabled title="Le délai de cette formation est dépassé" style="padding:12px 28px;border-radius:10px;border:none;background:rgba(226,75,74,.2);color:#E24B4A;font-size:14px;font-weight:600;cursor:not-allowed;margin-top:1rem">
+                  🚫 Accès refusé
+                </button>
+              {% endif %}
+            </div>
+          {% elseif contenuModules is empty %}
             <p style="color:var(--text-muted)">Aucun module disponible pour le moment.</p>
           {% else %}
             {% for module in contenuModules %}
-              <a href="{{ path('client_module_detail', {id: module.idContenu}) }}" style="display:block;border:.5px solid var(--border);border-radius:12px;padding:1.2rem;margin-bottom:.8rem;text-decoration:none;color:var(--text);transition:background .2s,border-color .2s,transform .2s">
+              {% set estVu = module.idContenu in modulesVus %}
+              <a href="{{ path('client_module_detail', {id: module.idContenu}) }}" style="display:block;border:.5px solid {{ estVu ? 'rgba(29,158,117,.4)' : 'var(--border)' }};border-radius:12px;padding:1.2rem;margin-bottom:.8rem;text-decoration:none;color:var(--text);transition:background .2s,border-color .2s,transform .2s;background:{{ estVu ? 'rgba(29,158,117,.05)' : 'transparent' }}">
                 <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem">
-                  <span style="background:var(--primary);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">{{ module.ordre ?? loop.index }}</span>
+                  <span style="background:{{ estVu ? '#1D9E75' : 'var(--primary)' }};color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">{{ estVu ? '✓' : (module.ordre ?? loop.index) }}</span>
                   <strong style="font-family:'Sora',sans-serif">{{ module.nom }}</strong>
-                  <span style="margin-left:auto;color:var(--text-muted);font-size:12px">→</span>
+                  {% if estVu %}<span style="margin-left:auto;font-size:11px;color:#1D9E75;font-weight:600">✓ Vu</span>{% else %}<span style="margin-left:auto;color:var(--text-muted);font-size:12px">→</span>{% endif %}
                 </div>
                 {% if module.contenu %}
                   <p style="color:var(--text-muted);font-size:14px;line-height:1.7">{{ module.contenu|slice(0, 120) }}{% if module.contenu|length > 120 %}...{% endif %}</p>
@@ -67,10 +120,21 @@
     <div class="pf-section" style="position:sticky;top:80px">
       {% if isInscrit %}
         <div style="text-align:center;padding:1rem 0">
-          <div style="font-size:2rem;margin-bottom:.8rem">✅</div>
-          <h3 style="font-family:'Sora',sans-serif;color:var(--teal);margin-bottom:.4rem">Vous êtes inscrit</h3>
-          <p style="color:var(--text-muted);font-size:13px">Vous avez accès au contenu de cette formation.</p>
-          <button disabled style="width:100%;margin-top:1.2rem;padding:12px;border-radius:10px;border:none;background:rgba(29,158,117,.15);color:var(--teal);font-size:14px;font-weight:600;cursor:not-allowed">Déjà inscrit</button>
+          {% if delaiDepasse %}
+            <div style="font-size:2rem;margin-bottom:.8rem">⏰</div>
+            <h3 style="font-family:'Sora',sans-serif;color:var(--red);margin-bottom:.4rem">Délai dépassé</h3>
+            <p style="color:var(--text-muted);font-size:13px">La date de fin est passée.</p>
+            {% if progression < 100 %}
+              <button disabled title="Le délai de cette formation est dépassé" style="width:100%;margin-top:1rem;padding:12px;border-radius:10px;border:none;background:rgba(226,75,74,.2);color:#E24B4A;font-size:14px;font-weight:600;cursor:not-allowed">
+                🚫 Accès refusé
+              </button>
+            {% endif %}
+          {% else %}
+            <div style="font-size:2rem;margin-bottom:.8rem">✅</div>
+            <h3 style="font-family:'Sora',sans-serif;color:var(--teal);margin-bottom:.4rem">Vous êtes inscrit</h3>
+            <p style="color:var(--text-muted);font-size:13px">Vous avez accès au contenu de cette formation.</p>
+            <button disabled style="width:100%;margin-top:1.2rem;padding:12px;border-radius:10px;border:none;background:rgba(29,158,117,.15);color:var(--teal);font-size:14px;font-weight:600;cursor:not-allowed">Déjà inscrit</button>
+          {% endif %}
         </div>
       {% elseif formation.placeDisponible <= 0 %}
         <div style="text-align:center;padding:1rem 0">
@@ -79,15 +143,30 @@
           <p style="color:var(--text-muted);font-size:13px">Aucune place disponible.</p>
           <button disabled style="width:100%;margin-top:1.2rem;padding:12px;border-radius:10px;border:none;background:rgba(226,75,74,.15);color:var(--red);font-size:14px;font-weight:600;cursor:not-allowed">Inscription fermée</button>
         </div>
+      {% elseif delaiDepasse %}
+        <div style="text-align:center;padding:1rem 0">
+          <div style="font-size:2rem;margin-bottom:.8rem">⏰</div>
+          <h3 style="font-family:'Sora',sans-serif;color:var(--red);margin-bottom:.4rem">Délai dépassé</h3>
+          <p style="color:var(--text-muted);font-size:13px">La date de fin de cette formation est passée.</p>
+          <button disabled title="Le délai de cette formation est dépassé" style="width:100%;margin-top:1rem;padding:12px;border-radius:10px;border:none;background:rgba(226,75,74,.2);color:#E24B4A;font-size:14px;font-weight:600;cursor:not-allowed">
+            🚫 Accès refusé
+          </button>
+        </div>
       {% else %}
         <div class="pf-section-label">S'inscrire</div>
         <h3 style="font-family:'Sora',sans-serif;margin-bottom:1rem;font-size:1rem">Rejoindre cette formation</h3>
         <p style="color:var(--text-muted);font-size:13px;margin-bottom:1.5rem">Cliquez sur le bouton ci-dessous pour vous inscrire instantanément à cette formation.</p>
-        <form method="post" action="{{ path('client_formation_inscrire', {id: formation.idFormation}) }}">
-          <button type="submit" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:transform .2s,box-shadow .2s">
-            ✨ S'inscrire maintenant
-          </button>
-        </form>
+        {% if app.user %}
+          <form method="post" action="{{ path('client_formation_inscrire', {id: formation.idFormation}) }}">
+            <button type="submit" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
+              ✨ S'inscrire maintenant
+            </button>
+          </form>
+        {% else %}
+          <a href="{{ path('auth_login') }}" style="display:block;width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;text-align:center;text-decoration:none">
+            🔐 Se connecter pour s'inscrire
+          </a>
+        {% endif %}
         <p style="color:var(--text-dim);font-size:11px;margin-top:1rem;text-align:center">Inscription gratuite et instantanée</p>
       {% endif %}
     </div>
