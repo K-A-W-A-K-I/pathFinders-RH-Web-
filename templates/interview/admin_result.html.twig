@@ -1,0 +1,72 @@
+{% extends 'admin_base.html.twig' %}
+
+{% block title %}Résultat entretien IA — {{ entretien.offre.titre }}{% endblock %}
+{% block page_icon %}🤖{% endblock %}
+{% block page_title %}Résultat de l'entretien IA{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{{ path('entretien_admin') }}" class="btn btn-secondary">← Retour aux entretiens</a>
+{% endblock %}
+
+{% block body %}
+
+<div style="max-width:640px">
+
+  {# Candidate info #}
+  <div style="background:#fff;border-radius:14px;border:1px solid var(--border);box-shadow:var(--shadow);padding:28px;margin-bottom:20px">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--border)">
+      <div style="width:48px;height:48px;background:var(--primary-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🙂</div>
+      <div>
+        <div style="font-weight:600;font-size:15px;color:var(--text-dark)">{{ entretien.candidat.fullName }}</div>
+        <div style="font-size:13px;color:var(--text-light);margin-top:2px">{{ entretien.offre.titre }} · {{ entretien.offre.domaine }}</div>
+      </div>
+      <div style="margin-left:auto;font-size:13px;color:var(--text-light)">
+        📅 {{ entretien.dateEntretien|date('d/m/Y à H:i') }}
+      </div>
+    </div>
+
+    {% if entretien.interviewCompleted %}
+
+      {# Score + bar #}
+      {% set score = entretien.interviewScore ?? 0 %}
+      {% set barColor = score >= 70 ? '#22c55e' : (score >= 40 ? '#f59e0b' : '#ef4444') %}
+      {% set scoreLabel = score >= 70 ? 'Bon candidat' : (score >= 40 ? 'Candidat moyen' : 'Candidat faible') %}
+
+      <div style="display:flex;align-items:center;gap:24px;margin-bottom:20px">
+        <div style="text-align:center;flex-shrink:0">
+          <div style="width:76px;height:76px;border-radius:50%;background:{{ barColor }};color:#fff;font-family:'Sora',sans-serif;font-size:22px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 6px">
+            {{ score }}
+          </div>
+          <div style="font-size:11px;color:var(--text-light)">/100</div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:600;color:var(--text-mid);margin-bottom:8px">{{ scoreLabel }}</div>
+          <div style="height:8px;background:#e5e7ef;border-radius:99px;overflow:hidden">
+            <div style="height:100%;width:{{ score }}%;background:{{ barColor }};border-radius:99px"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text-light);margin-top:5px">Score global de l'entretien IA</div>
+        </div>
+      </div>
+
+      {# AI Summary — one clean block #}
+      {% if entretien.notes %}
+        <div style="background:#f8f7ff;border:1px solid #e0dbff;border-radius:10px;padding:16px 18px">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--primary);margin-bottom:8px">🤖 Évaluation IA</div>
+          <p style="font-size:14px;color:var(--text-dark);line-height:1.65;margin:0">{{ entretien.notes }}</p>
+        </div>
+      {% endif %}
+
+    {% elseif entretien.interviewToken %}
+      <div style="background:#fef9c3;border:1px solid #fde047;border-radius:10px;padding:16px;font-size:14px;color:#b45309">
+        ⏳ Le candidat n'a pas encore complété l'entretien IA.
+      </div>
+    {% else %}
+      <div style="background:#f3f4f6;border-radius:10px;padding:16px;font-size:14px;color:var(--text-light)">
+        Aucun entretien IA généré. Confirmez l'entretien pour créer le lien.
+      </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}

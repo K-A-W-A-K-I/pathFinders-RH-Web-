@@ -42,6 +42,15 @@ class Entretien
     #[ORM\Column(name: 'created_at', type: 'datetime', nullable: true)]
     private ?\DateTimeInterface $createdAt = null;
 
+    #[ORM\Column(name: 'interview_token', length: 64, nullable: true, unique: true)]
+    private ?string $interviewToken = null;
+
+    #[ORM\Column(name: 'interview_score', nullable: true)]
+    private ?int $interviewScore = null;
+
+    #[ORM\Column(name: 'interview_completed')]
+    private bool $interviewCompleted = false;
+
     public function __construct()
     {
         $this->createdAt = new \DateTime();
@@ -61,6 +70,15 @@ class Entretien
     public function getNotes(): ?string { return $this->notes; }
     public function setNotes(?string $notes): static { $this->notes = $notes; return $this; }
     public function getCreatedAt(): ?\DateTimeInterface { return $this->createdAt; }
+
+    public function getInterviewToken(): ?string { return $this->interviewToken; }
+    public function setInterviewToken(?string $token): static { $this->interviewToken = $token; return $this; }
+
+    public function getInterviewScore(): ?int { return $this->interviewScore; }
+    public function setInterviewScore(?int $score): static { $this->interviewScore = $score; return $this; }
+
+    public function isInterviewCompleted(): bool { return $this->interviewCompleted; }
+    public function setInterviewCompleted(bool $completed): static { $this->interviewCompleted = $completed; return $this; }
 
     public function getStatutLabel(): string
     {

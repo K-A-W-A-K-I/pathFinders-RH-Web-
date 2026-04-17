@@ -6,11 +6,13 @@ use App\Entity\Candidature;
 use App\Entity\Entretien;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class CandidatureMailer
 {
     public function __construct(
         private MailerInterface $mailer,
+        private UrlGeneratorInterface $urlGenerator,
         private string $fromEmail = 'noreply@pathfinders.tn'
     ) {}
 
@@ -63,12 +65,17 @@ class CandidatureMailer
         $offre = $entretien->getOffre();
         $date  = $entretien->getDateEntretien();
         $notes = $entretien->getNotes();
+        $token = $entretien->getInterviewToken();
+
+        $interviewUrl = $token
+            ? $this->urlGenerator->generate('interview_chat', ['token' => $token], UrlGeneratorInterface::ABSOLUTE_URL)
+            : null;
 
         $email = (new Email())
             ->from($this->fromEmail)
             ->to($toEmail)
             ->subject('📅 Entretien confirmé — ' . $offre->getTitre())
-            ->html($this->templateEntretienConfirme($toName, $offre->getTitre(), $date, $notes));
+            ->html($this->templateEntretienConfirme($toName, $offre->getTitre(), $date, $notes, $interviewUrl));
 
         $this->mailer->send($email);
     }
@@ -114,11 +121,22 @@ class CandidatureMailer
         </div>";
     }
 
-    private function templateEntretienConfirme(string $nom, string $titre, \DateTimeInterface $date, ?string $notes): string
+    private function templateEntretienConfirme(string $nom, string $titre, \DateTimeInterface $date, ?string $notes, ?string $interviewUrl = null): string
     {
         $dateFormatee = $date->format('d/m/Y à H:i');
         $notesHtml = $notes
             ? "<div style='background:#f0fdf4;border:1px solid rgba(22,163,74,.2);border-radius:8px;padding:12px 16px;margin:16px 0;font-size:13px;color:#166534'><strong>Note :</strong> {$notes}</div>"
+            : '';
+
+        $interviewHtml = $interviewUrl
+            ? "<div style='background:#f0f4ff;border:1px solid #c7d2fe;border-radius:10px;padding:18px;margin:20px 0'>
+                <p style='margin:0 0 10px;font-size:14px;color:#3730a3;font-weight:600'>🤖 Entretien en ligne</p>
+                <p style='margin:0 0 14px;font-size:13px;color:#4338ca'>Un entretien virtuel avec notre assistant IA est prévu à l'heure de votre rendez-vous. Cliquez sur le bouton ci-dessous pour y accéder :</p>
+                <a href='{$interviewUrl}' style='display:inline-block;background:#6c63ff;color:#fff;padding:11px 24px;border-radius:10px;text-decoration:none;font-size:14px;font-weight:600'>
+                    💬 Démarrer l'entretien IA
+                </a>
+                <p style='margin:12px 0 0;font-size:11px;color:#6366f1'>Le lien sera actif 15 minutes avant l'heure prévue.</p>
+               </div>"
             : '';
 
         return "
@@ -132,6 +150,7 @@ class CandidatureMailer
                 </p>
             </div>
             {$notesHtml}
+            {$interviewHtml}
             <p style='color:#555'>Merci de vous présenter à l'heure. En cas d'empêchement, contactez-nous dès que possible.</p>
             <p style='color:#999;font-size:12px;margin-top:24px'>PathFinders — Plateforme de recrutement</p>
         </div>";

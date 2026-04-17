@@ -45,7 +45,15 @@
                 <td class="admin-table-muted">{{ e.offre.titre }}</td>
                 <td class="admin-table-muted">{{ e.dateEntretien|date('d/m/Y H:i') }}</td>
                 <td><span class="admin-status-dot {{ e.statut == 'CONFIRME' ? 'dot-active' : (e.statut == 'REFUSE' ? 'dot-refuse' : 'dot-pending') }}">● {{ e.statutLabel }}</span></td>
-                <td class="admin-table-muted">{{ e.notes ?? '—' }}</td>
+                <td class="admin-table-muted">
+                    {% if e.interviewCompleted %}
+                        <span style="color:var(--primary);font-size:12px;font-weight:600">🤖 Entretien IA complété</span>
+                    {% elseif e.notes %}
+                        {{ e.notes|slice(0, 60) }}{% if e.notes|length > 60 %}…{% endif %}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
                 <td>
                     <div class="admin-row-actions">
                         {% if e.statut != 'CONFIRME' %}
@@ -61,6 +69,14 @@
                             <input type="hidden" name="notes" class="notes-input">
                             <button type="submit" class="btn btn-sm btn-danger">❌ Refuser</button>
                         </form>
+                        {% endif %}
+                        <a href="{{ path('interview_admin_result', {id: e.id}) }}" class="btn btn-sm" style="background:var(--primary-light);color:var(--primary);border:1px solid #c7d2fe">
+                            🤖 Résultat IA{% if e.interviewCompleted %} <span style="background:#22c55e;color:#fff;border-radius:99px;padding:1px 6px;font-size:10px;margin-left:4px">{{ e.interviewScore }}/100</span>{% endif %}
+                        </a>
+                        {% if e.interviewToken and app.debug %}
+                        <a href="{{ path('interview_chat', {token: e.interviewToken}) }}" target="_blank" class="btn btn-sm" style="background:#fef9c3;color:#b45309;border:1px solid #fde047" title="Lien de test (dev uniquement)">
+                            🔗 Test lien
+                        </a>
                         {% endif %}
                     </div>
                 </td>
