@@ -16,28 +16,15 @@ class InscriptionsFormationRepository extends ServiceEntityRepository
         parent::__construct($registry, InscriptionsFormation::class);
     }
 
-    //    /**
-    //     * @return InscriptionsFormation[] Returns an array of InscriptionsFormation objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('i')
-    //            ->andWhere('i.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('i.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
-
-    //    public function findOneBySomeField($value): ?InscriptionsFormation
-    //    {
-    //        return $this->createQueryBuilder('i')
-    //            ->andWhere('i.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    /** All inscriptions ordered by date desc, with utilisateur and formation eager-loaded */
+    public function findAllWithDetails(): array
+    {
+        return $this->createQueryBuilder('i')
+            ->leftJoin('i.utilisateur', 'u')
+            ->leftJoin('i.formation', 'f')
+            ->addSelect('u', 'f')
+            ->orderBy('i.date_inscription', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

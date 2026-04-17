@@ -2,6 +2,40 @@
 {% block title %}{{ categorie.nomCategorie }} — PathFinder{% endblock %}
 {% block nav_formations %}active{% endblock %}
 
+{% block stylesheets %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+<style>
+/* ── View toggle ── */
+.pf-view-toggle{display:flex;gap:6px;align-items:center}
+.pf-view-btn{padding:9px 20px;border-radius:10px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:rgba(255,255,255,.8);font-size:13.5px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:7px;backdrop-filter:blur(8px)}
+.pf-view-btn:hover:not(.active){background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.4);color:#fff}
+.pf-view-btn.active{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 4px 14px rgba(108,99,255,.4)}
+
+/* ── FullCalendar theme overrides ── */
+#pf-calendar{padding:4px}
+.fc{font-family:'DM Sans',sans-serif!important;color:var(--text)!important}
+.fc .fc-toolbar-title{font-family:'Sora',sans-serif!important;font-size:1.1rem!important;font-weight:600!important;color:var(--text)!important}
+.fc .fc-button{background:var(--surface)!important;border:.5px solid var(--border)!important;color:var(--text)!important;font-family:'DM Sans',sans-serif!important;font-size:13px!important;border-radius:8px!important;box-shadow:none!important;transition:all .2s!important}
+.fc .fc-button:hover{background:var(--surface-hover)!important;border-color:var(--border-hover)!important}
+.fc .fc-button-active,.fc .fc-button-primary:not(:disabled).fc-button-active{background:var(--primary)!important;border-color:var(--primary)!important;color:#fff!important}
+.fc .fc-col-header-cell-cushion{color:var(--text-muted)!important;font-size:12px!important;font-weight:600!important;text-transform:uppercase!important;letter-spacing:.06em!important;text-decoration:none!important}
+.fc .fc-daygrid-day-number{color:var(--text-muted)!important;font-size:12px!important;text-decoration:none!important}
+.fc .fc-daygrid-day.fc-day-today{background:rgba(108,99,255,.07)!important}
+.fc .fc-daygrid-day-frame{min-height:80px}
+.fc-theme-standard td,.fc-theme-standard th,.fc-theme-standard .fc-scrollgrid{border-color:var(--border)!important}
+.fc .fc-event{border-radius:6px!important;border:none!important;font-size:12px!important;font-weight:500!important;padding:2px 6px!important;cursor:pointer!important}
+.fc .fc-event-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fc .fc-list-event:hover td{background:var(--surface-hover)!important}
+.fc .fc-list-day-cushion{background:var(--surface)!important}
+
+/* ── Event tooltip ── */
+.pf-cal-tooltip{position:fixed;z-index:9999;background:var(--bg2);border:.5px solid var(--border);border-radius:14px;padding:14px 18px;min-width:220px;max-width:300px;box-shadow:0 8px 32px rgba(0,0,0,.25);pointer-events:none;opacity:0;transition:opacity .15s}
+.pf-cal-tooltip.show{opacity:1}
+.pf-cal-tooltip h4{font-family:'Sora',sans-serif;font-size:14px;font-weight:600;color:var(--text);margin-bottom:8px}
+.pf-cal-tooltip p{font-size:12.5px;color:var(--text-muted);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+</style>
+{% endblock %}
+
 {% block body %}
 <div class="pf-hero">
   <div class="pf-hero-bg"></div>
@@ -10,12 +44,18 @@
     <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>{{ categorie.nomCategorie }}</div>
     <h1>Formations <span>disponibles</span></h1>
     <p>{{ formations|length }} formation(s) dans cette catégorie.</p>
+    <div style="display:flex;gap:8px;margin-top:1.6rem">
+      <button class="pf-view-btn active" id="btn-grid" onclick="switchView('grid')">⊞ Grille</button>
+      <button class="pf-view-btn" id="btn-calendar" onclick="switchView('calendar')">📅 Calendrier</button>
+    </div>
   </div>
 </div>
 
 <div class="pf-content">
-  <div class="pf-section">
-    <form method="get" class="pf-search-bar">
+
+  {# ── Toolbar: search + view toggle ── #}
+  <div class="pf-section" style="display:flex;align-items:center;padding:1.2rem 1.8rem">
+    <form method="get" class="pf-search-bar" style="margin:0;flex:1;min-width:260px">
       <input type="text" name="q" value="{{ q }}" placeholder="Rechercher..." class="pf-input">
       <select name="sort" class="pf-select">
         <option value="titre" {% if sort == 'titre' %}selected{% endif %}>Titre</option>
@@ -26,32 +66,161 @@
     </form>
   </div>
 
-  {% if formations is empty %}
-    <div class="pf-section" style="text-align:center;padding:3rem">
-      <p style="color:var(--text-muted)">Aucune formation dans cette catégorie.</p>
-    </div>
-  {% else %}
-    <div class="pf-cards">
-      {% for f in formations %}
-        <div class="pf-card" style="display:block">
-          <div class="pf-card-img-placeholder">🎓</div>
-          <h3>{{ f.titre }}</h3>
-          {% if f.description %}<p>{{ f.description|slice(0,100) }}...</p>{% endif %}
-          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:.8rem">
-            {% if f.formateur %}<span class="pf-badge pf-badge-purple">👤 {{ f.formateur }}</span>{% endif %}
-            {% if f.dureeHeures %}<span class="pf-badge pf-badge-purple">⏱ {{ f.dureeHeures }}h</span>{% endif %}
+  {# ── Grid view ── #}
+  <div id="view-grid">
+    {% if formations is empty %}
+      <div class="pf-section" style="text-align:center;padding:3rem">
+        <p style="color:var(--text-muted)">Aucune formation dans cette catégorie.</p>
+      </div>
+    {% else %}
+      <div class="pf-cards">
+        {% for f in formations %}
+          <div class="pf-card" style="display:block">
+            <div class="pf-card-img-placeholder">🎓</div>
+            <h3>{{ f.titre }}</h3>
+            {% if f.description %}<p>{{ f.description|slice(0,100) }}...</p>{% endif %}
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:.8rem">
+              {% if f.formateur %}<span class="pf-badge pf-badge-purple">👤 {{ f.formateur }}</span>{% endif %}
+              {% if f.dureeHeures %}<span class="pf-badge pf-badge-purple">⏱ {{ f.dureeHeures }}h</span>{% endif %}
+              {% if f.dateDebut %}<span class="pf-badge pf-badge-purple">📅 {{ f.dateDebut|date('d/m/Y') }}</span>{% endif %}
+              {% if f.placeDisponible > 0 %}
+                <span class="pf-badge pf-badge-green">{{ f.placeDisponible }} place(s)</span>
+              {% else %}
+                <span class="pf-badge pf-badge-red">Complet</span>
+              {% endif %}
+            </div>
             {% if f.placeDisponible > 0 %}
-              <span class="pf-badge pf-badge-green">{{ f.placeDisponible }} place(s)</span>
-            {% else %}
-              <span class="pf-badge pf-badge-red">Complet</span>
+              <a href="{{ path('client_formation_detail', {id: f.idFormation}) }}" class="pf-btn-details" style="margin-top:1rem;display:inline-block">S'inscrire →</a>
             {% endif %}
           </div>
-          {% if f.placeDisponible > 0 %}
-            <a href="{{ path('client_formation_detail', {id: f.idFormation}) }}" class="pf-btn-details" style="margin-top:1rem;display:inline-block">S'inscrire →</a>
-          {% endif %}
-        </div>
-      {% endfor %}
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+  {# ── Calendar view ── #}
+  <div id="view-calendar" style="display:none">
+    <div class="pf-section" style="padding:1.5rem">
+      <div id="pf-calendar"></div>
     </div>
-  {% endif %}
+  </div>
+
 </div>
+
+{# Tooltip #}
+<div class="pf-cal-tooltip" id="pf-tooltip">
+  <h4 id="tt-titre"></h4>
+  <p><span>👤</span><span id="tt-formateur"></span></p>
+  <p><span>📅</span><span id="tt-dates"></span></p>
+  <p><span>⏱</span><span id="tt-duree"></span></p>
+  <p><span>🎟</span><span id="tt-places"></span></p>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script>
+// ── Formation data from PHP ──────────────────────────────────────────────────
+const _formations = [
+  {% for f in formations %}
+  {
+    id:        {{ f.idFormation }},
+    title:     {{ f.titre|json_encode|raw }},
+    start:     "{{ f.dateDebut ? f.dateDebut|date('Y-m-d') : 'null' }}",
+    end:       "{{ f.dateFin   ? f.dateFin|date('Y-m-d')   : 'null' }}",
+    formateur: {{ (f.formateur ?? '—')|json_encode|raw }},
+    duree:     {{ f.dureeHeures ? f.dureeHeures : 'null' }},
+    places:    {{ f.placeDisponible }},
+    cap:       {{ f.capaciteMax }},
+    complet:   {{ f.placeDisponible <= 0 ? 'true' : 'false' }},
+    url:       "{{ path('client_formation_detail', {id: f.idFormation}) }}"
+  }{% if not loop.last %},{% endif %}
+  {% endfor %}
+].filter(f => f.start !== 'null');
+
+// Assign a distinct color per formation
+const COLORS = ['#6C63FF','#1D9E75','#f59e0b','#4B8BF5','#E24B4A','#9D6BFF','#14b8a6','#ec4899'];
+const events = _formations.map((f, i) => ({
+  ...f,
+  backgroundColor: f.complet ? '#6b7280' : COLORS[i % COLORS.length],
+  borderColor:     'transparent',
+  textColor:       '#fff',
+  // FullCalendar end is exclusive, add 1 day for all-day events
+  end: f.end !== 'null' ? addDay(f.end) : addDay(f.start),
+  extendedProps: { formateur: f.formateur, duree: f.duree, places: f.places, cap: f.cap, complet: f.complet, detailUrl: f.url }
+}));
+
+function addDay(dateStr) {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+// ── FullCalendar init ────────────────────────────────────────────────────────
+let calendar = null;
+
+function initCalendar() {
+  if (calendar) return;
+  const el = document.getElementById('pf-calendar');
+  calendar = new FullCalendar.Calendar(el, {
+    initialView:   'dayGridMonth',
+    locale:        'fr',
+    headerToolbar: {
+      left:   'prev,next today',
+      center: 'title',
+      right:  'dayGridMonth,listMonth'
+    },
+    buttonText: { today: "Aujourd'hui", month: 'Mois', list: 'Liste' },
+    events:        events,
+    height:        'auto',
+    eventDisplay:  'block',
+    dayMaxEvents:  3,
+    eventClick(info) {
+      info.jsEvent.preventDefault();
+      window.location.href = info.event.extendedProps.detailUrl;
+    },
+    eventMouseEnter(info) { showTooltip(info); },
+    eventMouseLeave()     { hideTooltip(); }
+  });
+  calendar.render();
+}
+
+// ── Tooltip ──────────────────────────────────────────────────────────────────
+const tooltip = document.getElementById('pf-tooltip');
+
+function showTooltip(info) {
+  const p = info.event.extendedProps;
+  const start = info.event.startStr;
+  // end was +1 day, show original
+  const endDate = new Date(info.event.end);
+  endDate.setDate(endDate.getDate() - 1);
+  const endStr = endDate.toLocaleDateString('fr-FR');
+  const startStr = new Date(start).toLocaleDateString('fr-FR');
+
+  document.getElementById('tt-titre').textContent     = info.event.title;
+  document.getElementById('tt-formateur').textContent = p.formateur || '—';
+  document.getElementById('tt-dates').textContent     = startStr + (endStr !== startStr ? ' → ' + endStr : '');
+  document.getElementById('tt-duree').textContent     = p.duree ? p.duree + 'h' : '—';
+  document.getElementById('tt-places').textContent    = p.complet ? 'Complet' : p.places + ' / ' + p.cap + ' places';
+
+  const rect = info.el.getBoundingClientRect();
+  tooltip.style.left = (rect.left + window.scrollX + rect.width / 2 - 110) + 'px';
+  tooltip.style.top  = (rect.top  + window.scrollY - 10) + 'px';
+  tooltip.classList.add('show');
+}
+
+function hideTooltip() {
+  tooltip.classList.remove('show');
+}
+
+// ── View switch ──────────────────────────────────────────────────────────────
+function switchView(view) {
+  document.getElementById('view-grid').style.display     = view === 'grid'     ? '' : 'none';
+  document.getElementById('view-calendar').style.display = view === 'calendar' ? '' : 'none';
+  document.getElementById('btn-grid').classList.toggle('active',     view === 'grid');
+  document.getElementById('btn-calendar').classList.toggle('active', view === 'calendar');
+  if (view === 'calendar') initCalendar();
+}
+</script>
 {% endblock %}

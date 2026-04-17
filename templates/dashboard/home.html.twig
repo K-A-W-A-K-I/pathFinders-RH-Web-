@@ -10,11 +10,6 @@
 .dash-tab:hover{color:var(--primary)}
 .dash-tab.active{color:var(--primary);border-bottom-color:var(--primary);background:var(--primary-light)}
 .tab-panel{display:none}.tab-panel.active{display:block}
-.stat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:28px}
-.stat-card{background:var(--white);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);border:1px solid var(--border);animation:fadeUp .4s ease both}
-.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(108,99,255,.12)}
-.stat-num{font-family:'Sora',sans-serif;font-size:2rem;font-weight:700;color:var(--text-dark)}
-.stat-label{font-size:13px;color:var(--text-light);margin-top:.2rem}
 </style>
 {% endblock %}
 
@@ -42,6 +37,7 @@
   <button class="dash-tab active" onclick="showTab('categories')">📂 Catégories</button>
   <button class="dash-tab" onclick="showTab('formations'); resetFormationsFilter()">🎓 Formations</button>
   <button class="dash-tab" onclick="showTab('inscriptions')">✅ Inscriptions</button>
+  <button class="dash-tab" onclick="showTab('statistiques')">📊 Statistiques</button>
 </div>
 
 {# ── TAB CATÉGORIES ── #}
@@ -108,7 +104,7 @@
         <span class="admin-count-badge" id="formations-count-badge">{{ formations|length }}</span>
       </div>
       <div class="admin-table-actions">
-        <input type="text" id="search-form" placeholder="Rechercher..." class="admin-search-input" oninput="filterTable('tbl-form', this.value)">
+        <input type="text" id="search-form" placeholder="Titre ou formateur..." class="admin-search-input" oninput="filterFormations()" style="width:220px">
         <select id="filter-cat" class="admin-search-input" style="width:auto" onchange="filterByCat(this.value)">
           <option value="">Toutes catégories</option>
           {% for cat in categories %}
@@ -196,9 +192,9 @@
           {% for insc in allInscriptions %}
             <tr>
               <td class="admin-table-muted">{{ loop.index }}</td>
-              <td class="admin-table-name">{{ insc.nomParticipant ?? '—' }}</td>
-              <td class="admin-table-muted">{{ insc.emailParticipant ?? '—' }}</td>
-              <td><span class="admin-badge admin-badge-blue">{{ insc.formation.titre }}</span></td>
+              <td class="admin-table-name">{{ insc.utilisateur ? insc.utilisateur.fullName : '—' }}</td>
+              <td class="admin-table-muted">{{ insc.utilisateur ? insc.utilisateur.email : '—' }}</td>
+              <td><span class="admin-badge admin-badge-blue">{{ insc.formation ? insc.formation.titre : '—' }}</span></td>
               <td class="admin-table-muted">{{ insc.dateInscription|date('d/m/Y H:i') }}</td>
             </tr>
           {% endfor %}
@@ -208,10 +204,91 @@
   </div>
 </div>
 
+{# ── TAB STATISTIQUES ── #}
+<div id="tab-statistiques" class="tab-panel">
+
+  {# KPI Cards #}
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px">
+    <div style="background:#fff;border:1px solid #eef0f6;border-radius:14px;padding:20px 16px;text-align:center;box-shadow:0 1px 6px rgba(0,0,0,.04)">
+      <div style="font-size:11px;color:#aab0c6;font-weight:600;letter-spacing:.05em;margin-bottom:8px">FORMATIONS</div>
+      <div style="font-size:32px;font-weight:700;color:#1a1d2e;font-family:'Sora',sans-serif;line-height:1" class="kpi-num" data-val="{{ statsGlobales.nbFormations }}">0</div>
+    </div>
+    <div style="background:#fff;border:1px solid #eef0f6;border-radius:14px;padding:20px 16px;text-align:center;box-shadow:0 1px 6px rgba(0,0,0,.04)">
+      <div style="font-size:11px;color:#aab0c6;font-weight:600;letter-spacing:.05em;margin-bottom:8px">INSCRIPTIONS</div>
+      <div style="font-size:32px;font-weight:700;color:#1a1d2e;font-family:'Sora',sans-serif;line-height:1" class="kpi-num" data-val="{{ statsGlobales.nbInscriptions }}">0</div>
+    </div>
+    <div style="background:#fff;border:1px solid #eef0f6;border-radius:14px;padding:20px 16px;text-align:center;box-shadow:0 1px 6px rgba(0,0,0,.04)">
+      <div style="font-size:11px;color:#aab0c6;font-weight:600;letter-spacing:.05em;margin-bottom:8px">COMPLÈTES</div>
+      <div style="font-size:32px;font-weight:700;color:#1a1d2e;font-family:'Sora',sans-serif;line-height:1" class="kpi-num" data-val="{{ statsGlobales.nbCompletes }}">0</div>
+    </div>
+    <div style="background:#fff;border:1px solid #eef0f6;border-radius:14px;padding:20px 16px;text-align:center;box-shadow:0 1px 6px rgba(0,0,0,.04)">
+      <div style="font-size:11px;color:#aab0c6;font-weight:600;letter-spacing:.05em;margin-bottom:8px">TAUX MOYEN</div>
+      <div style="font-size:32px;font-weight:700;color:#1a1d2e;font-family:'Sora',sans-serif;line-height:1" class="kpi-num" data-val="{{ statsGlobales.tauxMoyen }}">0</div>
+      <div style="font-size:11px;color:#aab0c6;margin-top:2px">%</div>
+    </div>
+    <div style="background:#fff;border:1px solid #eef0f6;border-radius:14px;padding:20px 16px;text-align:center;box-shadow:0 1px 6px rgba(0,0,0,.04);overflow:hidden">
+      <div style="font-size:11px;color:#aab0c6;font-weight:600;letter-spacing:.05em;margin-bottom:8px">+ POPULAIRE</div>
+      <div style="font-size:13px;font-weight:700;color:#1a1d2e;font-family:'Sora',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="{{ statsGlobales.plusPopulaire ?? '—' }}">
+        {{ statsGlobales.plusPopulaire ? statsGlobales.plusPopulaire|slice(0,16) ~ (statsGlobales.plusPopulaire|length > 16 ? '…' : '') : '—' }}
+      </div>
+    </div>
+  </div>
+
+  {# Insights #}
+  <div style="background:#fff;border:1px solid #eef0f6;border-radius:14px;padding:18px 22px;margin-bottom:18px;box-shadow:0 1px 6px rgba(0,0,0,.04)">
+    <div style="font-size:13px;font-weight:700;color:#1a1d2e;margin-bottom:10px">💡 Insights automatiques</div>
+    {% for alert in interpretations %}
+      <div style="padding:7px 14px;border-radius:8px;margin-bottom:6px;font-size:13px;
+        {% if alert.type == 'danger' %}background:#fff1f1;color:#c0392b;border-left:3px solid #e74c3c
+        {% elseif alert.type == 'warning' %}background:#fffbf0;color:#b7770d;border-left:3px solid #f59e0b
+        {% elseif alert.type == 'success' %}background:#f0fdf4;color:#166534;border-left:3px solid #22c55e
+        {% else %}background:#f5f3ff;color:#5b4fcf;border-left:3px solid #7c6fff{% endif %}">
+        {{ alert.msg }}
+      </div>
+    {% endfor %}
+  </div>
+
+  {# Row 1 — Top formations (left) + Taux remplissage (right) #}
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div style="background:#fff;border:1px solid #eef0f6;border-radius:14px;padding:24px 28px;box-shadow:0 1px 6px rgba(0,0,0,.04)">
+      <div style="font-size:14px;font-weight:700;color:#1a1d2e;margin-bottom:4px">🏅 Top formations — inscriptions</div>
+      <canvas id="sTop" style="width:100%;max-height:280px"></canvas>
+    </div>
+    <div style="background:#fff;border:1px solid #eef0f6;border-radius:14px;padding:24px 28px;box-shadow:0 1px 6px rgba(0,0,0,.04)">
+      <div style="font-size:14px;font-weight:700;color:#1a1d2e;margin-bottom:4px">🎯 Taux de remplissage par formation</div>
+      <canvas id="sRemplissage" style="width:100%;max-height:280px"></canvas>
+    </div>
+  </div>
+
+  {# Row 2 — Tendance full width #}
+  <div style="background:#fff;border:1px solid #eef0f6;border-radius:14px;padding:24px 28px;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,.04)">
+    <div style="font-size:14px;font-weight:700;color:#1a1d2e;margin-bottom:2px">📅 Inscriptions — 6 derniers mois</div>
+    <div style="font-size:12px;color:#aab0c6;margin-bottom:16px">Courbe + moyenne glissante</div>
+    <canvas id="sTendance" style="width:100%;max-height:260px"></canvas>
+  </div>
+
+  {# Row 3 — Donut catégories (left) + Progression (right) #}
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div style="background:#fff;border:1px solid #eef0f6;border-radius:14px;padding:24px 28px;box-shadow:0 1px 6px rgba(0,0,0,.04)">
+      <div style="font-size:14px;font-weight:700;color:#1a1d2e;margin-bottom:16px">■ Inscriptions par catégorie</div>
+      <canvas id="sCat" style="width:100%;max-height:300px"></canvas>
+    </div>
+    <div style="background:#fff;border:1px solid #eef0f6;border-radius:14px;padding:24px 28px;box-shadow:0 1px 6px rgba(0,0,0,.04)">
+      <div style="font-size:14px;font-weight:700;color:#1a1d2e;margin-bottom:16px">▦ Progression moyenne par formation</div>
+      <canvas id="sProg" style="width:100%;max-height:300px"></canvas>
+    </div>
+  </div>
+
+</div>
+
 {% endblock %}
 
 {% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
+// ── Tab system ──────────────────────────────────────────────────────────────
+let _statsBuilt = false;
+
 function showTab(name) {
   document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
@@ -221,20 +298,37 @@ function showTab(name) {
       t.classList.add('active');
     }
   });
-  // Ne réinitialiser que si on vient du tab, pas du bouton "📋 Formations"
-  if (name === 'formations') {
-    const sel = document.getElementById('filter-cat');
-    if (sel && sel.value !== '') {
-      // Ne réinitialiser que si on vient du tab, pas du bouton "📋 Formations"
-    }
+  if (name === 'statistiques' && !_statsBuilt) {
+    _statsBuilt = true;
+    buildStatsCharts();
+    animateKpi();
   }
 }
 
 function resetFormationsFilter() {
-  const sel = document.getElementById('filter-cat');
+  const sel    = document.getElementById('filter-cat');
   const search = document.getElementById('search-form');
-  if (sel) { sel.value = ''; filterByCat(''); }
-  if (search) { search.value = ''; filterTable('tbl-form', ''); }
+  if (sel)    sel.value = '';
+  if (search) search.value = '';
+  filterFormations();
+}
+
+function filterFormations() {
+  const q     = (document.getElementById('search-form')?.value || '').toLowerCase();
+  const catId = document.getElementById('filter-cat')?.value || '';
+  let count = 0;
+  document.querySelectorAll('#tbl-form tbody tr').forEach(row => {
+    const titre     = row.cells[0]?.textContent.toLowerCase() || '';
+    const formateur = row.cells[2]?.textContent.toLowerCase() || '';
+    const rowCatId  = row.dataset.catid || '';
+    const matchText = !q     || titre.includes(q) || formateur.includes(q);
+    const matchCat  = !catId || rowCatId === catId;
+    const visible   = matchText && matchCat;
+    row.style.display = visible ? '' : 'none';
+    if (visible) count++;
+  });
+  const badge = document.getElementById('formations-count-badge');
+  if (badge) badge.textContent = count;
 }
 
 function filterTable(tableId, q) {
@@ -245,47 +339,39 @@ function filterTable(tableId, q) {
     if (visible) count++;
   });
   if (tableId === 'tbl-form') {
-    document.getElementById('formations-count-badge').textContent = count;
+    const badge = document.getElementById('formations-count-badge');
+    if (badge) badge.textContent = count;
   }
 }
 
 function filterByCat(catId) {
-  let count = 0;
-  document.querySelectorAll('#tbl-form tbody tr').forEach(row => {
-    const visible = !catId || row.dataset.catid === catId;
-    row.style.display = visible ? '' : 'none';
-    if (visible) count++;
-  });
-  document.getElementById('formations-count-badge').textContent = count;
+  filterFormations();
 }
 
 function sortCategories(sortValue) {
   const [field, dir] = sortValue.split('-');
   const tbody = document.querySelector('#tbl-cat tbody');
+  if (!tbody) return;
   const rows = Array.from(tbody.querySelectorAll('tr'));
-  
   rows.sort((a, b) => {
     let valA, valB;
     if (field === 'nom') {
       valA = a.cells[0].textContent.trim().toLowerCase();
       valB = b.cells[0].textContent.trim().toLowerCase();
-    } else if (field === 'formations') {
+    } else {
       valA = parseInt(a.cells[3].textContent.trim()) || 0;
       valB = parseInt(b.cells[3].textContent.trim()) || 0;
     }
-    
-    if (dir === 'asc') return valA > valB ? 1 : -1;
-    return valA < valB ? 1 : -1;
+    return dir === 'asc' ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1);
   });
-  
   rows.forEach(row => tbody.appendChild(row));
 }
 
 function sortFormations(sortValue) {
   const [field, dir] = sortValue.split('-');
   const tbody = document.querySelector('#tbl-form tbody');
+  if (!tbody) return;
   const rows = Array.from(tbody.querySelectorAll('tr'));
-  
   rows.sort((a, b) => {
     let valA, valB;
     if (field === 'titre') {
@@ -294,17 +380,14 @@ function sortFormations(sortValue) {
     } else if (field === 'duree') {
       valA = parseFloat(a.cells[3].textContent.replace('h', '').trim()) || 0;
       valB = parseFloat(b.cells[3].textContent.replace('h', '').trim()) || 0;
-    } else if (field === 'places') {
-      const textA = a.cells[4].textContent.trim();
-      const textB = b.cells[4].textContent.trim();
-      valA = textA.includes('Complet') ? 0 : parseInt(textA.split('/')[0]) || 0;
-      valB = textB.includes('Complet') ? 0 : parseInt(textB.split('/')[0]) || 0;
+    } else {
+      const tA = a.cells[4].textContent.trim();
+      const tB = b.cells[4].textContent.trim();
+      valA = tA.includes('Complet') ? 0 : parseInt(tA.split('/')[0]) || 0;
+      valB = tB.includes('Complet') ? 0 : parseInt(tB.split('/')[0]) || 0;
     }
-    
-    if (dir === 'asc') return valA > valB ? 1 : -1;
-    return valA < valB ? 1 : -1;
+    return dir === 'asc' ? (valA > valB ? 1 : -1) : (valA < valB ? 1 : -1);
   });
-  
   rows.forEach(row => tbody.appendChild(row));
 }
 
@@ -322,5 +405,224 @@ document.querySelectorAll('[data-catid]').forEach(btn => {
 const urlParams = new URLSearchParams(window.location.search);
 const tab = urlParams.get('tab');
 if (tab) showTab(tab);
+
+// ── KPI counter animation ───────────────────────────────────────────────────
+function animateKpi() {
+  document.querySelectorAll('.kpi-num').forEach(el => {
+    const target = parseFloat(el.dataset.val) || 0;
+    const isFloat = String(el.dataset.val).includes('.');
+    let start = 0;
+    const duration = 800;
+    const step = timestamp => {
+      if (!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      const val = target * progress;
+      el.textContent = isFloat ? val.toFixed(1) : Math.floor(val);
+      if (progress < 1) requestAnimationFrame(step);
+      else el.textContent = isFloat ? target.toFixed(1) : target;
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+// ── Chart.js data from PHP ──────────────────────────────────────────────────
+const _topF       = {{ topFormations|json_encode|raw }};
+const _catData    = {{ statsParCat|json_encode|raw }};
+const _taux       = {{ tauxRemplissage|json_encode|raw }};
+const _tendance   = {{ tendanceMois|json_encode|raw }};
+const _prog       = {{ progression|json_encode|raw }};
+
+// Pastel palette matching the screenshots
+const PASTEL_TOP  = ['#b8b5ff','#7de8c8','#ffd97d','#ff9eb5','#a8d8ea','#ffcba4'];
+const PASTEL_CAT  = ['#4e9af1','#7de8c8','#ffd97d','#ff9eb5','#b8b5ff','#a8d8ea'];
+const COLOR_TEAL  = '#7de8c8';
+
+// Shared Chart.js defaults
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+Chart.defaults.font.size   = 12;
+Chart.defaults.color       = '#6b7280';
+
+function buildStatsCharts() {
+
+  // ── 1. Top formations — horizontal bar, one pastel color per bar ──────────
+  const topLabels = _topF.map(r => r.titre.length > 22 ? r.titre.slice(0,22)+'…' : r.titre);
+  const topVals   = _topF.map(r => parseInt(r.nb));
+  new Chart(document.getElementById('sTop'), {
+    type: 'bar',
+    data: {
+      labels: topLabels,
+      datasets: [{
+        data: topVals,
+        backgroundColor: PASTEL_TOP.slice(0, topVals.length),
+        borderRadius: 6,
+        borderSkipped: false,
+        barThickness: 28
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: { legend: { display: false }, tooltip: { callbacks: {
+        label: ctx => ' ' + ctx.parsed.x + ' inscrit(s)'
+      }}},
+      scales: {
+        x: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { color: '#f3f4f6' } },
+        y: { grid: { display: false }, ticks: { color: '#374151' } }
+      }
+    }
+  });
+
+  // ── 2. Taux de remplissage — vertical bar, salmon/yellow palette ──────────
+  const tauxArr    = Object.values(_taux);
+  const tauxLabels = tauxArr.map(r => r.titre.length > 14 ? r.titre.slice(0,14)+'…' : r.titre);
+  const tauxVals   = tauxArr.map(r => r.taux);
+  // ≥90% → salmon, ≥70% → yellow, else light green
+  const tauxColors = tauxVals.map(v => v >= 90 ? '#ff9eb5' : v >= 70 ? '#ffd97d' : '#b8f0c8');
+  new Chart(document.getElementById('sRemplissage'), {
+    type: 'bar',
+    data: {
+      labels: tauxLabels,
+      datasets: [{
+        data: tauxVals,
+        backgroundColor: tauxColors,
+        borderRadius: 5,
+        barThickness: 22
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false }, tooltip: { callbacks: {
+        label: ctx => ' ' + ctx.parsed.y + '%'
+      }}},
+      scales: {
+        y: {
+          beginAtZero: true, max: 100,
+          ticks: { callback: v => v + '%', stepSize: 10 },
+          grid: { color: '#f3f4f6' }
+        },
+        x: { grid: { display: false }, ticks: { color: '#374151' } }
+      }
+    }
+  });
+
+  // ── 3. Tendance — line + moving average dashed ────────────────────────────
+  // Compute 3-point moving average
+  const vals = _tendance.values;
+  const movAvg = vals.map((_, i) => {
+    const slice = vals.slice(Math.max(0, i-1), i+2);
+    return Math.round((slice.reduce((a,b)=>a+b,0)/slice.length)*100)/100;
+  });
+  new Chart(document.getElementById('sTendance'), {
+    type: 'line',
+    data: {
+      labels: _tendance.labels,
+      datasets: [
+        {
+          label: 'Inscriptions',
+          data: vals,
+          borderColor: '#7c6fff',
+          backgroundColor: 'rgba(124,111,255,.08)',
+          fill: true,
+          tension: 0.45,
+          pointBackgroundColor: '#7c6fff',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          borderWidth: 2
+        },
+        {
+          label: 'Moyenne glissante',
+          data: movAvg,
+          borderColor: '#22c55e',
+          borderDash: [6, 4],
+          backgroundColor: 'transparent',
+          fill: false,
+          tension: 0.45,
+          pointRadius: 0,
+          borderWidth: 1.5
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          align: 'start',
+          labels: { boxWidth: 12, font: { size: 11 }, color: '#9ca3af', usePointStyle: true }
+        }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { color: '#f3f4f6' } },
+        x: { grid: { display: false }, ticks: { color: '#6b7280' } }
+      }
+    }
+  });
+
+  // ── 4. Inscriptions par catégorie — large doughnut ────────────────────────
+  const catLabels = _catData.map(r => r.categorie);
+  const catVals   = _catData.map(r => r.nb);
+  new Chart(document.getElementById('sCat'), {
+    type: 'doughnut',
+    data: {
+      labels: catLabels,
+      datasets: [{
+        data: catVals,
+        backgroundColor: PASTEL_CAT,
+        borderWidth: 3,
+        borderColor: '#fff',
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '62%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { font: { size: 12 }, color: '#374151', padding: 14, usePointStyle: true, pointStyleWidth: 10 }
+        }
+      }
+    }
+  });
+
+  // ── 5. Progression moyenne — horizontal bar, teal ─────────────────────────
+  if (_prog.length > 0) {
+    const progLabels = _prog.map(r => r.titre.length > 22 ? r.titre.slice(0,22)+'…' : r.titre);
+    const progVals   = _prog.map(r => r.avg_prog);
+    new Chart(document.getElementById('sProg'), {
+      type: 'bar',
+      data: {
+        labels: progLabels,
+        datasets: [{
+          data: progVals,
+          backgroundColor: COLOR_TEAL,
+          borderRadius: 6,
+          borderSkipped: false,
+          barThickness: 28
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: { legend: { display: false }, tooltip: { callbacks: {
+          label: ctx => ' ' + ctx.parsed.x + '%'
+        }}},
+        scales: {
+          x: {
+            beginAtZero: true, max: 100,
+            ticks: { callback: v => v + '%', stepSize: 20 },
+            grid: { color: '#f3f4f6' }
+          },
+          y: { grid: { display: false }, ticks: { color: '#374151' } }
+        }
+      }
+    });
+  } else {
+    document.getElementById('sProg').insertAdjacentHTML('afterend',
+      '<p style="color:#aab0c6;text-align:center;font-size:13px;margin-top:24px">Aucune donnée de progression disponible.</p>');
+  }
+}
 </script>
 {% endblock %}
