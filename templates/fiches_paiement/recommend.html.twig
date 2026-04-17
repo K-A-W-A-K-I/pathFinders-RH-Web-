@@ -1,0 +1,97 @@
+{% extends 'base.html.twig' %}
+{% block title %}Recommandation Prime — PathFinder{% endblock %}
+
+{% block body %}
+
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+  <a href="{{ path('fiche_show', {id: fiche.idFichePaiement}) }}" class="btn-back">← Retour</a>
+  <h1 class="page-title" style="margin:0">🤖 Recommandation Gemini</h1>
+</div>
+
+{# Employee info card #}
+<div style="background:white;border-radius:12px;padding:24px;box-shadow:0 4px 15px rgba(0,0,0,0.08);margin-bottom:24px;border:1px solid #e5e7ef;max-width:600px">
+  <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Données envoyées à Gemini</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div>
+      <div style="font-size:12px;color:#9ca3af">Employé</div>
+      <div style="font-weight:600;color:#1a1d2e">{{ fiche.employee.utilisateur.nom }} {{ fiche.employee.utilisateur.prenom }}</div>
+    </div>
+    <div>
+      <div style="font-size:12px;color:#9ca3af">Score</div>
+      <div style="font-weight:600;color:#6C63FF">{{ fiche.employee.score ?? 0 }}/100</div>
+    </div>
+    <div>
+      <div style="font-size:12px;color:#9ca3af">Salaire base</div>
+      <div style="font-weight:600;color:#1a1d2e">{{ fiche.employee.salaire ?? 0 }} DT</div>
+    </div>
+    <div>
+      <div style="font-size:12px;color:#9ca3af">Salaire net</div>
+      <div style="font-weight:600;color:#22c55e">{{ fiche.salaireNet ?? 0 }} DT</div>
+    </div>
+    <div>
+      <div style="font-size:12px;color:#9ca3af">Déduction</div>
+      <div style="font-weight:600;color:#ef4444">{{ fiche.montantDeduction ?? 0 }} DT</div>
+    </div>
+    <div>
+      <div style="font-size:12px;color:#9ca3af">Type paiement</div>
+      <div style="font-weight:600;color:#1a1d2e">{{ fiche.typePaiement ?? 'mensuel' }}</div>
+    </div>
+  </div>
+</div>
+
+{# Gemini response #}
+{% if error %}
+  <div style="background:#fee2e2;border-radius:10px;padding:16px;color:#dc2626;max-width:600px">
+    ❌ {{ error }}
+  </div>
+
+{% elseif recommendation %}
+  <div style="background:linear-gradient(135deg,rgba(108,99,255,0.1),rgba(157,107,255,0.05));border:1px solid rgba(108,99,255,0.3);border-radius:16px;padding:28px;max-width:600px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+      <div style="font-size:28px">🤖</div>
+      <div>
+        <div style="font-weight:700;color:#1a1d2e;font-size:1.1rem">Recommandation Gemini</div>
+        <div style="font-size:12px;color:#9ca3af">Basée sur les données de l'employé</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+      <div style="background:white;border-radius:10px;padding:16px;text-align:center">
+        <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;margin-bottom:6px">Type de prime</div>
+        <div style="font-weight:700;color:#6C63FF;font-size:1.1rem">{{ recommendation.type_prime|capitalize }}</div>
+      </div>
+      <div style="background:white;border-radius:10px;padding:16px;text-align:center">
+        <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;margin-bottom:6px">Montant suggéré</div>
+        <div style="font-weight:700;color:#22c55e;font-size:1.4rem">{{ recommendation.montant }} DT</div>
+      </div>
+    </div>
+
+    <div style="background:white;border-radius:10px;padding:16px;margin-bottom:20px">
+      <div style="font-size:11px;color:#9ca3af;text-transform:uppercase;margin-bottom:8px">Justification</div>
+      <div style="color:#4b5563;line-height:1.6">{{ recommendation.justification }}</div>
+    </div>
+
+    {# Accept button — pre-fills prime form with suggestion #}
+    <a href="{{ path('prime_new_for_fiche', {id: fiche.idFichePaiement}) }}?montant={{ recommendation.montant }}&type={{ recommendation.type_prime }}"
+       style="display:inline-block;background:#6C63FF;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">
+      ✅ Accepter et créer la prime
+    </a>
+    <a href="{{ path('fiche_show', {id: fiche.idFichePaiement}) }}"
+       style="display:inline-block;background:#f1f1f1;color:#4A4A4A;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;margin-left:10px">
+      ✕ Ignorer
+    </a>
+  </div>
+
+{% else %}
+  <div style="background:#fee2e2;border-radius:10px;padding:16px;color:#dc2626;max-width:600px">
+    ❌ Gemini n'a pas pu générer de recommandation.
+  </div>
+{% endif %}
+
+<style>
+.page-title { font-size: 2rem; font-weight: 700; color: #4A4A4A; }
+.btn-back { background: #f1f1f1; color: #4A4A4A; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: 600; transition: 0.2s; }
+.btn-back:hover { background: #e0e0e0; }
+</style>
+
+{% endblock %}

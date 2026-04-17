@@ -267,4 +267,113 @@ public function workerHistory(
         $this->addFlash('success', 'Fiche supprimée.');
         return $this->redirectToRoute('fiche_index');
     }
+    #[Route('/fiches/{id}/recommend-prime', name: 'fiche_recommend_prime', methods: ['GET'])]
+public function recommendPrime(FichesPaiement $fiche): Response
+{
+    $employee    = $fiche->getEmployee();
+    $utilisateur = $employee->getUtilisateur();
+    $score       = $employee->getScore() ?? 0;
+    $salaire     = $employee->getSalaire() ?? 0;
+    $deduction   = $fiche->getMontantDeduction() ?? 0;
+    $salaireNet  = $fiche->getSalaireNet() ?? 0;
+    $typePaie    = $fiche->getTypePaiement() ?? 'mensuel';
+    $nom         = $utilisateur->getNom() . ' ' . $utilisateur->getPrenom();
+
+    $performanceLevel = match(true) {
+        $score >= 85 => 'excellente',
+        $score >= 70 => 'bonne',
+        $score >= 50 => 'moyenne',
+        default      => 'faible',
+    };
+
+    $prompt = "Tu es un expert RH tunisien. 
+Basé sur ces données d'employé, recommande une prime avec un montant précis en DT et une justification courte en français.
+
+Employé: {$nom}
+Score de performance global (intègre les absences, ponctualité, rendement): {$score}/100
+Niveau de performance: {$performanceLevel}
+Salaire de base: {$salaire} DT
+Déduction appliquée ce mois: {$deduction} DT (reflète les absences/retards)
+Salaire net perçu: {$salaireNet} DT
+Type de paiement: {$typePaie}
+Mois: " . date('F Y') . "
+
+Critères à considérer pour la prime:
+- Un score élevé (>= 85) justifie une prime de performance généreuse
+- Une déduction faible indique peu d'absences, donc prime de présence possible
+- Si le salaire net est très inférieur au brut (grosse déduction), éviter une prime trop faible qui démoralise
+- Le type de paiement peut influencer le montant (ex: contractuel vs permanent)
+
+Réponds UNIQUEMENT par un objet JSON valide, sans texte avant ou après, sans backticks.
+Format exact:
+{
+  \"type_prime\": \"performance|anciennete|exceptionnelle|presence\",
+  \"montant\": 250,
+  \"justification\": \"Explication courte ici\"
+}";
+
+    $apiKey = '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';
+    $url    = 'https://api.groq.com/openai/v1/chat/completions';
+
+    $payload = json_encode([
+        'model'       => 'llama-3.1-8b-instant',
+        'messages'    => [
+            ['role' => 'user', 'content' => $prompt]
+        ],
+        'temperature' => 0.7,
+    ]);
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . $apiKey,
+    ]);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    $recommendation = null;
+    $error          = null;
+
+    try {
+        $data = json_decode($response, true);
+
+        if (isset($data['error'])) {
+            $error = 'Groq error: ' . $data['error']['message'];
+            return $this->render('fiches_paiement/recommend.html.twig', [
+                'fiche' => $fiche, 'recommendation' => null, 'error' => $error,
+            ]);
+        }
+
+        $text = trim($data['choices'][0]['message']['content'] ?? '');
+
+        // strip ```json fences just in case
+        $text = preg_replace('/^```json\s*/i', '', $text);
+        $text = preg_replace('/```$/', '', $text);
+        $text = trim($text);
+
+        if (preg_match('/\{.*\}/s', $text, $matches)) {
+            $recommendation = json_decode($matches[0], true);
+        }
+
+        if (!isset($recommendation['type_prime'], $recommendation['montant'], $recommendation['justification'])) {
+            $error = 'Réponse invalide ou incomplète.';
+            $recommendation = null;
+        }
+
+    } catch (\Exception $e) {
+        $error = 'Exception: ' . $e->getMessage();
+    }
+
+    return $this->render('fiches_paiement/recommend.html.twig', [
+        'fiche'          => $fiche,
+        'recommendation' => $recommendation,
+        'error'          => $error,
+    ]);
+}
+
 }
