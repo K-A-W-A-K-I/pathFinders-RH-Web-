@@ -153,6 +153,10 @@
               <td>
                 <div class="admin-row-actions" style="justify-content:flex-end">
                   <a href="{{ path('dash_formation_inscriptions', {id: f.idFormation}) }}" class="admin-action-btn" style="color:#16a34a;border-color:rgba(34,197,94,.3)">👥 Inscrits</a>
+                  <button type="button" class="admin-action-btn" style="color:#6C63FF;border-color:rgba(108,99,255,.3)"
+                          onclick="openStatsModal({{ f.idFormation }}, '{{ f.titre|e('js') }}', {{ f.capaciteMax }}, {{ f.placeDisponible }}, {{ f.contenuModules|length }})">
+                    📊 Stats
+                  </button>
                   <a href="{{ path('dash_contenu_by_formation', {formationId: f.idFormation}) }}" class="admin-action-btn">📄 Modules</a>
                   <a href="{{ path('dash_formation_edit', {id: f.idFormation}) }}" class="admin-action-btn">✏️ Modifier</a>
                   <form method="post" action="{{ path('dash_formation_delete', {id: f.idFormation}) }}" onsubmit="return confirm('Supprimer ?')" style="display:inline">
