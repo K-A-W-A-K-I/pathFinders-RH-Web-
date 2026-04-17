@@ -18,6 +18,10 @@ services:
         arguments:
             $targetDirectory: '%images_categories_directory%'
 
+    App\Service\AiService:
+        arguments:
+            $apiKey: '%env(OPENROUTER_API_KEY)%'
+
     App\Controller\Evenement\UserEventController:
         arguments:
             $stripeSecretKey: '%env(STRIPE_SECRET_KEY)%'
