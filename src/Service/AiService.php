@@ -4,10 +4,9 @@ namespace App\Service;
 
 class AiService
 {
+    private const API_KEY = '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';
     private const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
     private const MODEL   = 'openai/gpt-3.5-turbo';
-
-    public function __construct(private string $apiKey) {}
 
     // ── Generic chat call ──────────────────────────────────────────────────
 
@@ -25,7 +24,7 @@ class AiService
             CURLOPT_POSTFIELDS     => $payload,
             CURLOPT_HTTPHEADER     => [
                 'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->apiKey,
+                'Authorization: Bearer ' . self::API_KEY,
                 'HTTP-Referer: http://localhost',
                 'X-Title: PathFinders',
             ],
@@ -148,7 +147,7 @@ class AiService
             CURLOPT_POSTFIELDS     => $payload,
             CURLOPT_HTTPHEADER     => [
                 'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->apiKey,
+                'Authorization: Bearer ' . self::API_KEY,
                 'HTTP-Referer: http://localhost',
                 'X-Title: PathFinders',
             ],
