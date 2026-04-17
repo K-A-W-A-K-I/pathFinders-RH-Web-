@@ -49,9 +49,52 @@
     </div>
   </div>
 
+  {# ── Analytics Charts (si inscriptions) ── #}
+  {% if inscriptions is not empty %}
+  <div style="display:flex;gap:1.5rem;margin-bottom:2rem;flex-wrap:wrap">
+
+    {# Graphique progression ── mukadi_chart si connecté, Highcharts sinon #}
+    <div class="pf-section" style="flex:2;min-width:280px">
+      <div class="pf-section-label">Progression</div>
+      <h2 style="font-family:'Sora',sans-serif;font-size:1rem;margin-bottom:.8rem">Progression par formation</h2>
+      <div id="chartProgression" style="min-height:220px"></div>
+    </div>
+
+    {# Donut + KPI #}
+    <div class="pf-section" style="flex:1;min-width:220px">
+      <div class="pf-section-label">Répartition</div>
+      <h2 style="font-family:'Sora',sans-serif;font-size:1rem;margin-bottom:.8rem">Taux de complétion</h2>
+      <div style="position:relative;height:160px;display:flex;align-items:center;justify-content:center">
+        <div id="chartDonut" style="height:160px;width:100%"></div>
+        <div style="position:absolute;text-align:center;pointer-events:none">
+          <div style="font-family:'Sora',sans-serif;font-size:1.4rem;font-weight:700;color:var(--text)">{{ tauxCompletion }}%</div>
+          <div style="font-size:10px;color:var(--text-muted)">complétion</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center;gap:.8rem;margin-top:.8rem;flex-wrap:wrap">
+        <span style="font-size:11px;color:#1D9E75">● {{ stats.termines }} terminées</span>
+        <span style="font-size:11px;color:#F59E0B">● {{ stats.enCours }} en cours</span>
+        <span style="font-size:11px;color:#E24B4A">● {{ stats.nonDebutes }} non débutées</span>
+      </div>
+      <div style="margin-top:1rem;text-align:center;padding:.8rem;background:rgba(75,139,245,.08);border-radius:10px;border:.5px solid rgba(75,139,245,.2)">
+        <div style="font-size:11px;color:var(--text-muted)">Heures totales</div>
+        <div style="font-family:'Sora',sans-serif;font-size:1.4rem;font-weight:700;color:#4B8BF5">{{ totalHeures }}h</div>
+      </div>
+    </div>
+  </div>
+
+  {# Top formations ── Highcharts #}
+  {% if topFormations is not empty %}
+  <div class="pf-section" style="margin-bottom:2rem">
+    <div class="pf-section-label">Popularité</div>
+    <h2 style="font-family:'Sora',sans-serif;font-size:1rem;margin-bottom:.8rem">Top formations les plus populaires</h2>
+    <div id="chartTop" style="min-height:180px"></div>
+  </div>
+  {% endif %}
+  {% endif %}
+
   {# ── Empty state ── #}
-  {% if inscriptions is empty %}
-    <div class="pf-section" style="text-align:center;padding:3rem">
+  {% if inscriptions is empty %}    <div class="pf-section" style="text-align:center;padding:3rem">
       <div style="font-size:3rem;margin-bottom:1rem">🎓</div>
       <p style="color:var(--text-muted);font-size:16px;margin-bottom:1.5rem">Aucune inscription pour l'instant.</p>
       <a href="{{ path('client_categories') }}" class="pf-btn-details">📚 Découvrir les formations</a>
@@ -164,7 +207,7 @@
 .mi-card-inner{display:flex;align-items:center;gap:2rem;padding:1.5rem 2rem;flex:1;flex-wrap:wrap}
 
 .mi-left{flex:1;min-width:180px}
-.mi-title{font-family:'Sora',sans-serif;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px}
+.mi-title{font-family:'Sora',sans-serif;font-weight:700;font-size:15px;color:#a78bfa;margin-bottom:6px}
 .mi-meta{font-size:12px;color:var(--text-muted);margin-bottom:2px}
 .mi-date-insc{font-size:11px;color:var(--text-dim);margin-top:6px}
 
@@ -188,7 +231,12 @@
 {% endblock %}
 
 {% block javascripts %}
+{# Mukadi Chart.js bundle assets #}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.2.1/chart.umd.min.js"></script>
+<script src="{{ asset('bundles/mukadichartjs/mukadi.chart.min.js') }}"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
 <script>
+// Compteurs animés stats bar
 document.querySelectorAll('.mi-stat-number').forEach(el => {
   const target = parseInt(el.dataset.target) || 0;
   if (target === 0) return;
@@ -200,6 +248,55 @@ document.querySelectorAll('.mi-stat-number').forEach(el => {
     if (current >= target) clearInterval(timer);
   }, 20);
 });
+
+const progLabels = {{ progressionLabels|json_encode|raw }};
+const progData   = {{ progressionData|json_encode|raw }};
+const progColors = {{ progressionColors|json_encode|raw }};
+
+// ── Graphique progression (colonnes colorées) ──
+if (progLabels.length && document.getElementById('chartProgression')) {
+  Highcharts.chart('chartProgression', {
+    chart: { type: 'column', backgroundColor: 'transparent', style: { fontFamily: "'DM Sans',sans-serif" }, marginBottom: 80 },
+    title: { text: null }, credits: { enabled: false }, legend: { enabled: false },
+    xAxis: { categories: progLabels, labels: { style: { color: '#94a3b8', fontSize: '11px' }, rotation: 0 }, lineColor: 'rgba(255,255,255,0.08)', tickColor: 'transparent' },
+    yAxis: { min: 0, max: 100, title: { text: null }, labels: { format: '{value}%', style: { color: '#94a3b8' } }, gridLineColor: 'rgba(255,255,255,0.06)' },
+    tooltip: { backgroundColor: '#1e293b', borderColor: '#334155', style: { color: '#e2e8f0' }, pointFormat: '<b>{point.y}%</b>' },
+    plotOptions: { column: { borderRadius: 6, colorByPoint: true, colors: progColors, dataLabels: { enabled: true, format: '{y}%', style: { color: '#e2e8f0', fontSize: '11px', fontWeight: '600', textOutline: 'none' } } } },
+    series: [{ name: 'Progression', data: progData }]
+  });
+}
+
+// ── Donut statut ──
+if (document.getElementById('chartDonut')) {
+  Highcharts.chart('chartDonut', {
+    chart: { type: 'pie', backgroundColor: 'transparent', margin: [0,0,0,0], height: 160 },
+    title: { text: null }, credits: { enabled: false }, legend: { enabled: false },
+    tooltip: { backgroundColor: '#1e293b', borderColor: '#334155', style: { color: '#e2e8f0' }, pointFormat: '<b>{point.y}</b> formation(s)' },
+    plotOptions: { pie: { innerSize: '65%', dataLabels: { enabled: false }, borderWidth: 0 } },
+    series: [{ name: 'Statut', data: [
+      { name: 'Terminées',    y: {{ stats.termines }},   color: '#1D9E75' },
+      { name: 'En cours',     y: {{ stats.enCours }},    color: '#F59E0B' },
+      { name: 'Non débutées', y: {{ stats.nonDebutes }}, color: '#E24B4A' }
+    ]}]
+  });
+}
+
+// ── Top formations (barres horizontales) ──
+{% if topFormations is not empty %}
+if (document.getElementById('chartTop')) {
+  Highcharts.chart('chartTop', {
+    chart: { type: 'bar', backgroundColor: 'transparent', style: { fontFamily: "'DM Sans',sans-serif" } },
+    title: { text: null }, credits: { enabled: false }, legend: { enabled: false },
+    xAxis: { categories: {{ topLabels|json_encode|raw }}, labels: { style: { color: '#94a3b8', fontSize: '11px' } }, lineColor: 'rgba(255,255,255,0.08)', tickColor: 'transparent' },
+    yAxis: { title: { text: null }, allowDecimals: false, labels: { style: { color: '#94a3b8' } }, gridLineColor: 'rgba(255,255,255,0.06)' },
+    tooltip: { backgroundColor: '#1e293b', borderColor: '#334155', style: { color: '#e2e8f0' }, pointFormat: '<b>{point.y}</b> inscription(s)' },
+    plotOptions: { bar: { borderRadius: 6, color: '#6C63FF', dataLabels: { enabled: true, style: { color: '#e2e8f0', fontSize: '11px', fontWeight: '600', textOutline: 'none' } } } },
+    series: [{ name: 'Inscriptions', data: {{ topData|json_encode|raw }} }]
+  });
+}
+{% endif %}
+
+// Animation compteurs progress value
 document.querySelectorAll('.mi-progress-value').forEach(el => {
   const target = parseInt(el.dataset.percent) || 0;
   if (target === 0) { el.textContent = '0%'; return; }

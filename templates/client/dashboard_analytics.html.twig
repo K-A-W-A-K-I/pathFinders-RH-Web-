@@ -1,0 +1,613 @@
+{% extends 'dashboard/base.html.twig' %}
+{% block title %}Statistiques — Dashboard{% endblock %}
+
+{% block stylesheets %}
+<style>
+*{box-sizing:border-box}
+.dash-stats{padding:0 0 2.5rem}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px}
+.topbar-title{font-size:20px;font-weight:600;color:var(--text)}
+.topbar-sub{font-size:13px;color:var(--text-muted);margin-top:2px}
+.ds-badge{font-size:11px;padding:3px 10px;border-radius:20px;background:var(--surface);border:.5px solid var(--border);color:var(--text-muted)}
+
+/* ── KPI Grid ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:1.5rem}
+.kpi-card{background:var(--surface);border:.5px solid var(--border);border-radius:14px;padding:1rem;transition:transform .2s}
+.kpi-card:hover{transform:translateY(-2px)}
+.kpi-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem;margin-bottom:10px}
+.kpi-val{font-size:22px;font-weight:700;color:var(--text);line-height:1}
+.kpi-val-sm{font-size:13px;font-weight:600;color:var(--text);line-height:1.3;margin-top:4px}
+.kpi-label{font-size:12px;color:var(--text-muted);margin-top:5px}
+.kpi-trend{font-size:11px;margin-top:5px}
+
+/* ── Tabs ── */
+.tab-row{display:flex;gap:6px;margin-bottom:1rem;flex-wrap:wrap}
+.ds-tab{font-size:12px;padding:5px 14px;border-radius:20px;border:.5px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;transition:all .15s}
+.ds-tab:hover,.ds-tab.active{background:var(--surface);color:var(--text);border-color:var(--border)}
+
+/* ── Cards ── */
+.ds-card{background:var(--card-bg,#fff);border:.5px solid var(--border);border-radius:14px;padding:1.25rem;margin-bottom:1rem}
+.ds-card-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:5px}
+.ds-card-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:10px}
+.ds-divider{height:.5px;background:var(--border);margin:8px 0 14px}
+
+/* ── Section grid ── */
+.ds-grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.ds-grid31{display:grid;grid-template-columns:2fr 1fr;gap:1rem}
+
+/* ── Stat bar rows ── */
+.stat-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:.5px solid var(--border)}
+.stat-row:last-child{border-bottom:none}
+.stat-name{font-size:13px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 0 180px}
+.stat-bar-wrap{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.stat-bar{height:100%;border-radius:3px;transition:width .6s ease}
+.stat-pct{font-size:12px;min-width:40px;text-align:right}
+
+/* ── Insights ── */
+.insight-list{display:flex;flex-direction:column;gap:8px}
+.insight{padding:10px 12px;border-radius:10px;border-left:3px solid;font-size:13px;line-height:1.5}
+.insight-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.insight.warn{background:rgba(245,158,11,.08);border-color:#F59E0B}
+.insight.warn .insight-tag{color:#F59E0B}
+.insight.info{background:rgba(59,130,246,.08);border-color:#3B82F6}
+.insight.info .insight-tag{color:#3B82F6}
+.insight.success{background:rgba(16,185,129,.08);border-color:#10B981}
+.insight.success .insight-tag{color:#10B981}
+.insight.danger{background:rgba(239,68,68,.08);border-color:#EF4444}
+.insight.danger .insight-tag{color:#EF4444}
+
+/* ── Segmentation ── */
+.seg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.seg-card{border-radius:10px;padding:12px;text-align:center}
+.seg-card.pop{background:rgba(16,185,129,.1);border:.5px solid rgba(16,185,129,.3)}
+.seg-card.mid{background:rgba(245,158,11,.1);border:.5px solid rgba(245,158,11,.3)}
+.seg-card.low{background:rgba(239,68,68,.1);border:.5px solid rgba(239,68,68,.3)}
+.seg-num{font-size:24px;font-weight:700;margin-bottom:4px}
+.seg-card.pop .seg-num{color:#059669}
+.seg-card.mid .seg-num{color:#D97706}
+.seg-card.low .seg-num{color:#DC2626}
+.seg-lbl{font-size:11px;color:var(--text-muted)}
+
+/* ── Correlation meter ── */
+.corr-meter{display:flex;flex-direction:column;align-items:center;gap:8px;padding:1rem 0}
+.meter-track{width:100%;height:10px;border-radius:5px;background:linear-gradient(90deg,#EF4444,#F59E0B,#10B981);position:relative}
+.meter-cursor{position:absolute;top:-4px;width:18px;height:18px;border-radius:50%;background:#fff;border:2px solid #6C63FF;box-shadow:0 1px 4px rgba(0,0,0,.2);transform:translateX(-50%)}
+.meter-labels{display:flex;justify-content:space-between;width:100%;font-size:11px;color:var(--text-muted)}
+
+/* ── Regression ── */
+.reg-eq{font-family:monospace;font-size:14px;background:var(--surface);border:.5px solid var(--border);border-radius:8px;padding:9px 14px;text-align:center;margin:10px 0;color:var(--text)}
+.r2-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:5px}
+.r2-fill{height:100%;border-radius:4px;background:#10B981}
+
+/* ── Legend ── */
+.legend-row{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:8px}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-muted)}
+.legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  .ds-grid2,.ds-grid31{grid-template-columns:1fr}
+  .seg-grid{grid-template-columns:1fr}
+  .stat-name{flex:0 0 120px}
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="dash-stats">
+
+  {# ──────────────────────────────────────────────
+     TOPBAR
+  ────────────────────────────────────────────── #}
+  <div class="topbar">
+    <div>
+      <div class="topbar-title">📊 Statistiques des formations</div>
+      <div class="topbar-sub">Analyse avancée · Corrélation · Régression · Segmentation</div>
+    </div>
+    <span class="ds-badge">{{ "now"|date("d M Y · H:i") }}</span>
+  </div>
+
+  {# ──────────────────────────────────────────────
+     KPI CARDS
+  ────────────────────────────────────────────── #}
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:rgba(108,99,255,.12)">🎓</div>
+      <div class="kpi-val" data-count="{{ statsGlobales.totalFormations }}">0</div>
+      <div class="kpi-label">Formations totales</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:rgba(16,185,129,.12)">👥</div>
+      <div class="kpi-val" data-count="{{ statsGlobales.totalInscriptions }}">0</div>
+      <div class="kpi-label">Inscriptions totales</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:rgba(239,68,68,.12)">🔴</div>
+      <div class="kpi-val" data-count="{{ statsGlobales.formationsCompletes }}">0</div>
+      <div class="kpi-label">Formations complètes</div>
+      <div class="kpi-trend" style="color:#EF4444">aucune place libre</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:rgba(245,158,11,.12)">📈</div>
+      <div class="kpi-val" data-count="{{ statsGlobales.tauxRemplissageMoyen }}" data-suffix="%">0%</div>
+      <div class="kpi-label">Remplissage moyen</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:rgba(59,130,246,.12)">🏆</div>
+      <div class="kpi-val-sm">{{ statsGlobales.formationPlusPopulaire ?? '—' }}</div>
+      <div class="kpi-label">Formation populaire</div>
+    </div>
+  </div>
+
+  {# ──────────────────────────────────────────────
+     TABS
+  ────────────────────────────────────────────── #}
+  <div class="tab-row">
+    <button class="ds-tab active" onclick="dsTab(this,'tendance')">📅 Tendance</button>
+    <button class="ds-tab" onclick="dsTab(this,'top')">🏅 Top formations</button>
+    <button class="ds-tab" onclick="dsTab(this,'categories')">🗂 Catégories</button>
+    <button class="ds-tab" onclick="dsTab(this,'remplissage')">🎯 Remplissage</button>
+    <button class="ds-tab" onclick="dsTab(this,'correlation')">🔗 Corrélation</button>
+    <button class="ds-tab" onclick="dsTab(this,'regression')">📐 Régression</button>
+  </div>
+
+  {# ── PANE: Tendance ── #}
+  <div id="pane-tendance" class="ds-card">
+    <div class="ds-card-label">Tendance temporelle</div>
+    <div class="ds-card-title">Inscriptions des 6 derniers mois</div>
+    <div class="ds-divider"></div>
+    <div class="legend-row">
+      <span class="legend-item"><span class="legend-dot" style="background:#6C63FF"></span>Inscriptions</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#10B981;opacity:.6;border:1px dashed #10B981"></span>Moyenne glissante</span>
+    </div>
+    <div style="position:relative;width:100%;height:220px">
+      <canvas id="cTendance" role="img" aria-label="Courbe des inscriptions sur 6 mois">
+        Évolution mensuelle : {{ tendanceMois.valeurs|join(', ') }}
+      </canvas>
+    </div>
+  </div>
+
+  {# ── PANE: Top ── #}
+  <div id="pane-top" class="ds-card" style="display:none">
+    <div class="ds-card-label">Popularité</div>
+    <div class="ds-card-title">Top {{ topFormations|length }} formations les plus inscrites</div>
+    <div class="ds-divider"></div>
+    <div style="position:relative;width:100%;height:{{ topFormations|length * 44 + 60 }}px">
+      <canvas id="cTop" role="img" aria-label="Histogramme horizontal des formations populaires">
+        {% for f in topFormations %}{{ f.titre }}: {{ f.nbInscrits }} — {% endfor %}
+      </canvas>
+    </div>
+  </div>
+
+  {# ── PANE: Catégories ── #}
+  <div id="pane-categories" class="ds-card" style="display:none">
+    <div class="ds-card-label">Catégories</div>
+    <div class="ds-card-title">Répartition des inscriptions par catégorie</div>
+    <div class="ds-divider"></div>
+    <div style="display:flex;gap:1.5rem;flex-wrap:wrap;align-items:flex-start">
+      <div style="position:relative;width:200px;height:200px;flex-shrink:0">
+        <canvas id="cCat" role="img" aria-label="Donut des inscriptions par catégorie">Répartition par catégorie.</canvas>
+      </div>
+      <div style="flex:1;min-width:220px">
+        {% for nom, stats in statsParCat %}
+        <div class="stat-row">
+          <span class="stat-name">{{ nom }}</span>
+          <div class="stat-bar-wrap">
+            <div class="stat-bar" data-w="{{ stats.tauxRemplissageMoyen }}" style="width:0%;background:#6C63FF"></div>
+          </div>
+          <span class="stat-pct" style="color:var(--text-muted)">{{ stats.nbInscrits }} ins.</span>
+        </div>
+        {% endfor %}
+        <div style="margin-top:12px;font-size:12px;color:var(--text-muted)">* Les barres représentent le taux de remplissage moyen par catégorie.</div>
+      </div>
+    </div>
+  </div>
+
+  {# ── PANE: Remplissage ── #}
+  <div id="pane-remplissage" class="ds-card" style="display:none">
+    <div class="ds-card-label">Capacité</div>
+    <div class="ds-card-title">Taux de remplissage par formation</div>
+    <div class="ds-divider"></div>
+    <div style="max-height:320px;overflow-y:auto">
+      {% set tauxSorted = tauxRemplissage|sort|reverse %}
+      {% for idF, taux in tauxRemplissage %}
+        {% set formation = formations|filter(f => f.idFormation == idF)|first %}
+        {% if formation %}
+          {% set col = taux >= 80 ? '#EF4444' : (taux >= 50 ? '#F59E0B' : '#10B981') %}
+          <div class="stat-row">
+            <span class="stat-name">{{ formation.titre }}</span>
+            <div class="stat-bar-wrap">
+              <div class="stat-bar" data-w="{{ taux }}" style="width:0%;background:{{ col }}"></div>
+            </div>
+            <span class="stat-pct" style="color:{{ col }}">{{ taux }}%</span>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  {# ── PANE: Corrélation ── #}
+  <div id="pane-correlation" class="ds-card" style="display:none">
+    <div class="ds-card-label">Analyse statistique</div>
+    <div class="ds-card-title">Corrélation capacité ↔ inscriptions (Pearson)</div>
+    <div class="ds-divider"></div>
+    <div class="corr-meter">
+      <div style="width:100%">
+        <div class="meter-track">
+          <div class="meter-cursor" style="left:{{ ((correlation + 1) / 2 * 100)|number_format(1) }}%"></div>
+        </div>
+        <div class="meter-labels"><span>−1 (inverse)</span><span>0 (nulle)</span><span>+1 (forte)</span></div>
+      </div>
+      <div style="font-size:28px;font-weight:700;color:var(--text)">r = {{ correlation }}</div>
+      <div style="font-size:13px;color:var(--text-muted);text-align:center;max-width:440px;line-height:1.5">
+        {% if correlation|abs >= 0.7 %}
+          Corrélation {{ correlation > 0 ? 'positive' : 'négative' }} forte : les formations à grande capacité {{ correlation > 0 ? 'attirent' : 'repoussent' }} davantage d'inscrits. Ce signal permet d'optimiser l'allocation des ressources pédagogiques.
+        {% elseif correlation|abs >= 0.4 %}
+          Corrélation modérée : la capacité influence partiellement les inscriptions, mais d'autres facteurs (contenu, formateur, calendrier) jouent un rôle significatif.
+        {% else %}
+          Corrélation faible : la taille des formations n'explique pas le nombre d'inscrits. Le contenu, la réputation et la communication sont probablement des leviers plus décisifs.
+        {% endif %}
+      </div>
+    </div>
+    <div style="position:relative;width:100%;height:240px;margin-top:8px">
+      <canvas id="cCorr" role="img" aria-label="Nuage de points capacité vs inscriptions">Scatter plot corrélation.</canvas>
+    </div>
+  </div>
+
+  {# ── PANE: Régression ── #}
+  <div id="pane-regression" class="ds-card" style="display:none">
+    <div class="ds-card-label">Modèle prédictif</div>
+    <div class="ds-card-title">Régression linéaire — nbInscrits = a × capacité + b</div>
+    <div class="ds-divider"></div>
+    <div class="reg-eq">y = {{ regression.a }} × x + {{ regression.b }}</div>
+    <div style="margin:10px 0">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">R² = {{ regression.r2 }} — qualité du modèle</div>
+      <div class="r2-bar"><div class="r2-fill" style="width:{{ (regression.r2 * 100)|round }}%"></div></div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px">
+        Le modèle explique <strong>{{ (regression.r2 * 100)|round }}%</strong> de la variance des inscriptions.
+      </div>
+    </div>
+    <div style="font-size:13px;color:var(--text-muted);line-height:1.5;padding:10px;background:var(--surface);border-radius:8px;margin-top:8px">
+      {% if regression.r2 >= 0.7 %}
+        Excellent ajustement : la régression est fiable pour estimer le nombre d'inscrits à partir de la capacité. Utile pour planifier de nouvelles sessions et anticiper la demande.
+      {% elseif regression.r2 >= 0.4 %}
+        Ajustement acceptable : la capacité explique une partie des inscriptions. Des variables supplémentaires (catégorie, formateur, durée) amélioreraient sensiblement le modèle.
+      {% else %}
+        Faible pouvoir explicatif : la capacité seule ne prédit pas bien les inscriptions. Des facteurs socio-économiques ou marketing sont probablement déterminants dans l'attractivité des formations.
+      {% endif %}
+    </div>
+    <div style="position:relative;width:100%;height:220px;margin-top:14px">
+      <canvas id="cReg" role="img" aria-label="Droite de régression linéaire capacité/inscriptions">Régression linéaire.</canvas>
+    </div>
+  </div>
+
+  {# ──────────────────────────────────────────────
+     SEGMENTATION + INSIGHTS
+  ────────────────────────────────────────────── #}
+  <div class="ds-grid2">
+    <div class="ds-card" style="margin-bottom:0">
+      <div class="ds-card-label">Segmentation</div>
+      <div class="ds-card-title">Groupes de formations par popularité</div>
+      <div class="ds-divider"></div>
+      <div class="seg-grid">
+        <div class="seg-card pop">
+          <div class="seg-num">{{ segmentation.Populaire|length }}</div>
+          <div class="seg-lbl">Populaires</div>
+        </div>
+        <div class="seg-card mid">
+          <div class="seg-num">{{ segmentation.Moyenne|length }}</div>
+          <div class="seg-lbl">Moyennes</div>
+        </div>
+        <div class="seg-card low">
+          <div class="seg-num">{{ segmentation.Faible|length }}</div>
+          <div class="seg-lbl">Faibles</div>
+        </div>
+      </div>
+      <div style="position:relative;width:100%;height:150px">
+        <canvas id="cSeg" role="img" aria-label="Histogramme des 3 segments">Segmentation formations.</canvas>
+      </div>
+    </div>
+
+    <div class="ds-card" style="margin-bottom:0">
+      <div class="ds-card-label">Interprétations contextuelles</div>
+      <div class="ds-card-title">Insights automatiques</div>
+      <div class="ds-divider"></div>
+      <div class="insight-list">
+        {% for insight in interpretations %}
+          {% set type = 'info' %}
+          {% if '⚠️' in insight %}{% set type = 'warn' %}
+          {% elseif '🔴' in insight %}{% set type = 'danger' %}
+          {% elseif '📈' in insight %}{% set type = 'success' %}
+          {% elseif '⚡' in insight %}{% set type = 'warn' %}
+          {% elseif '🏆' in insight %}{% set type = 'success' %}
+          {% endif %}
+          <div class="insight {{ type }}">
+            <div class="insight-tag">
+              {% if type == 'warn' %}Attention
+              {% elseif type == 'danger' %}Critique
+              {% elseif type == 'success' %}Positif
+              {% else %}Info{% endif %}
+            </div>
+            {{ insight }}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  {# ──────────────────────────────────────────────
+     PROGRESSION MOYENNE
+  ────────────────────────────────────────────── #}
+  <div class="ds-card" style="margin-top:1rem">
+    <div class="ds-card-label">Engagement utilisateurs</div>
+    <div class="ds-card-title">Progression moyenne par formation</div>
+    <div class="ds-divider"></div>
+    {% for formation in formations %}
+      {% set prog = progMoyenne[formation.idFormation] ?? 0 %}
+      {% set col = prog >= 80 ? '#10B981' : (prog >= 50 ? '#F59E0B' : '#EF4444') %}
+      <div class="stat-row">
+        <span class="stat-name">{{ formation.titre }}</span>
+        <div class="stat-bar-wrap">
+          <div class="stat-bar" data-w="{{ prog }}" style="width:0%;background:{{ col }}"></div>
+        </div>
+        <span class="stat-pct" style="color:{{ col }}">{{ prog|number_format(1) }}%</span>
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// ── Données Twig → JS ──────────────────────────────────────────────
+const tendanceMois    = {{ tendanceMois.mois|json_encode|raw }};
+const tendanceValeurs = {{ tendanceMois.valeurs|json_encode|raw }};
+
+const topLabels = {{ topFormations|map(f => f.titre)|json_encode|raw }};
+const topData   = {{ topFormations|map(f => f.nbInscrits)|json_encode|raw }};
+const topCats   = {{ topFormations|map(f => f.categorie)|json_encode|raw }};
+
+const catLabels = {{ statsParCat|keys|json_encode|raw }};
+const catValues = {{ statsParCat|map(s => s.nbInscrits)|json_encode|raw }};
+
+const formationsJs    = {{ formationsJs|json_encode|raw }};
+const nbInscritsMap   = {{ nbInscrits|json_encode|raw }};
+const tauxRemplMap    = {{ tauxRemplissage|json_encode|raw }};
+
+const corrVal = {{ correlation }};
+const regA    = {{ regression.a }};
+const regB    = {{ regression.b }};
+const regR2   = {{ regression.r2 }};
+
+const segData = [
+  {{ segmentation.Populaire|length }},
+  {{ segmentation.Moyenne|length }},
+  {{ segmentation.Faible|length }}
+];
+
+// ── Palette ────────────────────────────────────────────────────────
+const PALETTE = ['#6C63FF','#10B981','#F59E0B','#EF4444','#3B82F6','#8B5CF6','#EC4899','#14B8A6'];
+const textC = '#94a3b8';
+const gridC = 'rgba(148,163,184,.12)';
+
+// ── Compteurs animés ───────────────────────────────────────────────
+document.querySelectorAll('[data-count]').forEach(el => {
+  const target = parseFloat(el.dataset.count) || 0;
+  const suffix = el.dataset.suffix || '';
+  let cur = 0;
+  const step = target / 40;
+  const t = setInterval(() => {
+    cur = Math.min(cur + step, target);
+    el.textContent = Math.round(cur * 10) / 10 + suffix;
+    if (cur >= target) clearInterval(t);
+  }, 18);
+});
+
+// ── Barres animées ─────────────────────────────────────────────────
+setTimeout(() => {
+  document.querySelectorAll('.stat-bar[data-w]').forEach(b => {
+    b.style.width = b.dataset.w + '%';
+  });
+}, 400);
+
+// ── Tabs ───────────────────────────────────────────────────────────
+const charts = {};
+
+function dsTab(btn, name) {
+  document.querySelectorAll('[id^="pane-"]').forEach(p => p.style.display = 'none');
+  document.getElementById('pane-' + name).style.display = 'block';
+  document.querySelectorAll('.ds-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  if (!charts[name]) buildChart(name);
+}
+
+function buildChart(name) {
+  if (name === 'correlation') buildCorr();
+  if (name === 'regression')  buildReg();
+}
+
+// ── Chart: Tendance ────────────────────────────────────────────────
+const movingAvg = tendanceValeurs.map((_, i, a) => {
+  const sl = a.slice(0, i + 1);
+  return Math.round(sl.reduce((x, y) => x + y, 0) / sl.length * 10) / 10;
+});
+
+new Chart(document.getElementById('cTendance'), {
+  type: 'line',
+  data: {
+    labels: tendanceMois,
+    datasets: [
+      {
+        label: 'Inscriptions',
+        data: tendanceValeurs,
+        borderColor: '#6C63FF',
+        backgroundColor: 'rgba(108,99,255,.1)',
+        fill: true, tension: .4,
+        pointBackgroundColor: '#6C63FF', pointRadius: 5, borderWidth: 2,
+        pointHoverRadius: 7,
+      },
+      {
+        label: 'Moy. glissante',
+        data: movingAvg,
+        borderColor: '#10B981',
+        borderDash: [5, 4],
+        fill: false, tension: .3,
+        pointRadius: 0, borderWidth: 1.5,
+      },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+    scales: {
+      y: { beginAtZero: true, grid: { color: gridC }, ticks: { color: textC, stepSize: 10 } },
+      x: { grid: { display: false }, ticks: { color: textC, maxRotation: 30, autoSkip: false } },
+    }
+  }
+});
+
+// ── Chart: Top formations ──────────────────────────────────────────
+new Chart(document.getElementById('cTop'), {
+  type: 'bar',
+  data: {
+    labels: topLabels.map(l => l.length > 26 ? l.slice(0, 26) + '…' : l),
+    datasets: [{
+      label: 'Inscrits',
+      data: topData,
+      backgroundColor: PALETTE.map(c => c + 'BB'),
+      borderColor: PALETTE,
+      borderWidth: 1.5,
+      borderRadius: 6,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { afterLabel: ctx => topCats[ctx.dataIndex] } }
+    },
+    scales: {
+      x: { beginAtZero: true, grid: { color: gridC }, ticks: { color: textC, stepSize: 5 } },
+      y: { grid: { display: false }, ticks: { color: textC, font: { size: 12 } } },
+    }
+  }
+});
+
+// ── Chart: Catégories donut ────────────────────────────────────────
+new Chart(document.getElementById('cCat'), {
+  type: 'doughnut',
+  data: {
+    labels: catLabels,
+    datasets: [{
+      data: catValues,
+      backgroundColor: PALETTE,
+      borderColor: 'transparent',
+      hoverOffset: 8,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false, cutout: '68%',
+    plugins: { legend: { display: false } }
+  }
+});
+
+// ── Chart: Segmentation ────────────────────────────────────────────
+new Chart(document.getElementById('cSeg'), {
+  type: 'bar',
+  data: {
+    labels: ['Populaires', 'Moyennes', 'Faibles'],
+    datasets: [{
+      data: segData,
+      backgroundColor: ['rgba(16,185,129,.7)','rgba(245,158,11,.7)','rgba(239,68,68,.7)'],
+      borderColor: ['#10B981','#F59E0B','#EF4444'],
+      borderWidth: 1.5, borderRadius: 6, borderSkipped: false,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, grid: { color: gridC }, ticks: { color: textC, stepSize: 1 } },
+      x: { grid: { display: false }, ticks: { color: textC } },
+    }
+  }
+});
+
+// ── Chart: Corrélation scatter ─────────────────────────────────────
+function buildCorr() {
+  charts['correlation'] = true;
+  const pts = formationsJs.map(f => ({
+    x: f.capaciteMax,
+    y: nbInscritsMap[f.id] ?? 0,
+    label: f.titre,
+  }));
+  new Chart(document.getElementById('cCorr'), {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: 'Formation',
+        data: pts,
+        backgroundColor: 'rgba(108,99,255,.65)',
+        pointRadius: 7, pointHoverRadius: 9,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${pts[ctx.dataIndex].label}: cap ${ctx.parsed.x} / ${ctx.parsed.y} ins.` } }
+      },
+      scales: {
+        x: { title: { display: true, text: 'Capacité max', color: textC, font: { size: 11 } }, grid: { color: gridC }, ticks: { color: textC } },
+        y: { beginAtZero: true, title: { display: true, text: 'Nb inscrits', color: textC, font: { size: 11 } }, grid: { color: gridC }, ticks: { color: textC } },
+      }
+    }
+  });
+}
+
+// ── Chart: Régression ──────────────────────────────────────────────
+function buildReg() {
+  charts['regression'] = true;
+  const scatter = formationsJs.map(f => ({ x: f.capaciteMax, y: nbInscritsMap[f.id] ?? 0 }));
+  const minX = Math.min(...formationsJs.map(f => f.capaciteMax));
+  const maxX = Math.max(...formationsJs.map(f => f.capaciteMax));
+  const line = [
+    { x: minX, y: Math.round((regA * minX + regB) * 100) / 100 },
+    { x: maxX, y: Math.round((regA * maxX + regB) * 100) / 100 },
+  ];
+  new Chart(document.getElementById('cReg'), {
+    type: 'scatter',
+    data: {
+      datasets: [
+        {
+          label: 'Formations',
+          data: scatter,
+          backgroundColor: 'rgba(108,99,255,.65)',
+          pointRadius: 6, pointHoverRadius: 8,
+        },
+        {
+          label: 'Régression',
+          data: line,
+          type: 'line',
+          borderColor: '#EF4444',
+          borderWidth: 2,
+          borderDash: [5, 3],
+          pointRadius: 0, fill: false, showLine: true,
+        },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { title: { display: true, text: 'Capacité max', color: textC, font: { size: 11 } }, grid: { color: gridC }, ticks: { color: textC } },
+        y: { beginAtZero: true, title: { display: true, text: 'Nb inscrits', color: textC, font: { size: 11 } }, grid: { color: gridC }, ticks: { color: textC } },
+      }
+    }
+  });
+}
+</script>
+{% endblock %}

@@ -37,42 +37,10 @@
     </button>
   </div>
 
-  {# ── Calendrier popup style Java ── #}
+  {# ── Calendrier FullCalendar ── #}
   <div id="calendarWrapper" style="display:none;margin-bottom:2rem">
-    <div style="background:#0f172a;border-radius:20px;padding:24px;border:1px solid rgba(124,58,237,0.3);box-shadow:0 8px 32px rgba(0,0,0,0.4)">
-
-      {# Header nav #}
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-        <button onclick="prevMonth()" style="width:36px;height:36px;border-radius:50%;border:1px solid rgba(124,58,237,0.4);background:rgba(124,58,237,0.15);color:#a78bfa;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">‹</button>
-        <div id="calTitle" style="font-family:'Sora',sans-serif;font-weight:700;font-size:18px;color:#e2e8f0"></div>
-        <button onclick="nextMonth()" style="width:36px;height:36px;border-radius:50%;border:1px solid rgba(124,58,237,0.4);background:rgba(124,58,237,0.15);color:#a78bfa;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">›</button>
-      </div>
-
-      {# Layout : grille + panneau latéral #}
-      <div style="display:flex;gap:20px;align-items:flex-start">
-
-        {# Grille calendrier #}
-        <div style="flex:1">
-          {# En-têtes jours #}
-          <div id="calHeader" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px"></div>
-          {# Jours #}
-          <div id="calGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px"></div>
-        </div>
-
-        {# Panneau formations du jour sélectionné #}
-        <div id="calSidebar" style="width:220px;background:#1e293b;border-radius:14px;padding:16px;border:1px solid rgba(124,58,237,0.2);min-height:200px">
-          <div id="calSelectedDate" style="font-family:'Sora',sans-serif;font-size:13px;font-weight:600;color:#a78bfa;margin-bottom:12px">📅 Sélectionnez un jour</div>
-          <div id="calFormationsList"></div>
-        </div>
-
-      </div>
-
-      {# Légende #}
-      <div style="margin-top:16px;display:flex;gap:16px;font-size:11px;color:#64748b">
-        <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:4px;background:#4c1d95;display:inline-block"></span>Formation planifiée</span>
-        <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:4px;background:#0ea5e9;display:inline-block"></span>Aujourd'hui</span>
-        <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:4px;background:#1e293b;border:1px solid #334155;display:inline-block"></span>Autre jour</span>
-      </div>
+    <div class="pf-section" style="padding:1.5rem">
+      <div id="calendar"></div>
     </div>
   </div>
 
@@ -102,128 +70,49 @@
 </div>
 
 {% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<style>
+#calendar { font-family: 'DM Sans', sans-serif; }
+.fc { --fc-border-color: var(--border); --fc-page-bg-color: transparent; --fc-neutral-bg-color: var(--surface); --fc-today-bg-color: rgba(108,99,255,.1); }
+.fc-toolbar-title { font-family: 'Sora', sans-serif !important; color: var(--text) !important; font-size: 1.1rem !important; }
+.fc-button { background: var(--surface) !important; border: .5px solid var(--border) !important; color: var(--text) !important; }
+.fc-button:hover { background: var(--surface-hover) !important; }
+.fc-button-primary:not(:disabled).fc-button-active { background: var(--primary) !important; border-color: var(--primary) !important; }
+.fc-daygrid-day-number { color: var(--text-muted) !important; }
+.fc-col-header-cell-cushion { color: var(--primary) !important; font-weight: 600 !important; }
+.fc-event { border-radius: 6px !important; font-size: 11px !important; cursor: pointer !important; }
+</style>
 <script>
-const EVENTS = {{ calendarEvents|json_encode|raw }};
-
-let currentYear  = new Date().getFullYear();
-let currentMonth = new Date().getMonth();
-
-const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-const DAYS_FR   = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+let calendarInstance = null;
 
 function toggleCalendar() {
   const w = document.getElementById('calendarWrapper');
   const open = w.style.display === 'none';
   w.style.display = open ? 'block' : 'none';
   document.getElementById('calBtnLabel').textContent = open ? 'Masquer le calendrier' : 'Voir le calendrier des formations';
-  if (open) renderCalendar();
-}
 
-function prevMonth() { currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; } renderCalendar(); }
-function nextMonth() { currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; } renderCalendar(); }
-
-function renderCalendar() {
-  document.getElementById('calTitle').textContent = MONTHS_FR[currentMonth] + ' ' + currentYear;
-
-  // En-têtes
-  const header = document.getElementById('calHeader');
-  header.innerHTML = '';
-  DAYS_FR.forEach(d => {
-    const h = document.createElement('div');
-    h.textContent = d;
-    h.style.cssText = 'text-align:center;font-size:11px;font-weight:700;color:#7c3aed;padding:6px 0;font-family:Sora,sans-serif';
-    header.appendChild(h);
-  });
-
-  const grid = document.getElementById('calGrid');
-  grid.innerHTML = '';
-
-  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-  const offset   = (firstDay === 0) ? 6 : firstDay - 1;
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  const todayStr = new Date().toISOString().slice(0, 10);
-
-  // Cases vides
-  for (let i = 0; i < offset; i++) grid.appendChild(document.createElement('div'));
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = currentYear + '-' + String(currentMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
-    const hasEvent = !!(EVENTS[dateStr] && EVENTS[dateStr].length > 0);
-    const isToday  = dateStr === todayStr;
-
-    const cell = document.createElement('div');
-    cell.style.cssText = `
-      position:relative; width:46px; height:46px; border-radius:10px;
-      display:flex; flex-direction:column; align-items:center; justify-content:center;
-      cursor:pointer; transition:all .15s; margin:2px auto;
-      background:${hasEvent ? '#4c1d95' : (isToday ? '#0ea5e9' : 'transparent')};
-      box-shadow:${hasEvent ? '0 2px 8px rgba(124,58,237,0.5)' : 'none'};
-    `;
-
-    const num = document.createElement('div');
-    num.textContent = d;
-    num.style.cssText = `
-      font-size:13px; font-weight:${(hasEvent || isToday) ? '700' : '400'};
-      color:${(hasEvent || isToday) ? '#fff' : '#94a3b8'};
-      font-family:Sora,sans-serif; line-height:1;
-    `;
-    cell.appendChild(num);
-
-    // Point violet sous le numéro si formation
-    if (hasEvent) {
-      const dot = document.createElement('div');
-      dot.textContent = '●';
-      dot.style.cssText = 'font-size:6px;color:#a78bfa;line-height:1;margin-top:2px';
-      cell.appendChild(dot);
-    }
-
-    // Hover
-    cell.onmouseenter = () => {
-      if (hasEvent) cell.style.background = '#7c3aed';
-      else if (!isToday) cell.style.background = '#334155';
-      cell.style.transform = 'scale(1.08)';
-    };
-    cell.onmouseleave = () => {
-      cell.style.background = hasEvent ? '#4c1d95' : (isToday ? '#0ea5e9' : 'transparent');
-      cell.style.transform = 'scale(1)';
-    };
-
-    // Clic → afficher formations
-    cell.onclick = () => showFormationsForDate(dateStr, d);
-
-    grid.appendChild(cell);
-  }
-}
-
-function showFormationsForDate(dateStr, day) {
-  const MONTHS_FR2 = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-  const label = day + ' ' + MONTHS_FR2[currentMonth] + ' ' + currentYear;
-  document.getElementById('calSelectedDate').textContent = '📅 ' + label;
-
-  const list = document.getElementById('calFormationsList');
-  list.innerHTML = '';
-
-  const events = EVENTS[dateStr] || [];
-  if (events.length === 0) {
-    const empty = document.createElement('div');
-    empty.textContent = 'Aucune formation ce jour';
-    empty.style.cssText = 'color:#64748b;font-size:12px;font-style:italic;padding:8px 0';
-    list.appendChild(empty);
-  } else {
-    events.forEach(ev => {
-      const item = document.createElement('div');
-      item.textContent = ev.titre;
-      item.style.cssText = `
-        color:#e2e8f0; background:#0f172a; border-radius:8px;
-        padding:8px 10px; font-size:12px; margin-bottom:6px;
-        cursor:pointer; border:1px solid rgba(124,58,237,0.2);
-        transition:background .15s;
-      `;
-      item.onmouseenter = () => item.style.background = '#1e293b';
-      item.onmouseleave = () => item.style.background = '#0f172a';
-      item.onclick = () => window.location.href = '/formations/detail/' + ev.id;
-      list.appendChild(item);
+  if (open && !calendarInstance) {
+    const calEl = document.getElementById('calendar');
+    calendarInstance = new FullCalendar.Calendar(calEl, {
+      initialView: 'dayGridMonth',
+      locale: 'fr',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,listMonth'
+      },
+      events: '{{ path("fc_load_events") }}',
+      eventClick: function(info) {
+        if (info.event.url) {
+          info.jsEvent.preventDefault();
+          window.location.href = info.event.url;
+        }
+      },
+      eventDidMount: function(info) {
+        info.el.title = info.event.title;
+      }
     });
+    calendarInstance.render();
   }
 }
 </script>

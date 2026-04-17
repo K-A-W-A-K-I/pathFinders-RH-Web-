@@ -1,0 +1,4 @@
+fc_load_events:
+    path: /api/calendar/events
+    controller: CalendarBundle\Controller\CalendarController::loadAction
+    methods: GET

@@ -90,6 +90,15 @@
                 </button>
               {% endif %}
             </div>
+          {% elseif progression == 100 %}
+            <div style="text-align:center;padding:2.5rem">
+              <div style="font-size:3rem;margin-bottom:1rem">🏆</div>
+              <h3 style="font-family:'Sora',sans-serif;color:#1D9E75;margin-bottom:.5rem">Formation terminée !</h3>
+              <p style="color:var(--text-muted);font-size:14px;margin-bottom:1.5rem">Félicitations ! Vous avez complété tous les modules. Votre certificat est disponible.</p>
+              <a href="{{ path('client_certificat', {id: formation.idFormation}) }}" class="pf-btn-details" style="font-size:14px;padding:12px 28px">
+                🎓 Télécharger mon certificat
+              </a>
+            </div>
           {% elseif contenuModules is empty %}
             <p style="color:var(--text-muted)">Aucun module disponible pour le moment.</p>
           {% else %}
@@ -129,6 +138,13 @@
                 🚫 Accès refusé
               </button>
             {% endif %}
+          {% elseif progression == 100 %}
+            <div style="font-size:2rem;margin-bottom:.8rem">🏆</div>
+            <h3 style="font-family:'Sora',sans-serif;color:#1D9E75;margin-bottom:.4rem">Formation terminée</h3>
+            <p style="color:var(--text-muted);font-size:13px;margin-bottom:1rem">Tous les modules complétés.</p>
+            <a href="{{ path('client_certificat', {id: formation.idFormation}) }}" style="display:block;width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#1D9E75,#16a34a);color:#fff;font-size:14px;font-weight:600;cursor:pointer;text-align:center;text-decoration:none">
+              🎓 Mon certificat
+            </a>
           {% else %}
             <div style="font-size:2rem;margin-bottom:.8rem">✅</div>
             <h3 style="font-family:'Sora',sans-serif;color:var(--teal);margin-bottom:.4rem">Vous êtes inscrit</h3>

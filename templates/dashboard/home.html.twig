@@ -42,6 +42,7 @@
   <button class="dash-tab active" onclick="showTab('categories')">📂 Catégories</button>
   <button class="dash-tab" onclick="showTab('formations'); resetFormationsFilter()">🎓 Formations</button>
   <button class="dash-tab" onclick="showTab('inscriptions')">✅ Inscriptions</button>
+  <button class="dash-tab" onclick="showTab('statistiques')">📊 Statistiques</button>
 </div>
 
 {# ── TAB CATÉGORIES ── #}
@@ -108,8 +109,8 @@
         <span class="admin-count-badge" id="formations-count-badge">{{ formations|length }}</span>
       </div>
       <div class="admin-table-actions">
-        <input type="text" id="search-form" placeholder="Rechercher..." class="admin-search-input" oninput="filterTable('tbl-form', this.value)">
-        <select id="filter-cat" class="admin-search-input" style="width:auto" onchange="filterByCat(this.value)">
+        <input type="text" id="search-form" placeholder="Rechercher formations complètes par nom..." class="admin-search-input" oninput="filterFormations()">
+        <select id="filter-cat" class="admin-search-input" style="width:auto" onchange="filterFormations()">
           <option value="">Toutes catégories</option>
           {% for cat in categories %}
             <option value="{{ cat.idCategorie }}">{{ cat.nomCategorie }}</option>
@@ -135,7 +136,7 @@
         </tr></thead>
         <tbody>
           {% for f in formations %}
-            <tr data-catid="{{ f.categorie.idCategorie }}">
+            <tr data-catid="{{ f.categorie.idCategorie }}" data-places="{{ f.placeDisponible }}" data-titre="{{ f.titre|lower }}">
               <td class="admin-table-name">{{ f.titre }}</td>
               <td><span class="admin-badge admin-badge-blue">{{ f.categorie.nomCategorie }}</span></td>
               <td class="admin-table-muted">{{ f.formateur ?? '—' }}</td>
@@ -174,7 +175,7 @@
   <div class="admin-table-section">
     <div class="admin-table-header">
       <div class="admin-table-title">
-        Toutes les inscriptions
+        Inscriptions
         <span class="admin-count-badge">{{ nbInscriptions }}</span>
       </div>
       <div class="admin-table-actions">
@@ -186,22 +187,144 @@
     {% else %}
       <table class="admin-table" id="tbl-insc">
         <thead><tr>
-          <th>#</th><th>Participant</th><th>Email</th><th>Formation</th><th>Date</th>
+          <th>#</th>
+          <th>Utilisateur</th>
+          <th>Email</th>
+          <th>Formation</th>
+          <th>Progression</th>
+          <th>Date</th>
         </tr></thead>
         <tbody>
           {% for insc in allInscriptions %}
             <tr>
               <td class="admin-table-muted">{{ loop.index }}</td>
-              <td class="admin-table-name">{{ insc.nomParticipant ?? '—' }}</td>
-              <td class="admin-table-muted">{{ insc.emailParticipant ?? '—' }}</td>
-              <td><span class="admin-badge admin-badge-blue">{{ insc.formation.titre }}</span></td>
-              <td class="admin-table-muted">{{ insc.dateInscription|date('d/m/Y H:i') }}</td>
+              <td class="admin-table-name">
+                {% if insc.utilisateur %}
+                  {{ insc.utilisateur.fullName }}
+                {% else %}
+                  <span class="admin-table-muted">—</span>
+                {% endif %}
+              </td>
+              <td class="admin-table-muted">
+                {{ insc.utilisateur ? insc.utilisateur.email : '—' }}
+              </td>
+              <td>
+                {% if insc.formation %}
+                  <span class="admin-badge admin-badge-blue">{{ insc.formation.titre }}</span>
+                {% else %}
+                  <span class="admin-table-muted">—</span>
+                {% endif %}
+              </td>
+              <td>
+                {% set prog = insc.pourcentage_progression ?? 0 %}
+                {% set col = prog >= 70 ? '#22c55e' : (prog >= 40 ? '#f59e0b' : '#ef4444') %}
+                <div style="display:flex;align-items:center;gap:8px">
+                  <div style="flex:1;height:5px;background:rgba(108,99,255,.15);border-radius:3px;overflow:hidden;min-width:60px">
+                    <div style="height:100%;width:{{ prog }}%;background:{{ col }};border-radius:3px"></div>
+                  </div>
+                  <span style="font-size:12px;color:{{ col }};font-weight:600;min-width:32px">{{ prog > 0 ? prog ~ '%' : '—' }}</span>
+                </div>
+              </td>
+              <td class="admin-table-muted">
+                {{ insc.date_inscription ? insc.date_inscription|date('d/m/Y H:i') : '—' }}
+              </td>
             </tr>
           {% endfor %}
         </tbody>
       </table>
     {% endif %}
   </div>
+</div>
+
+{# ── TAB STATISTIQUES ── #}
+<div id="tab-statistiques" class="tab-panel">
+
+  {# KPI #}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:28px">
+    <div class="stat-card" style="padding:24px 20px;border-radius:16px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div style="font-size:1.6rem;width:46px;height:46px;border-radius:12px;background:rgba(59,130,246,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">🎓</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-light);font-weight:600">Formations</div>
+      </div>
+      <div class="stat-num" style="color:#60a5fa;font-size:2.6rem" data-kpi="{{ statsGlobales.totalFormations }}">0</div>
+    </div>
+    <div class="stat-card" style="padding:24px 20px;border-radius:16px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div style="font-size:1.6rem;width:46px;height:46px;border-radius:12px;background:rgba(16,185,129,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">👥</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-light);font-weight:600">Inscriptions</div>
+      </div>
+      <div class="stat-num" style="color:#34d399;font-size:2.6rem" data-kpi="{{ statsGlobales.totalInscriptions }}">0</div>
+    </div>
+    <div class="stat-card" style="padding:24px 20px;border-radius:16px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div style="font-size:1.6rem;width:46px;height:46px;border-radius:12px;background:rgba(239,68,68,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">🔒</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-light);font-weight:600">Complètes</div>
+      </div>
+      <div class="stat-num" style="color:#f87171;font-size:2.6rem" data-kpi="{{ statsGlobales.formationsCompletes }}">0</div>
+    </div>
+    <div class="stat-card" style="padding:24px 20px;border-radius:16px;grid-column:span 2">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div style="font-size:1.6rem;width:46px;height:46px;border-radius:12px;background:rgba(108,99,255,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">📈</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-light);font-weight:600">Remplissage moy.</div>
+      </div>
+      <div class="stat-num" style="color:#a78bfa;font-size:2.6rem" data-kpi="{{ statsGlobales.tauxRemplissageMoyen }}">0<span style="font-size:1.2rem">%</span></div>
+    </div>
+    <div class="stat-card" style="padding:24px 20px;border-radius:16px;grid-column:span 2">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <div style="font-size:1.6rem;width:46px;height:46px;border-radius:12px;background:rgba(245,158,11,.15);display:flex;align-items:center;justify-content:center;flex-shrink:0">🏆</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-light);font-weight:600">+ Populaire</div>
+      </div>
+      <div style="color:#fbbf24;font-size:15px;font-weight:700;line-height:1.4">{{ statsGlobales.formationPlusPopulaire ?? '—' }}</div>
+    </div>
+  </div>
+
+  {# Histogrammes #}
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+    <div class="admin-table-section" style="padding:18px">
+      <div style="font-size:13px;font-weight:700;color:var(--text-dark);margin-bottom:12px">🏅 Top formations — inscriptions</div>
+      <canvas id="sTop" height="200"></canvas>
+    </div>
+    <div class="admin-table-section" style="padding:18px">
+      <div style="font-size:13px;font-weight:700;color:var(--text-dark);margin-bottom:12px">🎯 Taux de remplissage par formation</div>
+      <canvas id="sRemplissage" height="200"></canvas>
+    </div>
+  </div>
+
+  {# Courbe tendance #}
+  <div class="admin-table-section" style="padding:18px;margin-bottom:18px">
+    <div style="font-size:13px;font-weight:700;color:var(--text-dark);margin-bottom:4px">📅 Inscriptions — 6 derniers mois</div>
+    <div style="font-size:11px;color:var(--text-light);margin-bottom:12px">Courbe + moyenne glissante</div>
+    <canvas id="sTendance" height="120"></canvas>
+  </div>
+
+  {# Donut + Progression #}
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+    <div class="admin-table-section" style="padding:18px">
+      <div style="font-size:13px;font-weight:700;color:var(--text-dark);margin-bottom:12px">🗂 Inscriptions par catégorie</div>
+      <canvas id="sCat" height="200"></canvas>
+    </div>
+    <div class="admin-table-section" style="padding:18px">
+      <div style="font-size:13px;font-weight:700;color:var(--text-dark);margin-bottom:12px">📉 Progression moyenne par formation</div>
+      <canvas id="sProg" height="200"></canvas>
+    </div>
+  </div>
+
+  {# Insights #}
+  <div class="admin-table-section" style="padding:18px">
+    <div style="font-size:13px;font-weight:700;color:var(--text-dark);margin-bottom:12px">💡 Insights automatiques</div>
+    {% if interpretations is empty %}
+      <div style="padding:10px 14px;border-radius:8px;border-left:3px solid #3B82F6;background:rgba(59,130,246,.08);font-size:13px;color:#93c5fd">Pas encore assez de données.</div>
+    {% else %}
+      {% for insight in interpretations %}
+        {% set t = '#3B82F6' %}{% set bg = 'rgba(59,130,246,.08)' %}{% set tc = '#93c5fd' %}
+        {% if '⚠️' in insight %}{% set t = '#F59E0B' %}{% set bg = 'rgba(245,158,11,.08)' %}{% set tc = '#fcd34d' %}
+        {% elseif '🔴' in insight %}{% set t = '#EF4444' %}{% set bg = 'rgba(239,68,68,.08)' %}{% set tc = '#fca5a5' %}
+        {% elseif '📈' in insight or '🏆' in insight %}{% set t = '#10B981' %}{% set bg = 'rgba(16,185,129,.08)' %}{% set tc = '#6ee7b7' %}{% endif %}
+        <div style="padding:10px 14px;border-radius:8px;border-left:3px solid {{ t }};background:{{ bg }};font-size:13px;color:{{ tc }};margin-bottom:8px;line-height:1.5">{{ insight }}</div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
 </div>
 
 {% endblock %}
@@ -227,10 +350,11 @@ function showTab(name) {
 }
 
 function resetFormationsFilter() {
-  const sel = document.getElementById('filter-cat');
+  const sel    = document.getElementById('filter-cat');
   const search = document.getElementById('search-form');
-  if (sel) { sel.value = ''; filterByCat(''); }
-  if (search) { search.value = ''; filterTable('tbl-form', ''); }
+  if (sel)    sel.value = '';
+  if (search) search.value = '';
+  filterFormations();
 }
 
 function filterTable(tableId, q) {
@@ -245,14 +369,34 @@ function filterTable(tableId, q) {
   }
 }
 
-function filterByCat(catId) {
+function filterFormations() {
+  const raw   = (document.getElementById('search-form').value || '').toLowerCase().trim();
+  const catId = document.getElementById('filter-cat').value;
   let count = 0;
+
   document.querySelectorAll('#tbl-form tbody tr').forEach(row => {
-    const visible = !catId || row.dataset.catid === catId;
+    const titre  = row.dataset.titre  || '';
+    const places = parseInt(row.dataset.places ?? '999');
+    const catOk  = !catId || row.dataset.catid === catId;
+
+    let visible;
+    if (!raw) {
+      // Barre vide → afficher tout (selon filtre catégorie seulement)
+      visible = catOk;
+    } else {
+      // Barre remplie → nom ET places = 0
+      visible = catOk && titre.includes(raw) && places === 0;
+    }
+
     row.style.display = visible ? '' : 'none';
     if (visible) count++;
   });
   document.getElementById('formations-count-badge').textContent = count;
+}
+
+function filterByCat(catId) {
+  document.getElementById('filter-cat').value = catId;
+  filterFormations();
 }
 
 function sortCategories(sortValue) {
@@ -310,7 +454,7 @@ document.querySelectorAll('[data-catid]').forEach(btn => {
     const catId = this.dataset.catid;
     showTab('formations');
     const sel = document.getElementById('filter-cat');
-    if (sel) { sel.value = catId; filterByCat(catId); }
+    if (sel) { sel.value = catId; filterFormations(); }
   });
 });
 
@@ -318,5 +462,93 @@ document.querySelectorAll('[data-catid]').forEach(btn => {
 const urlParams = new URLSearchParams(window.location.search);
 const tab = urlParams.get('tab');
 if (tab) showTab(tab);
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// KPI counters dans le tab stats
+document.querySelectorAll('[data-kpi]').forEach(el => {
+  const target = parseFloat(el.dataset.kpi) || 0;
+  let cur = 0, step = target / 40;
+  const t = setInterval(() => {
+    cur = Math.min(cur + step, target);
+    el.textContent = target % 1 !== 0 ? cur.toFixed(1) : Math.round(cur);
+    if (cur >= target) clearInterval(t);
+  }, 25);
+});
+
+// Données PHP → JS
+const _fjs      = {{ formationsJs|json_encode|raw }};
+const _tauxData = {{ tauxRemplissage|json_encode|raw }};
+const _nbData   = {{ nbInscrits|json_encode|raw }};
+const _progData = {{ progMoyenne|json_encode|raw }};
+const _topF     = {{ topFormations|json_encode|raw }};
+const _catData  = {{ statsParCat|json_encode|raw }};
+const _tendMois = {{ tendanceMois.mois|json_encode|raw }};
+const _tendVals = {{ tendanceMois.valeurs|json_encode|raw }};
+const _regA     = {{ regression.a }};
+const _regB     = {{ regression.b }};
+const _PAL = ['#818cf8','#34d399','#fbbf24','#f87171','#60a5fa','#c084fc','#f472b6','#2dd4bf'];
+const _TC  = '#64748b';
+const _GC  = 'rgba(148,163,184,.12)';
+function _tr(s,n){ return s&&s.length>n?s.slice(0,n)+'...':s; }
+
+let _chartsBuilt = false;
+
+function buildStatsCharts() {
+  if (_chartsBuilt) return;
+  _chartsBuilt = true;
+
+  // Chart 1 — Top formations
+  new Chart(document.getElementById('sTop'), {
+    type:'bar',
+    data:{ labels:_topF.map(f=>_tr(f.titre,22)), datasets:[{ label:'Inscrits', data:_topF.map(f=>f.nbInscrits), backgroundColor:_PAL.map(c=>c+'99'), borderColor:_PAL, borderWidth:1.5, borderRadius:5, borderSkipped:false }] },
+    options:{ indexAxis:'y', responsive:true, plugins:{legend:{display:false}}, scales:{ x:{beginAtZero:true,grid:{color:_GC},ticks:{color:_TC}}, y:{grid:{display:false},ticks:{color:_TC,font:{size:11}}} } }
+  });
+
+  // Chart 2 — Taux remplissage
+  const rL=[],rV=[],rC=[];
+  _fjs.forEach(f=>{ const t=parseFloat(_tauxData[f.id])||0; rL.push(_tr(f.titre,13)); rV.push(t); rC.push(t>=80?'#f8717199':t>=50?'#fbbf2499':'#34d39999'); });
+  new Chart(document.getElementById('sRemplissage'), {
+    type:'bar',
+    data:{ labels:rL, datasets:[{ label:'%', data:rV, backgroundColor:rC, borderColor:rC.map(c=>c.slice(0,7)), borderWidth:1.5, borderRadius:5, borderSkipped:false }] },
+    options:{ responsive:true, plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.parsed.y+'%'}}}, scales:{ y:{beginAtZero:true,max:100,grid:{color:_GC},ticks:{color:_TC,callback:v=>v+'%'}}, x:{grid:{display:false},ticks:{color:_TC,maxRotation:35,font:{size:10}}} } }
+  });
+
+  // Chart 3 — Tendance
+  const movAvg = _tendVals.map((_,i,a)=>{ const sl=a.slice(0,i+1); return Math.round(sl.reduce((x,y)=>x+y,0)/sl.length*10)/10; });
+  new Chart(document.getElementById('sTendance'), {
+    type:'line',
+    data:{ labels:_tendMois, datasets:[
+      { label:'Inscriptions', data:_tendVals, borderColor:'#818cf8', backgroundColor:'rgba(129,140,248,.12)', fill:true, tension:.4, pointBackgroundColor:'#818cf8', pointRadius:4, borderWidth:2 },
+      { label:'Moy.', data:movAvg, borderColor:'#34d399', borderDash:[5,4], fill:false, tension:.3, pointRadius:0, borderWidth:1.5 }
+    ]},
+    options:{ responsive:true, plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}}, scales:{ y:{beginAtZero:true,grid:{color:_GC},ticks:{color:_TC}}, x:{grid:{display:false},ticks:{color:_TC,maxRotation:30}} } }
+  });
+
+  // Chart 4 — Catégories donut
+  const catL=Object.keys(_catData), catV=catL.map(k=>_catData[k].nbInscrits);
+  new Chart(document.getElementById('sCat'), {
+    type:'doughnut',
+    data:{ labels:catL, datasets:[{ data:catV, backgroundColor:_PAL, borderColor:'transparent', hoverOffset:8 }] },
+    options:{ responsive:true, cutout:'65%', plugins:{legend:{position:'bottom',labels:{color:_TC,font:{size:11},boxWidth:12}}} }
+  });
+
+  // Chart 5 — Progression
+  const pL=[],pV=[],pC=[];
+  _fjs.forEach(f=>{ if(_progData[f.id]!==undefined){ const p=parseFloat(_progData[f.id]); pL.push(_tr(f.titre,18)); pV.push(p); pC.push(p>=70?'#34d39999':p>=40?'#fbbf2499':'#f8717199'); } });
+  new Chart(document.getElementById('sProg'), {
+    type:'bar',
+    data:{ labels:pL, datasets:[{ label:'%', data:pV, backgroundColor:pC, borderColor:pC.map(c=>c.slice(0,7)), borderWidth:1.5, borderRadius:5, borderSkipped:false }] },
+    options:{ indexAxis:'y', responsive:true, plugins:{legend:{display:false}}, scales:{ x:{beginAtZero:true,max:100,grid:{color:_GC},ticks:{color:_TC,callback:v=>v+'%'}}, y:{grid:{display:false},ticks:{color:_TC,font:{size:11}}} } }
+  });
+
+}
+
+// Intercepter showTab pour construire les charts au premier clic
+const _origShowTab = showTab;
+window.showTab = function(name) {
+  _origShowTab(name);
+  if (name === 'statistiques') buildStatsCharts();
+};
 </script>
 {% endblock %}

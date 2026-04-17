@@ -189,6 +189,15 @@ public function inscrire(
             return $this->redirectToRoute('client_formation_detail', ['id' => $formation->getIdFormation()]);
         }
 
+        // Bloquer si progression = 100% (formation terminée, certificat obtenu)
+        if ($user) {
+            $inscForm = $inscFormRepo->findOneBy(['utilisateur' => $user, 'formation' => $formation]);
+            if ($inscForm && (int)$inscForm->getPourcentage_progression() === 100) {
+                $this->addFlash('info', 'Vous avez terminé cette formation et obtenu votre certificat. Accès aux modules fermé.');
+                return $this->redirectToRoute('client_formation_detail', ['id' => $formation->getIdFormation()]);
+            }
+        }
+
         // Bloquer si délai dépassé et progression < 100% et pas de réinscription récente
         if ($formation->getDateFin()) {
             $now = new \DateTime();

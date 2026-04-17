@@ -2,35 +2,20 @@
 
 namespace App\Controller\Dashboard;
 
-use App\Repository\CategorieFormationRepository;
 use App\Repository\FormationRepository;
-use App\Repository\InscriptionsFormationRepository;
 use App\Service\FormationStatsService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/dashboard', name: 'dashboard_')]
-class DashboardHomeController extends AbstractController
+class DashStatistiquesController extends AbstractController
 {
-    #[Route('', name: 'home')]
+    #[Route('/dashboard/statistiques', name: 'dashboard_statistiques')]
     public function index(
-        CategorieFormationRepository $catRepo,
-        FormationRepository $formRepo,
-        InscriptionsFormationRepository $inscRepo,
-        FormationStatsService $statsService
+        FormationStatsService $statsService,
+        FormationRepository $formationRepo,
     ): Response {
-        $allInscriptions = $inscRepo->findBy([], ['date_inscription' => 'DESC']);
-        $formations = $formRepo->findByCategorieAndSort(null, 'titre', 'ASC');
-
-        return $this->render('dashboard/home.html.twig', [
-            'nbCategories'    => count($catRepo->findAll()),
-            'nbFormations'    => count($formRepo->findAll()),
-            'nbInscriptions'  => count($allInscriptions),
-            'categories'      => $catRepo->findAllSorted('nom', 'ASC'),
-            'formations'      => $formations,
-            'allInscriptions' => $allInscriptions,
-            // Stats avancées
+        return $this->render('dashboard/statistiques.html.twig', [
             'statsGlobales'   => $statsService->getStatsGlobales(),
             'statsParCat'     => $statsService->getStatsParCategorie(),
             'topFormations'   => $statsService->getTopFormations(5),
@@ -38,11 +23,12 @@ class DashboardHomeController extends AbstractController
             'progMoyenne'     => $statsService->getProgressionMoyenneParFormation(),
             'tauxRemplissage' => $statsService->getTauxRemplissageParFormation(),
             'nbInscrits'      => $statsService->getNbInscriptionsParFormation(),
+            'formations'      => $formationRepo->findByCategorieAndSort(null, 'titre', 'ASC'),
             'formationsJs'    => array_map(fn($f) => [
                 'id'          => $f->getIdFormation(),
                 'titre'       => $f->getTitre(),
                 'capaciteMax' => $f->getCapaciteMax(),
-            ], $formations),
+            ], $formationRepo->findByCategorieAndSort(null, 'titre', 'ASC')),
             'correlation'     => $statsService->getCorrelationCapaciteInscriptions(),
             'regression'      => $statsService->getRegressionsLineaire(),
             'segmentation'    => $statsService->getSegmentationFormations(),
