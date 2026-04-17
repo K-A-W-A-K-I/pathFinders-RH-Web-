@@ -7,6 +7,21 @@
 {% endblock %}
 
 {% block body %}
+<div style="display:flex;gap:4px;margin-bottom:1.5rem;border-bottom:2px solid #e5e7ef;padding-bottom:0">
+    <a href="{{ path('evenement_index') }}"
+       style="padding:9px 18px;font-size:13px;font-weight:600;border-radius:8px 8px 0 0;text-decoration:none;border:1.5px solid transparent;border-bottom:none;margin-bottom:-2px;{% if app.request.attributes.get('_route') == 'evenement_index' %}background:#fff;border-color:#e5e7ef;color:#6c63ff;border-bottom-color:#fff;{% else %}color:#9ca3af;{% endif %}">
+        📅 Événements
+    </a>
+    <a href="{{ path('evenement_categories') }}"
+       style="padding:9px 18px;font-size:13px;font-weight:600;border-radius:8px 8px 0 0;text-decoration:none;border:1.5px solid transparent;border-bottom:none;margin-bottom:-2px;{% if app.request.attributes.get('_route') == 'evenement_categories' %}background:#fff;border-color:#e5e7ef;color:#6c63ff;border-bottom-color:#fff;{% else %}color:#9ca3af;{% endif %}">
+        🏷️ Catégories
+    </a>
+    <a href="{{ path('evenement_inscriptions') }}"
+       style="padding:9px 18px;font-size:13px;font-weight:600;border-radius:8px 8px 0 0;text-decoration:none;border:1.5px solid transparent;border-bottom:none;margin-bottom:-2px;{% if app.request.attributes.get('_route') == 'evenement_inscriptions' %}background:#fff;border-color:#e5e7ef;color:#6c63ff;border-bottom-color:#fff;{% else %}color:#9ca3af;{% endif %}">
+        📋 Inscriptions
+    </a>
+</div>
+
 <div class="admin-quick-cards" style="grid-template-columns:repeat(4,1fr)">
     <div class="quick-card">
         <div class="quick-card-icon" style="background:rgba(108,99,255,.1)">📅</div>

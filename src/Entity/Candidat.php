@@ -34,15 +34,6 @@ class Candidat
     #[ORM\Column(name: 'cv_analyse_date', type: 'datetime', nullable: true)]
     private ?\DateTimeInterface $cvAnalyseDate = null;
 
-    #[ORM\Column(name: 'is_blacklisted', type: 'boolean', options: ['default' => false])]
-    private bool $isBlacklisted = false;
-
-    #[ORM\Column(name: 'blacklist_note', type: 'text', nullable: true)]
-    private ?string $blacklistNote = null;
-
-    #[ORM\Column(name: 'blacklisted_at', type: 'datetime', nullable: true)]
-    private ?\DateTimeInterface $blacklistedAt = null;
-
     // Joined from utilisateurs (not mapped, loaded manually)
     private ?string $nom = null;
     private ?string $prenom = null;
@@ -69,12 +60,6 @@ class Candidat
     public function setCvScoreDetails(?string $cvScoreDetails): static { $this->cvScoreDetails = $cvScoreDetails; return $this; }
     public function getCvAnalyseDate(): ?\DateTimeInterface { return $this->cvAnalyseDate; }
     public function setCvAnalyseDate(?\DateTimeInterface $cvAnalyseDate): static { $this->cvAnalyseDate = $cvAnalyseDate; return $this; }
-    public function isBlacklisted(): bool { return $this->isBlacklisted; }
-    public function setIsBlacklisted(bool $isBlacklisted): static { $this->isBlacklisted = $isBlacklisted; return $this; }
-    public function getBlacklistNote(): ?string { return $this->blacklistNote; }
-    public function setBlacklistNote(?string $blacklistNote): static { $this->blacklistNote = $blacklistNote; return $this; }
-    public function getBlacklistedAt(): ?\DateTimeInterface { return $this->blacklistedAt; }
-    public function setBlacklistedAt(?\DateTimeInterface $blacklistedAt): static { $this->blacklistedAt = $blacklistedAt; return $this; }
     public function getNom(): ?string { return $this->nom; }
     public function setNom(?string $nom): static { $this->nom = $nom; return $this; }
     public function getPrenom(): ?string { return $this->prenom; }

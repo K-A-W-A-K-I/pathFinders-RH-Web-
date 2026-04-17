@@ -8,7 +8,6 @@ use App\Repository\CandidatRepository;
 use App\Repository\CandidatureRepository;
 use App\Repository\OffreRepository;
 use App\Repository\QuestionRepository;
-use App\Service\CandidatureMailer;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -43,12 +42,6 @@ class QuizController extends AbstractController
         $userId   = $session->get('user_id', 1);
         $candidat = $candidatRepo->findByUserId($userId);
 
-        // Vérifier si le candidat est blacklisté
-        if ($candidat && $candidat->isBlacklisted()) {
-            $this->addFlash('danger', 'Votre compte ne vous permet pas de postuler à des offres.');
-            return $this->redirectToRoute('offre_list');
-        }
-
         if ($candidat && $candidatureRepo->dejaPostule($candidat->getId(), $id)) {
             $this->addFlash('warning', 'Vous avez déjà postulé à cette offre.');
             return $this->redirectToRoute('offre_list');
@@ -79,8 +72,7 @@ class QuizController extends AbstractController
         CandidatRepository $candidatRepo,
         CandidatureRepository $candidatureRepo,
         EntityManagerInterface $em,
-        SessionInterface $session,
-        CandidatureMailer $mailer
+        SessionInterface $session
     ): Response {
         $offre     = $offreRepo->find($id);
         $questions = $questionRepo->findByOffre($id);
@@ -108,12 +100,6 @@ class QuizController extends AbstractController
         $userId   = $session->get('user_id', 1);
         $candidat = $candidatRepo->findByUserId($userId);
 
-        // Bloquer si blacklisté
-        if ($candidat && $candidat->isBlacklisted()) {
-            $this->addFlash('danger', 'Votre compte ne vous permet pas de postuler à des offres.');
-            return $this->redirectToRoute('offre_list');
-        }
-
         if (!$candidat) {
             $candidat = new Candidat();
             $candidat->setIdUtilisateur($userId);
@@ -128,18 +114,6 @@ class QuizController extends AbstractController
         $candidature->setAdmis(false);
         $em->persist($candidature);
         $em->flush();
-
-        // Envoyer email de confirmation au candidat
-        try {
-            $candidatRepo->hydrateNames([$candidat]);
-            $email = $candidat->getEmail();
-            $nom   = $candidat->getFullName() ?: 'Candidat';
-            if ($email) {
-                $mailer->sendCandidatureRecue($candidature, $email, $nom);
-            }
-        } catch (\Throwable) {
-            // Ne pas bloquer si l'email échoue
-        }
 
         $session->set('last_candidature_id', $candidature->getId());
         $session->set('last_score', $pct);

@@ -1,0 +1,178 @@
+{% extends 'admin_base.html.twig' %}
+{% block title %}Inscriptions aux événements{% endblock %}
+{% block page_icon %}📋{% endblock %}
+{% block page_title %}Inscriptions aux événements{% endblock %}
+{% block topbar_actions %}
+    <a href="{{ path('evenement_index') }}" class="admin-tool-btn">← Retour aux événements</a>
+{% endblock %}
+
+{% block body %}
+<div style="display:flex;gap:4px;margin-bottom:1.5rem;border-bottom:2px solid #e5e7ef;padding-bottom:0">
+    <a href="{{ path('evenement_index') }}"
+       style="padding:9px 18px;font-size:13px;font-weight:600;border-radius:8px 8px 0 0;text-decoration:none;border:1.5px solid transparent;border-bottom:none;margin-bottom:-2px;{% if app.request.attributes.get('_route') == 'evenement_index' %}background:#fff;border-color:#e5e7ef;color:#6c63ff;border-bottom-color:#fff;{% else %}color:#9ca3af;{% endif %}">
+        📅 Événements
+    </a>
+    <a href="{{ path('evenement_categories') }}"
+       style="padding:9px 18px;font-size:13px;font-weight:600;border-radius:8px 8px 0 0;text-decoration:none;border:1.5px solid transparent;border-bottom:none;margin-bottom:-2px;{% if app.request.attributes.get('_route') == 'evenement_categories' %}background:#fff;border-color:#e5e7ef;color:#6c63ff;border-bottom-color:#fff;{% else %}color:#9ca3af;{% endif %}">
+        🏷️ Catégories
+    </a>
+    <a href="{{ path('evenement_inscriptions') }}"
+       style="padding:9px 18px;font-size:13px;font-weight:600;border-radius:8px 8px 0 0;text-decoration:none;border:1.5px solid transparent;border-bottom:none;margin-bottom:-2px;{% if app.request.attributes.get('_route') == 'evenement_inscriptions' %}background:#fff;border-color:#e5e7ef;color:#6c63ff;border-bottom-color:#fff;{% else %}color:#9ca3af;{% endif %}">
+        📋 Inscriptions
+    </a>
+</div>
+
+
+{# ── Stats row ────────────────────────────────────────────────────────────── #}
+{% set total = inscriptions|length %}
+{% set confirmes = inscriptions|filter(i => i.statut_inscription == 'CONFIRME')|length %}
+{% set payes = inscriptions|filter(i => i.statut_paiement == 'PAYE')|length %}
+{% set enAttente = inscriptions|filter(i => i.statut_paiement == 'EN_ATTENTE')|length %}
+
+<div class="admin-quick-cards" style="grid-template-columns:repeat(4,1fr);margin-bottom:1.5rem">
+    <div class="quick-card">
+        <div class="quick-card-icon" style="background:rgba(108,99,255,.1)">📋</div>
+        <div class="quick-card-title">Total inscriptions</div>
+        <div style="font-size:1.6rem;font-weight:700;color:#1a1730">{{ total }}</div>
+    </div>
+    <div class="quick-card">
+        <div class="quick-card-icon" style="background:rgba(34,197,94,.1)">✅</div>
+        <div class="quick-card-title">Confirmées</div>
+        <div style="font-size:1.6rem;font-weight:700;color:#16a34a">{{ confirmes }}</div>
+    </div>
+    <div class="quick-card">
+        <div class="quick-card-icon" style="background:rgba(59,130,246,.1)">💳</div>
+        <div class="quick-card-title">Payées</div>
+        <div style="font-size:1.6rem;font-weight:700;color:#2563eb">{{ payes }}</div>
+    </div>
+    <div class="quick-card">
+        <div class="quick-card-icon" style="background:rgba(245,158,11,.1)">⏳</div>
+        <div class="quick-card-title">En attente paiement</div>
+        <div style="font-size:1.6rem;font-weight:700;color:#d97706">{{ enAttente }}</div>
+    </div>
+</div>
+
+{# ── Table ────────────────────────────────────────────────────────────────── #}
+<div class="admin-table-section">
+    <div class="admin-table-header">
+        <div class="admin-table-title">
+            Liste des inscriptions
+            <span class="admin-count-badge">{{ total }}</span>
+        </div>
+        <div class="admin-table-actions">
+            <form method="GET" action="{{ path('evenement_inscriptions') }}" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+
+                <input type="text" name="search" value="{{ search }}" placeholder="Nom, email, événement…"
+                       class="admin-search-input"
+                       oninput="clearTimeout(window._st);window._st=setTimeout(()=>this.form.submit(),350)">
+
+                <select name="event" class="admin-search-input" style="width:auto" onchange="this.form.submit()">
+                    <option value="">Tous les événements</option>
+                    {% for ev in evenements %}
+                        <option value="{{ ev.id }}" {% if eventId == ev.id %}selected{% endif %}>{{ ev.titre }}</option>
+                    {% endfor %}
+                </select>
+
+                <select name="statut" class="admin-search-input" style="width:auto" onchange="this.form.submit()">
+                    <option value="">Tous statuts</option>
+                    <option value="CONFIRME"  {% if statut == 'CONFIRME'  %}selected{% endif %}>Confirmé</option>
+                    <option value="ANNULE"    {% if statut == 'ANNULE'    %}selected{% endif %}>Annulé</option>
+                    <option value="EN_ATTENTE"{% if statut == 'EN_ATTENTE'%}selected{% endif %}>En attente</option>
+                </select>
+
+                {% if search or statut or eventId %}
+                    <a href="{{ path('evenement_inscriptions') }}" class="admin-tool-btn">✕ Reset</a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    {% if inscriptions is empty %}
+        <div class="admin-body empty-state">
+            <div class="empty-icon">📋</div>
+            <p class="empty-title">Aucune inscription trouvée</p>
+        </div>
+    {% else %}
+    <div style="overflow-x:auto">
+        <table class="admin-table">
+            <thead><tr>
+                <th>#</th>
+                <th>Utilisateur</th>
+                <th>Événement</th>
+                <th>Date inscription</th>
+                <th>Statut inscription</th>
+                <th>Paiement</th>
+                <th>Prix</th>
+                <th>Date paiement</th>
+            </tr></thead>
+            <tbody>
+            {% for ins in inscriptions %}
+            <tr>
+                <td style="color:#9999b8;font-size:12px">{{ ins.id_inscription }}</td>
+
+                {# User #}
+                <td>
+                    <div class="admin-table-name" style="font-size:14px">
+                        {{ ins.prenom }} {{ ins.nom }}
+                    </div>
+                    <div class="admin-table-muted" style="font-size:12px">{{ ins.email }}</div>
+                </td>
+
+                {# Event #}
+                <td>
+                    <div style="font-weight:600;font-size:13px;color:#1a1730">{{ ins.titre_evenement }}</div>
+                    <div class="admin-table-muted" style="font-size:12px">
+                        {{ ins.date_debut|date('d/m/Y') }} → {{ ins.date_fin|date('d/m/Y') }}
+                    </div>
+                </td>
+
+                {# Date inscription #}
+                <td class="admin-table-muted" style="font-size:13px;white-space:nowrap">
+                    {{ ins.date_inscription|date('d/m/Y H:i') }}
+                </td>
+
+                {# Statut inscription #}
+                <td>
+                    {% if ins.statut_inscription == 'CONFIRME' %}
+                        <span class="admin-status-dot dot-active">● Confirmé</span>
+                    {% elseif ins.statut_inscription == 'ANNULE' %}
+                        <span class="admin-status-dot dot-refuse">● Annulé</span>
+                    {% else %}
+                        <span class="admin-status-dot dot-pending">● {{ ins.statut_inscription }}</span>
+                    {% endif %}
+                </td>
+
+                {# Statut paiement #}
+                <td>
+                    {% if ins.statut_paiement == 'PAYE' %}
+                        <span class="admin-badge" style="background:#dcfce7;color:#16a34a">💳 Payé</span>
+                    {% elseif ins.statut_paiement == 'EN_ATTENTE' %}
+                        <span class="admin-badge" style="background:#fef9c3;color:#b45309">⏳ En attente</span>
+                    {% elseif ins.statut_paiement == 'NON_REQUIS' %}
+                        <span class="admin-badge" style="background:#f1f5f9;color:#64748b">— Gratuit</span>
+                    {% else %}
+                        <span class="admin-table-muted" style="font-size:12px">—</span>
+                    {% endif %}
+                </td>
+
+                {# Prix #}
+                <td style="font-size:13px">
+                    {% if ins.prix and ins.prix > 0 %}
+                        <span style="font-weight:700;color:#16a34a">{{ ins.prix }} TND</span>
+                    {% else %}
+                        <span class="admin-badge admin-badge-green">Gratuit</span>
+                    {% endif %}
+                </td>
+
+                {# Date paiement #}
+                <td class="admin-table-muted" style="font-size:12px;white-space:nowrap">
+                    {{ ins.date_paiement ? ins.date_paiement|date('d/m/Y') : '—' }}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

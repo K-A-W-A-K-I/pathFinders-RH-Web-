@@ -18,10 +18,12 @@ services:
         arguments:
             $targetDirectory: '%images_categories_directory%'
 
-    App\Service\CandidatureMailer:
+    App\Controller\Evenement\UserEventController:
         arguments:
-            $fromEmail: '%env(MAILER_FROM)%'
+            $stripeSecretKey: '%env(STRIPE_SECRET_KEY)%'
 
-    App\Service\AiService:
+    App\Service\EventMailer:
         arguments:
-            $apiKey: '%env(OPENROUTER_API_KEY)%'
+            $fromEmail: '%env(MAILER_FROM_EMAIL)%'
+            $fromName:  '%env(MAILER_FROM_NAME)%'
+            $appBaseUrl: '%env(APP_BASE_URL)%'

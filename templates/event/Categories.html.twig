@@ -1,0 +1,170 @@
+{% extends 'admin_base.html.twig' %}
+{% block title %}Catégories d'événements{% endblock %}
+{% block page_icon %}🏷️{% endblock %}
+{% block page_title %}Catégories d'événements{% endblock %}
+{% block topbar_actions %}
+    <a href="{{ path('evenement_index') }}" class="admin-tool-btn">← Retour aux événements</a>
+{% endblock %}
+
+{% block body %}
+<div style="display:flex;gap:4px;margin-bottom:1.5rem;border-bottom:2px solid #e5e7ef;padding-bottom:0">
+    <a href="{{ path('evenement_index') }}"
+       style="padding:9px 18px;font-size:13px;font-weight:600;border-radius:8px 8px 0 0;text-decoration:none;border:1.5px solid transparent;border-bottom:none;margin-bottom:-2px;{% if app.request.attributes.get('_route') == 'evenement_index' %}background:#fff;border-color:#e5e7ef;color:#6c63ff;border-bottom-color:#fff;{% else %}color:#9ca3af;{% endif %}">
+        📅 Événements
+    </a>
+    <a href="{{ path('evenement_categories') }}"
+       style="padding:9px 18px;font-size:13px;font-weight:600;border-radius:8px 8px 0 0;text-decoration:none;border:1.5px solid transparent;border-bottom:none;margin-bottom:-2px;{% if app.request.attributes.get('_route') == 'evenement_categories' %}background:#fff;border-color:#e5e7ef;color:#6c63ff;border-bottom-color:#fff;{% else %}color:#9ca3af;{% endif %}">
+        🏷️ Catégories
+    </a>
+    <a href="{{ path('evenement_inscriptions') }}"
+       style="padding:9px 18px;font-size:13px;font-weight:600;border-radius:8px 8px 0 0;text-decoration:none;border:1.5px solid transparent;border-bottom:none;margin-bottom:-2px;{% if app.request.attributes.get('_route') == 'evenement_inscriptions' %}background:#fff;border-color:#e5e7ef;color:#6c63ff;border-bottom-color:#fff;{% else %}color:#9ca3af;{% endif %}">
+        📋 Inscriptions
+    </a>
+</div>
+
+
+{# Flash messages #}
+{% for msg in app.flashes('success') %}
+    <div style="background:#dcfce7;border:1px solid #86efac;color:#15803d;padding:.75rem 1.25rem;border-radius:8px;font-size:14px;display:flex;align-items:center;gap:.5rem;margin-bottom:1rem">✓ {{ msg }}</div>
+{% endfor %}
+{% for msg in app.flashes('error') %}
+    <div style="background:#fee2e2;border:1px solid #fca5a5;color:#dc2626;padding:.75rem 1.25rem;border-radius:8px;font-size:14px;display:flex;align-items:center;gap:.5rem;margin-bottom:1rem">✕ {{ msg }}</div>
+{% endfor %}
+
+<div style="display:grid;grid-template-columns:1fr 360px;gap:1.5rem;align-items:start">
+
+    {# ── Left : categories list ─────────────────────────────────────────── #}
+    <div class="admin-table-section">
+        <div class="admin-table-header">
+            <div class="admin-table-title">
+                Liste des catégories
+                <span class="admin-count-badge">{{ categories|length }}</span>
+            </div>
+        </div>
+
+        {% if categories is empty %}
+            <div style="text-align:center;padding:40px 20px;color:#9999b8">
+                <div style="font-size:2rem;margin-bottom:8px">🏷️</div>
+                <p style="font-weight:600;margin:0">Aucune catégorie pour le moment.</p>
+                <p style="font-size:13px;margin-top:4px">Créez-en une depuis le formulaire →</p>
+            </div>
+        {% else %}
+            <table class="admin-table">
+                <thead><tr>
+                    <th>#</th>
+                    <th>Nom</th>
+                    <th>Description</th>
+                    <th style="text-align:right">Actions</th>
+                </tr></thead>
+                <tbody>
+                {% for cat in categories %}
+                <tr>
+                    <td style="color:#9999b8;font-size:13px">{{ cat.id }}</td>
+                    <td><span class="admin-badge admin-badge-blue">{{ cat.nomCategorie }}</span></td>
+                    <td class="admin-table-muted" style="font-size:13px">
+                        {{ cat.description ? cat.description|slice(0,80) ~ (cat.description|length > 80 ? '…' : '') : '—' }}
+                    </td>
+                    <td>
+                        <div style="display:flex;justify-content:flex-end">
+                            <form method="post" action="{{ path('evenement_categories') }}"
+                                  onsubmit="return confirm('Supprimer la catégorie « {{ cat.nomCategorie }} » ?')">
+                                <input type="hidden" name="_action" value="delete">
+                                <input type="hidden" name="id" value="{{ cat.id }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('categorie_delete_' ~ cat.id) }}">
+                                <button type="submit" class="admin-action-btn admin-action-delete" title="Supprimer">🗑</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+
+    {# ── Right : add form ───────────────────────────────────────────────── #}
+    <div class="admin-table-section" style="padding:28px">
+        <div style="font-size:13px;font-weight:700;color:#9999b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:1.4rem">➕ Nouvelle catégorie</div>
+
+        <form method="post" action="{{ path('evenement_categories') }}" id="cat-form" novalidate>
+            <input type="hidden" name="_action" value="add">
+            <input type="hidden" name="_token" value="{{ csrf_token('categorie_add') }}">
+
+            {# Nom #}
+            <div class="fv-group" style="margin-bottom:1rem">
+                <label style="display:block;font-size:13px;font-weight:600;color:#4b5563;margin-bottom:.4rem">
+                    Nom <span style="color:#dc2626">*</span>
+                </label>
+                <input type="text" name="nom" id="cat-nom" value="{{ formData.nom }}"
+                       maxlength="100" autocomplete="off"
+                       data-fv="nom"
+                       style="width:100%;padding:10px 14px;border:1.5px solid {% if errors.nom is defined %}#dc2626{% else %}#e2e5ea{% endif %};border-radius:9px;font-size:14px;font-family:DM Sans,sans-serif;outline:none;"
+                       placeholder="ex: Conférence, Sport, Culture…">
+                <div class="fv-error" data-for="nom" style="color:#dc2626;font-size:12px;margin-top:3px{% if errors.nom is not defined %};display:none{% endif %}">
+                    {% if errors.nom is defined %}⚠ {{ errors.nom[0] }}{% endif %}
+                </div>
+            </div>
+
+            {# Description #}
+            <div class="fv-group" style="margin-bottom:1.4rem">
+                <label style="display:block;font-size:13px;font-weight:600;color:#4b5563;margin-bottom:.4rem">Description</label>
+                <textarea name="description" id="cat-desc" rows="3"
+                          data-fv="desc"
+                          style="width:100%;padding:10px 14px;border:1.5px solid #e2e5ea;border-radius:9px;font-size:14px;font-family:DM Sans,sans-serif;outline:none;resize:vertical;"
+                          placeholder="Description optionnelle…">{{ formData.description }}</textarea>
+                <div class="fv-error" data-for="desc" style="display:none;color:#dc2626;font-size:12px;margin-top:3px"></div>
+            </div>
+
+            <button type="submit"
+                    style="width:100%;background:linear-gradient(135deg,#6C63FF,#9D6BFF);border:none;border-radius:10px;padding:12px;font-weight:600;font-size:14px;color:#fff;cursor:pointer;">
+                ✓ Créer la catégorie
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+(function () {
+    const nomEl  = document.getElementById('cat-nom');
+    const errNom = document.querySelector('.fv-error[data-for="nom"]');
+    const descEl = document.getElementById('cat-desc');
+    const errDesc = document.querySelector('.fv-error[data-for="desc"]');
+
+    function validateNom() {
+        const v = nomEl.value.trim();
+        if (!v) { return show(nomEl, errNom, 'Le nom est obligatoire.'); }
+        if (v.length < 2) { return show(nomEl, errNom, 'Le nom doit contenir au moins 2 caractères.'); }
+        if (nomEl.value.length > 100) { return show(nomEl, errNom, 'Le nom ne peut pas dépasser 100 caractères.'); }
+        ok(nomEl, errNom); return true;
+    }
+
+    function validateDesc() {
+        if (descEl.value.length > 500) { return show(descEl, errDesc, 'La description ne peut pas dépasser 500 caractères.'); }
+        ok(descEl, errDesc); return true;
+    }
+
+    function show(el, err, msg) {
+        el.style.borderColor = '#dc2626';
+        err.textContent = '⚠ ' + msg;
+        err.style.display = 'block';
+        return false;
+    }
+    function ok(el, err) {
+        el.style.borderColor = '#22c55e';
+        err.style.display = 'none';
+    }
+
+    nomEl.addEventListener('blur', validateNom);
+    nomEl.addEventListener('input', function () { if (errNom.style.display !== 'none') validateNom(); });
+    descEl.addEventListener('blur', validateDesc);
+
+    document.getElementById('cat-form').addEventListener('submit', function (e) {
+        const v1 = validateNom();
+        const v2 = validateDesc();
+        if (!v1 || !v2) e.preventDefault();
+    });
+})();
+</script>
+{% endblock %}

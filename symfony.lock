@@ -38,6 +38,18 @@
     "knplabs/knp-paginator-bundle": {
         "version": "v6.10.0"
     },
+    "stripe/stripe-php": {
+        "version": "20.0",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "main",
+            "version": "19.0",
+            "ref": "d6829c693e3927a8972c7671d74a1a5c505712b0"
+        },
+        "files": [
+            "./config/packages/stripe.yaml"
+        ]
+    },
     "symfony/console": {
         "version": "7.1",
         "recipe": {
@@ -127,19 +139,6 @@
         "files": [
             "./config/packages/security.yaml",
             "./config/routes/security.yaml"
-        ]
-    },
-    "symfony/translation": {
-        "version": "6.4",
-        "recipe": {
-            "repo": "github.com/symfony/recipes",
-            "branch": "main",
-            "version": "6.3",
-            "ref": "620a1b84865ceb2ba304c8f8bf2a185fbf32a843"
-        },
-        "files": [
-            "./config/packages/translation.yaml",
-            "./translations/.gitignore"
         ]
     },
     "symfony/twig-bundle": {
