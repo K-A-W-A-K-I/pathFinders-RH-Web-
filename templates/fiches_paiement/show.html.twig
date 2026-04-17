@@ -17,10 +17,19 @@
       </div>
       <div class="detail-sub">Fiche #{{ fiche.idFichePaiement }}</div>
     </div>
-    <div style="display:flex; gap:8px">
-      <a href="{{ path('fiche_edit', {id: fiche.idFichePaiement}) }}" class="btn-edit">✏️ Modifier</a>
-      <a href="{{ path('fiche_print_one', {id: fiche.idFichePaiement}) }}" class="btn-print" target="_blank">🖨 Imprimer</a>
-      <a href="{{ path('prime_new_for_fiche', {id: fiche.idFichePaiement}) }}" class="btn-prime">⭐ Ajouter Prime</a>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <a href="{{ path('fiche_edit', {id: fiche.idFichePaiement}) }}" class="btn-edit">
+        ✏️ Modifier
+      </a>
+      <a href="{{ path('fiche_print_one', {id: fiche.idFichePaiement}) }}" class="btn-print" target="_blank">
+        🖨 Imprimer
+      </a>
+      <a href="{{ path('prime_new_for_fiche', {id: fiche.idFichePaiement}) }}" class="btn-prime">
+        ⭐ Ajouter Prime
+      </a>
+      <a href="{{ path('fiche_recommend_prime', {id: fiche.idFichePaiement}) }}" class="btn-prime">
+        🤖 Recommander Prime
+      </a>
     </div>
   </div>
 

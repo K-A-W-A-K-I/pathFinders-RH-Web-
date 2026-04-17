@@ -30,7 +30,7 @@ class FichesPaiementType extends AbstractType
                 'placeholder' => '-- Choisir --',
             ])
             ->add('date_paiement', DateType::class, [
-                'widget' => 'single_text', // renders as <input type="date">
+                'widget' => 'single_text', 
                 'label' => 'Date de paiement',
             ])
             ->add('type_paiement', ChoiceType::class, [

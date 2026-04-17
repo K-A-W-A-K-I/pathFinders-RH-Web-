@@ -1,0 +1,94 @@
+{% extends 'admin_base.html.twig' %}
+{% block title %}Recommandation IA — Prime{% endblock %}
+{% block page_icon %}🤖{% endblock %}
+{% block page_title %}Recommandation de Prime{% endblock %}
+
+{% block topbar_actions %}
+    <a href="{{ path('fiche_show', {id: fiche.idFichePaiement}) }}" class="admin-tool-btn">← Retour à la fiche</a>
+{% endblock %}
+
+{% block body %}
+<div style="max-width:700px">
+
+    {# ── Employee data card ── #}
+    <div class="admin-table-section" style="margin-bottom:20px;padding:24px">
+        <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#9999b8;margin-bottom:16px">
+            📋 Données analysées
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+            <div>
+                <div style="font-size:12px;color:#9999b8;margin-bottom:4px">Employé</div>
+                <div style="font-weight:600;color:#1a1730">{{ fiche.employee.utilisateur.nom }} {{ fiche.employee.utilisateur.prenom }}</div>
+            </div>
+            <div>
+                <div style="font-size:12px;color:#9999b8;margin-bottom:4px">Score performance</div>
+                <div style="font-weight:700;color:#6C63FF">{{ fiche.employee.score ?? 0 }}/100</div>
+            </div>
+            <div>
+                <div style="font-size:12px;color:#9999b8;margin-bottom:4px">Type paiement</div>
+                <div style="font-weight:600;color:#1a1730">{{ fiche.typePaiement ?? 'mensuel' }}</div>
+            </div>
+            <div>
+                <div style="font-size:12px;color:#9999b8;margin-bottom:4px">Salaire de base</div>
+                <div style="font-weight:600;color:#1a1730">{{ fiche.employee.salaire ?? 0 }} DT</div>
+            </div>
+            <div>
+                <div style="font-size:12px;color:#9999b8;margin-bottom:4px">Déduction</div>
+                <div style="font-weight:600;color:#dc2626">{{ fiche.montantDeduction ?? 0 }} DT</div>
+            </div>
+            <div>
+                <div style="font-size:12px;color:#9999b8;margin-bottom:4px">Salaire net</div>
+                <div style="font-weight:600;color:#16a34a">{{ fiche.salaireNet ?? 0 }} DT</div>
+            </div>
+        </div>
+    </div>
+
+    {# ── AI Result ── #}
+    {% if error %}
+        <div class="pf-alert pf-alert-error">❌ {{ error }}</div>
+
+    {% elseif recommendation %}
+        <div class="admin-table-section" style="padding:24px">
+
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #e2e5ea">
+                <div style="width:44px;height:44px;background:rgba(108,99,255,.1);border:1px solid rgba(108,99,255,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🤖</div>
+                <div>
+                    <div style="font-weight:700;font-family:'Sora',sans-serif;font-size:15px;color:#1a1730">Recommandation IA</div>
+                    <div style="font-size:12px;color:#9999b8">Basée sur les données de l'employé</div>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+                <div style="background:rgba(108,99,255,.07);border:1px solid rgba(108,99,255,.18);border-radius:12px;padding:20px;text-align:center">
+                    <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6C63FF;margin-bottom:8px">Type de prime</div>
+                    <div style="font-weight:700;color:#6C63FF;font-size:1.2rem">{{ recommendation.type_prime|capitalize }}</div>
+                </div>
+                <div style="background:rgba(22,163,74,.07);border:1px solid rgba(22,163,74,.18);border-radius:12px;padding:20px;text-align:center">
+                    <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#16a34a;margin-bottom:8px">Montant suggéré</div>
+                    <div style="font-weight:800;color:#16a34a;font-size:1.6rem;font-family:'Sora',sans-serif">{{ recommendation.montant }} DT</div>
+                </div>
+            </div>
+
+            <div style="background:#f8f9fb;border:1px solid #e2e5ea;border-radius:12px;padding:18px;margin-bottom:24px">
+                <div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#9999b8;margin-bottom:10px">Justification</div>
+                <p style="color:#4b5563;line-height:1.7;font-size:14px;margin:0">{{ recommendation.justification }}</p>
+            </div>
+
+            <div style="display:flex;gap:10px">
+                <a href="{{ path('prime_new_for_fiche', {id: fiche.idFichePaiement}) }}?montant={{ recommendation.montant }}&type={{ recommendation.type_prime }}"
+                   style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:10px;background:linear-gradient(135deg,#6C63FF,#9D6BFF);color:#fff;font-weight:600;font-size:13.5px;text-decoration:none;box-shadow:0 2px 10px rgba(108,99,255,.3)">
+                    ✅ Accepter et créer la prime
+                </a>
+                <a href="{{ path('fiche_show', {id: fiche.idFichePaiement}) }}"
+                   style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:10px;background:#f0f2f5;border:1px solid #e2e5ea;color:#5a5a7a;font-weight:600;font-size:13.5px;text-decoration:none">
+                    ✕ Ignorer
+                </a>
+            </div>
+        </div>
+
+    {% else %}
+        <div class="pf-alert pf-alert-error">❌ L'IA n'a pas pu générer de recommandation.</div>
+    {% endif %}
+
+</div>
+{% endblock %}

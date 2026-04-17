@@ -41,7 +41,7 @@ class Prime
     private ?string $typePrime = null;
 
     #[ORM\ManyToOne(targetEntity: FichesPaiement::class, inversedBy: 'primes')]
-    #[ORM\JoinColumn(name: 'id_fiche_paiement', referencedColumnName: 'id_fiche_paiement')]
+    #[ORM\JoinColumn(name: 'id_fiche_paiement', referencedColumnName: 'id_fiche_paiement', onDelete: 'CASCADE')]
     #[Assert\NotNull(message: 'La fiche de paiement est obligatoire')]
     private ?FichesPaiement $fichesPaiement = null;
 
