@@ -23,6 +23,15 @@ class CandidatureRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    public function findAllWithRelationsQuery(): \Doctrine\ORM\Query
+    {
+        return $this->createQueryBuilder('c')
+            ->join('c.offre', 'o')
+            ->join('c.candidat', 'ca')
+            ->orderBy('c.datePassage', 'DESC')
+            ->getQuery();
+    }
+
     public function findByCandidat(int $idCandidat): array
     {
         return $this->createQueryBuilder('c')

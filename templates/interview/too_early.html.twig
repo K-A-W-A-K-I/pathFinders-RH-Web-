@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entretien pas encore disponible</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ 'now'|date('U') }}">
+</head>
+<body class="pf-body">
+<div class="pf-bg">
+  <div class="pf-bg-grid"></div>
+  <div class="pf-bg-glow pf-bg-glow-1"></div>
+  <div class="pf-bg-glow pf-bg-glow-2"></div>
+</div>
+<nav class="pf-nav">
+  <div class="pf-logo">
+    <img src="{{ asset('logowhite.png') }}" alt="PathFinder" style="height:32px;">
+    <span class="pf-logo-text">PATHFINDER</span>
+  </div>
+</nav>
+<div class="auth-wrapper">
+  <div class="auth-card" style="text-align:center">
+    <div style="font-size:52px;margin-bottom:16px">⏰</div>
+    <h1 class="auth-title">Pas encore disponible</h1>
+    <p class="auth-subtitle" style="margin-bottom:20px">Votre entretien pour le poste <strong style="color:var(--accent)">{{ entretien.offre.titre }}</strong> est prévu le :</p>
+    <div style="background:rgba(108,99,255,.1);border:1px solid rgba(108,99,255,.25);border-radius:12px;padding:14px 20px;margin:0 0 16px;font-family:'Sora',sans-serif;font-size:16px;font-weight:700;color:var(--accent)">
+      {{ entretien.dateEntretien|date('d/m/Y à H:i') }}
+    </div>
+    <p style="font-size:13px;color:var(--text-muted)">Le lien sera actif à partir de <strong>{{ openFrom|date('H:i') }}</strong> (15 min avant).<br>Revenez à ce moment-là.</p>
+  </div>
+</div>
+</body>
+</html>

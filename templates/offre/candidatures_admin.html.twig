@@ -4,7 +4,7 @@
 {% block page_title %}Toutes les Candidatures{% endblock %}
 
 {% block topbar_actions %}
-    <a href="{{ path('offre_index') }}" class="btn btn-secondary">← Retour aux offres</a>
+    <a href="{{ path('offre_index') }}" class="btn btn-secondary" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;font-weight:600;text-decoration:none;background:var(--white);color:var(--text-light);border:1px solid var(--border)">← Retour aux offres</a>
 {% endblock %}
 
 {% block body %}
@@ -13,9 +13,12 @@
     <div class="admin-table-header">
         <div class="admin-table-title">
             Candidatures reçues
-            <span class="admin-count-badge">{{ candidatures|length }}</span>
+            <span class="admin-count-badge">{{ candidatures.totalItemCount }}</span>
         </div>
         <div class="admin-table-actions">
+            <span style="font-size:13px;color:var(--text-light)">
+                Page {{ candidatures.currentPageNumber }} / {{ candidatures.pageCount }}
+            </span>
             <input type="text" placeholder="Rechercher..." class="admin-search-input" id="candidatSearch">
         </div>
     </div>
@@ -31,7 +34,8 @@
             <tr>
                 <th>CANDIDAT</th>
                 <th>OFFRE</th>
-                <th>SCORE</th>
+                <th>SCORE QUIZ</th>
+                <th>SCORE CV IA</th>
                 <th>DATE</th>
                 <th>STATUT</th>
                 <th>ACTIONS</th>
@@ -47,6 +51,19 @@
                     <div class="admin-score-fill" style="width:{{ c.score }}%"></div>
                 </div>
                 {{ c.score }}%
+            </td>
+            <td id="cv-score-{{ c.id }}">
+                {% if c.cvScoreIa is not null %}
+                    <span style="color:#6C63FF;font-weight:600">{{ c.cvScoreIa }}%</span>
+                    {% if c.candidat.cvScoreDetails %}
+                        <span title="{{ c.candidat.cvScoreDetails }}" style="cursor:help;color:#9999b8;font-size:11px"> ℹ️</span>
+                    {% endif %}
+                {% elseif c.candidat.cvPath %}
+                    <button class="admin-action-btn" style="color:#f97316;border-color:rgba(249,115,22,.3);font-size:11px;white-space:nowrap"
+                            onclick="analyseCv({{ c.id }}, this)">🤖 Analyser</button>
+                {% else %}
+                    <span class="admin-table-muted">Pas de CV</span>
+                {% endif %}
             </td>
             <td class="admin-table-muted">
                 {{ c.datePassage ? c.datePassage|date('d/m/Y H:i') : '—' }}
@@ -67,13 +84,166 @@
                         <button type="submit" class="admin-action-btn admin-action-delete" title="Refuser">✗</button>
                     </form>
                     <a href="{{ path('offre_show', {id: c.offre.id}) }}" class="admin-action-btn" title="Voir l'offre">→</a>
+                    {% if not c.candidat.isBlacklisted %}
+                    <button type="button"
+                            class="admin-action-btn"
+                            style="color:#dc2626;border-color:rgba(239,68,68,.3)"
+                            title="Refuser & Blacklister"
+                            onclick="openBlacklistModal({{ c.id }}, '{{ c.candidat.fullName|e('js') }}')">
+                        🚫
+                    </button>
+                    {% else %}
+                    <span title="Blacklisté : {{ c.candidat.blacklistNote }}" style="font-size:13px;cursor:help">🚫✓</span>
+                    {% endif %}
                 </div>
             </td>
         </tr>
         {% endfor %}
         </tbody>
     </table>
+
+    {# ── Pagination ── #}
+    <div class="pagination-wrapper">
+        <div class="pagination-nav">
+            {% if candidatures.currentPageNumber > 1 %}
+                <a href="{{ path('admin_candidatures', {page: candidatures.currentPageNumber - 1}) }}" class="pagination-btn pagination-prev">
+                    ← Précédent
+                </a>
+            {% else %}
+                <span class="pagination-btn pagination-disabled">← Précédent</span>
+            {% endif %}
+
+            <div class="pagination-current">
+                <span class="page-label">Page</span>
+                <span class="page-number">{{ candidatures.currentPageNumber }}</span>
+                <span class="page-separator">/</span>
+                <span class="page-total">{{ candidatures.pageCount }}</span>
+            </div>
+
+            {% if candidatures.currentPageNumber < candidatures.pageCount %}
+                <a href="{{ path('admin_candidatures', {page: candidatures.currentPageNumber + 1}) }}" class="pagination-btn pagination-next">
+                    Suivant →
+                </a>
+            {% else %}
+                <span class="pagination-btn pagination-disabled">Suivant →</span>
+            {% endif %}
+        </div>
+        <div class="pagination-info">
+            {{ candidatures.currentPageNumber * 15 - 14 }}–{{ min(candidatures.currentPageNumber * 15, candidatures.totalItemCount) }} sur {{ candidatures.totalItemCount }} candidatures
+        </div>
+    </div>
+
     {% endif %}
+</div>
+
+<style>
+.pagination-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 32px 0 16px;
+    margin-top: 24px;
+}
+
+.pagination-nav {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.pagination-btn {
+    padding: 12px 32px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    background: #1e1b3a;
+    color: white;
+    border: none;
+    transition: all 0.2s;
+    min-width: 150px;
+    text-align: center;
+}
+
+.pagination-btn:hover:not(.pagination-disabled) {
+    background: #6C63FF;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(108, 99, 255, 0.4);
+}
+
+.pagination-disabled {
+    background: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+.pagination-current {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 28px;
+    background: white;
+    border: 2px solid #1e1b3a;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.page-label {
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.page-number {
+    color: #1e1b3a;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.page-separator {
+    color: #9ca3af;
+    font-size: 16px;
+}
+
+.page-total {
+    color: #4b5563;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.pagination-info {
+    font-size: 13px;
+    color: #6b7280;
+    text-align: center;
+}
+</style>
+
+{# ── Blacklist Modal ── #}
+<div id="blacklist-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:#fff;border-radius:16px;padding:28px;max-width:460px;width:95%;position:relative">
+        <button onclick="closeBlacklistModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#666">✕</button>
+        <h3 style="margin:0 0 6px;font-size:16px;font-weight:700;color:#dc2626">🚫 Refuser & Blacklister</h3>
+        <p id="blacklist-candidat-name" style="margin:0 0 18px;font-size:13px;color:#666"></p>
+        <form id="blacklist-form" method="post">
+            <input type="hidden" name="_token" id="blacklist-token">
+            <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">Note (raison du blacklist)</label>
+            <textarea name="blacklist_note" id="blacklist-note" rows="3"
+                      placeholder="Ex: Faux diplômes, No-show entretien..."
+                      style="width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box"></textarea>
+            <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end">
+                <button type="button" onclick="closeBlacklistModal()"
+                        style="padding:9px 18px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;font-weight:600;cursor:pointer;font-size:13px">
+                    Annuler
+                </button>
+                <button type="submit"
+                        style="padding:9px 18px;border-radius:8px;border:none;background:#dc2626;color:#fff;font-weight:600;cursor:pointer;font-size:13px">
+                    🚫 Confirmer le blacklist
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>
@@ -83,5 +253,51 @@ document.getElementById('candidatSearch')?.addEventListener('input', function() 
         row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
     });
 });
+
+// ── Blacklist Modal ────────────────────────────────────────────────────
+const blacklistUrls = {
+    {% for c in candidatures %}
+    {{ c.id }}: "{{ path('candidature_blacklist', {id: c.id}) }}",
+    {% endfor %}
+};
+const blacklistTokens = {
+    {% for c in candidatures %}
+    {{ c.id }}: "{{ csrf_token('blacklist' ~ c.id) }}",
+    {% endfor %}
+};
+
+function openBlacklistModal(candidatureId, candidatName) {
+    document.getElementById('blacklist-candidat-name').textContent = 'Candidat : ' + candidatName;
+    document.getElementById('blacklist-form').action = blacklistUrls[candidatureId];
+    document.getElementById('blacklist-token').value = blacklistTokens[candidatureId];
+    document.getElementById('blacklist-note').value = '';
+    document.getElementById('blacklist-modal').style.display = 'flex';
+}
+function closeBlacklistModal() {
+    document.getElementById('blacklist-modal').style.display = 'none';
+}
+document.getElementById('blacklist-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeBlacklistModal();
+});
+
+function analyseCv(candidatureId, btn) {
+    btn.textContent = '⏳...';
+    btn.disabled = true;
+
+    fetch(`/admin/offres/candidature/${candidatureId}/analyse-cv`, { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+        const cell = document.getElementById('cv-score-' + candidatureId);
+        if (data.success) {
+            cell.innerHTML = `<span style="color:#6C63FF;font-weight:600">${data.score}%</span>`
+                + (data.details ? ` <span title="${data.details.replace(/"/g,"'")}" style="cursor:help;color:#9999b8;font-size:11px">ℹ️</span>` : '');
+        } else {
+            cell.innerHTML = `<span style="color:#f87171;font-size:11px" title="${data.error}">❌ Erreur</span>`;
+        }
+    })
+    .catch(() => {
+        document.getElementById('cv-score-' + candidatureId).innerHTML = '<span style="color:#f87171;font-size:11px">Erreur réseau</span>';
+    });
+}
 </script>
 {% endblock %}

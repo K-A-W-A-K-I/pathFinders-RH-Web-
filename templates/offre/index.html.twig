@@ -24,19 +24,48 @@
         <div class="quick-card-icon" style="background:rgba(245,158,11,0.12)">❓</div>
         <div class="quick-card-body">
             <div class="quick-card-title">Gestion des Questions</div>
-            <div class="quick-card-sub">Gérer les questions et les tests d'évaluation</div>
+            <div style="display:flex;gap:12px;margin-top:6px;flex-wrap:wrap">
+                <span style="font-size:12px;color:#6b6b8a">📝 <strong style="color:#1a1730">{{ totalQuestions }}</strong> questions</span>
+                <span style="font-size:12px;color:#6b6b8a">📋 <strong style="color:#1a1730">{{ offres|length }}</strong> offres</span>
+                {% if offresWithoutQuestions > 0 %}
+                    <span style="font-size:12px;color:#d97706;font-weight:600">⚠️ {{ offresWithoutQuestions }} sans questions</span>
+                {% else %}
+                    <span style="font-size:12px;color:#16a34a;font-weight:600">✅ Toutes couvertes</span>
+                {% endif %}
+            </div>
+            {% if offresWithoutQuestions > 0 %}
+            <button onclick="bulkGenerate()" id="bulk-btn"
+                    style="margin-top:10px;display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:12.5px;font-weight:600;background:linear-gradient(135deg,#6C63FF,#9D6BFF);color:#fff;border:none;cursor:pointer;width:100%">
+                🤖 Générer pour les {{ offresWithoutQuestions }} offre(s) sans questions
+            </button>
+            <div id="bulk-status" style="font-size:12px;margin-top:6px;color:#6C63FF;display:none"></div>
+            {% endif %}
         </div>
-        <a href="{{ path('offre_index') }}" class="quick-card-btn">Gérer →</a>
         <span class="quick-card-badge quick-card-badge-amber">Tests actifs</span>
     </div>
     <div class="quick-card quick-card-featured">
         <div class="quick-card-icon" style="background:rgba(239,68,68,0.12)">🤖</div>
         <div class="quick-card-body">
             <div class="quick-card-title" style="color:#f97316">Analyser CV par IA</div>
-            <div class="quick-card-sub">Gemini analyse le CV et attribue un score sur 100</div>
+            {% if totalCv == 0 %}
+                <div class="quick-card-sub">Aucune candidature avec CV pour le moment.</div>
+            {% elseif analysedCv == totalCv %}
+                <div class="quick-card-sub" style="color:#16a34a;font-weight:600">✅ Tous les CVs analysés ({{ totalCv }})</div>
+            {% else %}
+                <div class="quick-card-sub">{{ analysedCv }}/{{ totalCv }} CVs analysés</div>
+                <div style="margin-top:8px;height:6px;background:#f0f0f8;border-radius:4px;overflow:hidden">
+                    <div style="height:6px;border-radius:4px;background:linear-gradient(90deg,#f97316,#fb923c);width:{{ totalCv > 0 ? ((analysedCv / totalCv) * 100)|round : 0 }}%;transition:width .4s"></div>
+                </div>
+            {% endif %}
         </div>
-        <button class="quick-card-btn quick-card-btn-orange">● Analyser</button>
-        <span class="quick-card-badge quick-card-badge-orange">IA Gemini</span>
+        {% if totalCv == 0 %}
+            <span class="quick-card-btn quick-card-btn-orange" style="opacity:.5;cursor:default">Aucun CV</span>
+        {% elseif analysedCv == totalCv %}
+            <a href="{{ path('admin_candidatures') }}" class="quick-card-btn" style="background:rgba(22,163,74,.1);color:#16a34a;border:1px solid rgba(22,163,74,.3)">Voir résultats →</a>
+        {% else %}
+            <a href="{{ path('admin_candidatures') }}" class="quick-card-btn quick-card-btn-orange">Continuer →</a>
+        {% endif %}
+        <span class="quick-card-badge quick-card-badge-orange">IA OpenRouter</span>
     </div>
 </div>
 
@@ -114,5 +143,41 @@ document.getElementById('offreSearch')?.addEventListener('input', function() {
         row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
     });
 });
+
+function bulkGenerate() {
+    const btn    = document.getElementById('bulk-btn');
+    const status = document.getElementById('bulk-status');
+    btn.disabled = true;
+    btn.textContent = '⏳ Génération en cours...';
+    status.style.display = 'block';
+    status.textContent = 'Appel à l\'IA pour chaque offre, veuillez patienter...';
+
+    fetch('/admin/offres/bulk-generate-questions', { method: 'POST' })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            if (data.count === 0) {
+                status.textContent = '✅ Toutes les offres ont déjà des questions.';
+            } else {
+                status.textContent = `✅ ${data.questions} questions générées pour ${data.count} offre(s) !`;
+                if (data.errors && data.errors.length > 0) {
+                    status.textContent += ` (${data.errors.length} erreur(s))`;
+                }
+                btn.style.display = 'none';
+                setTimeout(() => location.reload(), 2000);
+            }
+        } else {
+            status.style.color = '#f87171';
+            status.textContent = '❌ Erreur : ' + (data.error ?? 'inconnue');
+            btn.disabled = false;
+            btn.textContent = '🤖 Réessayer';
+        }
+    })
+    .catch(() => {
+        status.style.color = '#f87171';
+        status.textContent = '❌ Erreur réseau';
+        btn.disabled = false;
+    });
+}
 </script>
 {% endblock %}
