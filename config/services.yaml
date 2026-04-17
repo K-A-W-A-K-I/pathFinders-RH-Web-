@@ -21,3 +21,7 @@ services:
     App\Service\CandidatureMailer:
         arguments:
             $fromEmail: '%env(MAILER_FROM)%'
+
+    App\Service\AiService:
+        arguments:
+            $apiKey: '%env(OPENROUTER_API_KEY)%'
