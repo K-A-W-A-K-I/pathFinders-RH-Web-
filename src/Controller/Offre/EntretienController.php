@@ -118,7 +118,16 @@ class EntretienController extends AbstractController
         }
 
         $entretien->setStatut($statut);
-        $entretien->setNotes($notes ?: null);
+        // Only overwrite notes if the admin actually typed something
+        if ($notes) {
+            $entretien->setNotes($notes);
+        }
+
+        // Generate interview token when confirming
+        if ($statut === Entretien::STATUT_CONFIRME && !$entretien->getInterviewToken()) {
+            $entretien->setInterviewToken(bin2hex(random_bytes(32)));
+        }
+
         $em->flush();
 
         // Envoyer email de confirmation si entretien confirmé
