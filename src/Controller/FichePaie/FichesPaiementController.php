@@ -14,7 +14,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
  use App\Repository\UtilisateurRepository;
-
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 class FichesPaiementController extends AbstractController
 {
     // ── 1. INDEX ──────────────────────────────────────
@@ -28,7 +29,7 @@ class FichesPaiementController extends AbstractController
 
     // ── 2. NEW ────────────────────────────────────────
 #[Route('/fiches/new', name: 'fiche_new', methods: ['GET', 'POST'])]
-public function new(Request $request, EntityManagerInterface $em, FichesPaiementRepository $repo): Response
+public function new(Request $request, EntityManagerInterface $em, FichesPaiementRepository $repo, MailerInterface $mailer): Response
 {
     $fiche = new FichesPaiement();
     $form = $this->createForm(FichesPaiementType::class, $fiche);
@@ -94,6 +95,16 @@ public function new(Request $request, EntityManagerInterface $em, FichesPaiement
         $em->flush();
         $em->persist($fiche);
         $em->flush();
+         $emailAddress = $employee->getUtilisateur()?->getEmail();
+         if ($emailAddress) {
+            $email = (new Email())
+                ->from('no-reply@yourcompany.com')
+                ->to($emailAddress)
+                ->subject('Nouvelle fiche de paie')
+                ->text("Bonjour {$employee->getUtilisateur()?->getFullName()},\n\nVotre fiche de paie pour {$fiche->getDatePaiement()?->format('F Y')} a été ajoutée.\nSalaire net: {$fiche->getSalaireNet()} DT.\n\nCordialement,\nService RH");
+
+            $mailer->send($email);
+        }
 
         $this->addFlash('success', 'Fiche créée avec succès !');
         return $this->redirectToRoute('fiche_index');
