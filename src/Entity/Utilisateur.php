@@ -143,7 +143,15 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface, 
     }
 
     // UserInterface
-    public function getRoles(): array { return array_unique([$this->role ?? 'ROLE_USER', 'ROLE_USER']); }
+    public function getRoles(): array
+    {
+        $role = $this->role ?? 'ROLE_USER';
+        // Normalize legacy roles without the ROLE_ prefix
+        if (!str_starts_with($role, 'ROLE_')) {
+            $role = 'ROLE_' . strtoupper($role);
+        }
+        return array_unique([$role, 'ROLE_USER']);
+    }
     public function getUserIdentifier(): string { return (string) $this->email; }
     public function eraseCredentials(): void { $this->plainPassword = null; }
 }

@@ -44,6 +44,8 @@ services:
     App\Service\AiService:
         arguments:
             $apiKey: '%env(OPENROUTER_API_KEY)%'
+            $geminiApiKey: '%env(GEMINI_API_KEY)%'
+            $groqApiKey: '%env(GROQ_API_KEY)%'
 
     App\Service\Security\RecaptchaVerifier:
         arguments:
@@ -76,9 +78,15 @@ services:
 
     App\Service\EventMailer:
         arguments:
-            $fromEmail: '%env(MAILER_FROM_EMAIL)%'
-            $fromName:  '%env(MAILER_FROM_NAME)%'
+            $fromEmail: 'boulehmifadi95@gmail.com'
+            $fromName:  'PathFinders RH'
             $appBaseUrl: '%env(APP_BASE_URL)%'
+            $gmailDsn: '%env(MAILER_DSN_GMAIL)%'
+
+    App\Service\CandidatureMailer:
+        arguments:
+            $fromEmail: 'boulehmifadi95@gmail.com'
+            $gmailDsn: '%env(MAILER_DSN_GMAIL)%'
 
     App\Service\Reclamation\GeminiClient:
         arguments:

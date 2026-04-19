@@ -211,8 +211,11 @@ class AuthController extends AbstractController
     private function redirectByRole(object $user): Response
     {
         $roles = $user->getRoles();
-        if (in_array('ROLE_ADMIN', $roles) || in_array('ROLE_WORKER', $roles)) {
-            return $this->redirectToRoute('offre_index');
+        if (in_array('ROLE_ADMIN', $roles)) {
+            return $this->redirectToRoute('dashboard_home');
+        }
+        if (in_array('ROLE_WORKER', $roles)) {
+            return $this->redirectToRoute('worker_about');
         }
         return $this->redirectToRoute('offre_list');
     }

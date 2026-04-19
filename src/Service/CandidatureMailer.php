@@ -4,7 +4,9 @@ namespace App\Service;
 
 use App\Entity\Candidature;
 use App\Entity\Entretien;
+use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mailer\Transport;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
@@ -13,7 +15,8 @@ class CandidatureMailer
     public function __construct(
         private MailerInterface $mailer,
         private UrlGeneratorInterface $urlGenerator,
-        private string $fromEmail = 'noreply@pathfinders.tn'
+        private string $fromEmail = 'noreply@pathfinders.tn',
+        private string $gmailDsn = '',
     ) {}
 
     /** Envoyé au candidat après soumission du quiz */
@@ -77,7 +80,17 @@ class CandidatureMailer
             ->subject('📅 Entretien confirmé — ' . $offre->getTitre())
             ->html($this->templateEntretienConfirme($toName, $offre->getTitre(), $date, $notes, $interviewUrl));
 
-        $this->mailer->send($email);
+        $this->sendViaGmail($email);
+    }
+
+    private function sendViaGmail(Email $email): void
+    {
+        if ($this->gmailDsn !== '') {
+            $transport = Transport::fromDsn($this->gmailDsn);
+            (new Mailer($transport))->send($email);
+        } else {
+            $this->mailer->send($email);
+        }
     }
 
     // ── Templates HTML ────────────────────────────────────────────────────

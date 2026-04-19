@@ -8,200 +8,550 @@
   <div class="pf-hero-inner">
     <div class="pf-hero-badge"><div class="pf-hero-badge-dot"></div>Espace candidat</div>
     <h1>Modifier mon <span>Profil</span></h1>
+    <p>Mettez à jour vos informations personnelles et vos documents.</p>
   </div>
 </div>
 
 <div class="pf-content">
-<div class="pf-section" style="max-width:700px">
-{% set inp = 'width:100%;padding:10px 14px;border:.5px solid var(--border);border-radius:9px;font-size:14px;font-family:DM Sans,sans-serif;background:var(--surface);color:var(--text);outline:none;' %}
 {% set profileImageSrc = user.imageUrl ? (user.imageUrl starts with 'http' ? user.imageUrl : asset(user.imageUrl)) : '' %}
 {% set cvSrc = (candidat is not null and candidat.cvPath) ? (candidat.cvPath starts with 'http' ? candidat.cvPath : asset(candidat.cvPath)) : '' %}
 {% set cvExt = cvSrc ? (cvSrc|split('.')|last|lower|split('?')|first) : '' %}
 {% set cvPreviewSrc = (cvSrc and cvExt == 'pdf') ? cvSrc|replace({'/image/upload/':'/image/upload/pg_1,f_jpg/'}) : cvSrc %}
 
 {% for message in app.flashes('error') %}
-<div style="margin-bottom:10px;padding:10px 12px;border-radius:10px;background:rgba(226,75,74,.12);border:.5px solid rgba(226,75,74,.35);color:#f87171;font-size:13px">
-  {{ message }}
-</div>
+  <div class="edit-alert edit-alert-error">⚠️ {{ message }}</div>
 {% endfor %}
-
 {% for message in app.flashes('success') %}
-<div style="margin-bottom:10px;padding:10px 12px;border-radius:10px;background:rgba(29,158,117,.12);border:.5px solid rgba(29,158,117,.35);color:#34d399;font-size:13px">
-  {{ message }}
-</div>
+  <div class="edit-alert edit-alert-success">✓ {{ message }}</div>
 {% endfor %}
 
-<form method="post" enctype="multipart/form-data" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+<div class="edit-layout">
 
-  <div style="grid-column:1/-1;display:flex;justify-content:center;margin-bottom:.25rem">
-    <label for="profile-photo-input" style="cursor:pointer;text-align:center;display:block">
-      <img
-        id="profile-photo-preview"
-        src="{{ profileImageSrc }}"
-        alt="Photo de profil"
-        style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:.5px solid var(--border);display:{{ user.imageUrl ? 'block' : 'none' }};margin:0 auto .55rem"
-      >
-      <div
-        id="profile-photo-fallback"
-        style="width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,#6C63FF,#9D6BFF);display:{{ user.imageUrl ? 'none' : 'flex' }};align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#fff;margin:0 auto .55rem"
-      >
-        {{ user.fullName|slice(0,1)|upper }}
-      </div>
-      <div style="font-size:12px;color:var(--text-muted)">Cliquez pour changer la photo</div>
-    </label>
-    <input id="profile-photo-input" type="file" name="photo" accept="image/*" style="display:none">
-  </div>
-
-  <div>
-    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:5px">Nom *</label>
-    <input type="text" name="nom" value="{{ user.nom }}" style="{{ inp }}{{ errors.nom is defined ? 'border-color:#ef4444;' : '' }}" required>
-    {% if errors.nom is defined %}<div style="color:#E24B4A;font-size:12px;margin-top:3px">⚠ {{ errors.nom }}</div>{% endif %}
-  </div>
-
-  <div>
-    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:5px">Prénom *</label>
-    <input type="text" name="prenom" value="{{ user.prenom }}" style="{{ inp }}{{ errors.prenom is defined ? 'border-color:#ef4444;' : '' }}" required>
-    {% if errors.prenom is defined %}<div style="color:#E24B4A;font-size:12px;margin-top:3px">⚠ {{ errors.prenom }}</div>{% endif %}
-  </div>
-
-  <div style="grid-column:1/-1">
-    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:5px">Email</label>
-    <input type="email" value="{{ user.email }}" style="{{ inp }}opacity:.6" disabled>
-    <div style="font-size:11px;color:var(--text-muted);margin-top:3px">L'email ne peut pas être modifié.</div>
-  </div>
-
-  <div>
-    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:5px">Téléphone</label>
-    <input type="text" name="telephone" value="{{ user.telephone ?? '' }}" style="{{ inp }}">
-  </div>
-
-  <div>
-    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:5px">Nouveau mot de passe</label>
-    <input type="password" name="password" placeholder="Laisser vide pour ne pas changer" style="{{ inp }}{{ errors.password is defined ? 'border-color:#ef4444;' : '' }}">
-    {% if errors.password is defined %}<div style="color:#E24B4A;font-size:12px;margin-top:3px">⚠ {{ errors.password }}</div>{% endif %}
-  </div>
-
-  {% if candidat is not null %}
-  <div style="grid-column:1/-1">
-    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:5px">CV (PDF)</label>
-    <input id="profile-cv-input" type="file" name="cv" accept=".pdf,application/pdf" style="display:none">
-
-    <label for="profile-cv-input" style="display:block;cursor:pointer;border:.5px dashed var(--border);border-radius:12px;background:var(--surface);padding:14px 16px;transition:border-color .2s,background .2s">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#6C63FF,#9D6BFF);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px">📄</div>
-          <div>
-            <div style="font-size:13px;font-weight:700;color:var(--text)">Choisir un CV</div>
-            <div style="font-size:11px;color:var(--text-muted)">Format: PDF uniquement - Taille max: 10MB</div>
+  <!-- Left: Avatar + nav -->
+  <aside class="edit-sidebar">
+    <div class="edit-avatar-card">
+      <label for="profile-photo-input" class="edit-avatar-label">
+        <div class="edit-avatar-wrap">
+          <img id="profile-photo-preview"
+               src="{{ profileImageSrc }}"
+               alt="Photo de profil"
+               style="display:{{ user.imageUrl ? 'block' : 'none' }}"
+               class="edit-avatar-img">
+          <div id="profile-photo-fallback"
+               class="edit-avatar-initials"
+               style="display:{{ user.imageUrl ? 'none' : 'flex' }}">
+            {{ user.fullName|slice(0,1)|upper }}
+          </div>
+          <div class="edit-avatar-overlay">
+            <span>📷</span>
+            <span style="font-size:11px">Changer</span>
           </div>
         </div>
-        <div style="font-size:12px;font-weight:700;color:#6C63FF">Parcourir</div>
-      </div>
-    </label>
-
-    <div id="cv-file-card" style="margin-top:10px;display:none;border:.5px solid var(--border);border-radius:12px;background:var(--surface);padding:12px 14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-        <div>
-          <div id="cv-file-name" style="font-size:13px;font-weight:700;color:var(--text)"></div>
-          <div id="cv-file-meta" style="font-size:11px;color:var(--text-muted)"></div>
-        </div>
-        <button id="cv-clear-btn" type="button" class="pf-btn-ghost" style="padding:6px 12px;border-radius:8px">Retirer</button>
-      </div>
+        <input id="profile-photo-input" type="file" name="photo" accept="image/*" style="display:none" form="edit-form">
+      </label>
+      <div class="edit-avatar-name">{{ user.fullName }}</div>
+      <div class="edit-avatar-email">{{ user.email }}</div>
     </div>
 
-    {% if candidat.cvPath %}
-    <div id="cv-existing-card" style="margin-top:10px;border:.5px solid var(--border);border-radius:12px;background:var(--surface);padding:12px 14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-        <div>
-          <div style="font-size:13px;font-weight:700;color:var(--text)">CV actuel</div>
-          <div style="font-size:11px;color:var(--text-muted)">{{ cvExt ? cvExt|upper : 'Document' }}</div>
-        </div>
-        <a href="{{ cvPreviewSrc }}" target="_blank" class="pf-btn-ghost" style="padding:6px 12px;border-radius:8px;text-decoration:none">Voir</a>
-      </div>
-      {% if cvExt == 'pdf' %}
-        <div style="margin-top:10px;height:425px;overflow:auto;border:.5px solid var(--border);border-radius:10px;background:#fff;padding:6px">
-          <img src="{{ cvPreviewSrc }}" alt="Aperçu du CV" style="width:100%;height:auto;display:block">
-        </div>
-        <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Aperçu de la première page affiché (restriction Cloudinary sur l'original PDF).</div>
+    <!-- Section nav -->
+    <nav class="edit-nav">
+      <a href="#section-info" class="edit-nav-item active" data-section="info">
+        <span>👤</span> Informations
+      </a>
+      <a href="#section-security" class="edit-nav-item" data-section="security">
+        <span>🔒</span> Sécurité
+      </a>
+      {% if candidat is not null %}
+      <a href="#section-docs" class="edit-nav-item" data-section="docs">
+        <span>📁</span> Documents
+      </a>
       {% endif %}
-    </div>
-    {% endif %}
-  </div>
+    </nav>
+  </aside>
 
-  <div style="grid-column:1/-1">
-    <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:5px">Lettre de motivation</label>
-    <textarea name="lettre_motivation" rows="5" style="{{ inp }}resize:vertical">{{ candidat.lettreMotivation ?? '' }}</textarea>
-  </div>
-  {% endif %}
+  <!-- Right: Form -->
+  <main class="edit-main">
+    <form method="post" enctype="multipart/form-data" id="edit-form">
 
-  <div style="grid-column:1/-1;display:flex;gap:10px;margin-top:8px;padding-top:16px;border-top:.5px solid var(--border)">
-    <button type="submit" class="pf-btn-details">💾 Enregistrer</button>
-    <a href="{{ path('profile_2fa_index') }}" class="pf-btn-ghost" style="padding:8px 18px;border-radius:10px;text-decoration:none">Configurer 2FA</a>
-    <a href="{{ path('profile_index') }}" class="pf-btn-ghost" style="padding:8px 18px;border-radius:10px;text-decoration:none">Annuler</a>
-  </div>
-</form>
+      <!-- Section: Informations -->
+      <div class="edit-section" id="section-info">
+        <div class="edit-section-header">
+          <div class="edit-section-title">
+            <span class="edit-section-icon">👤</span>
+            Informations personnelles
+          </div>
+        </div>
+        <div class="edit-section-body">
+          <div class="edit-form-row">
+            <div class="edit-form-group">
+              <label class="edit-label">Nom <span class="required">*</span></label>
+              <div class="edit-input-wrap">
+                <input type="text" name="nom" value="{{ user.nom }}"
+                       class="edit-input {{ errors.nom is defined ? 'input-error' : '' }}" required>
+              </div>
+              {% if errors.nom is defined %}
+                <div class="edit-field-error">⚠ {{ errors.nom }}</div>
+              {% endif %}
+            </div>
+            <div class="edit-form-group">
+              <label class="edit-label">Prénom <span class="required">*</span></label>
+              <div class="edit-input-wrap">
+                <input type="text" name="prenom" value="{{ user.prenom }}"
+                       class="edit-input {{ errors.prenom is defined ? 'input-error' : '' }}" required>
+              </div>
+              {% if errors.prenom is defined %}
+                <div class="edit-field-error">⚠ {{ errors.prenom }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="edit-form-group">
+            <label class="edit-label">Adresse email</label>
+            <div class="edit-input-wrap">
+              <input type="email" value="{{ user.email }}" class="edit-input edit-input-disabled" disabled>
+            </div>
+            <div class="edit-hint">L'adresse email ne peut pas être modifiée.</div>
+          </div>
+
+          <div class="edit-form-group">
+            <label class="edit-label">Téléphone</label>
+            <div class="edit-input-wrap">
+              <input type="text" name="telephone" value="{{ user.telephone ?? '' }}"
+                     placeholder="+216 XX XXX XXX" class="edit-input">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Sécurité -->
+      <div class="edit-section" id="section-security">
+        <div class="edit-section-header">
+          <div class="edit-section-title">
+            <span class="edit-section-icon">🔒</span>
+            Sécurité
+          </div>
+        </div>
+        <div class="edit-section-body">
+          <div class="edit-form-group">
+            <label class="edit-label">Nouveau mot de passe</label>
+            <div class="edit-input-wrap">
+              <input type="password" name="password" id="pw-new"
+                     placeholder="Laisser vide pour ne pas changer"
+                     class="edit-input {{ errors.password is defined ? 'input-error' : '' }}">
+            </div>
+            {% if errors.password is defined %}
+              <div class="edit-field-error">⚠ {{ errors.password }}</div>
+            {% endif %}
+            <div class="pw-strength-wrap" id="pw-strength-wrap" style="display:none">
+              <div class="pw-strength-bars">
+                <div class="pw-bar" id="pw-bar-1"></div>
+                <div class="pw-bar" id="pw-bar-2"></div>
+                <div class="pw-bar" id="pw-bar-3"></div>
+              </div>
+              <div class="pw-strength-label" id="pw-strength-label"></div>
+            </div>
+          </div>
+
+          <div class="edit-2fa-banner">
+            <div class="edit-2fa-left">
+              <div class="edit-2fa-title">Authentification à deux facteurs</div>
+              <div class="edit-2fa-sub">
+                {% if user.isTwoFactorEnabled %}
+                  <span style="color:#4ade80">✓ Activée</span> — Votre compte est protégé
+                {% else %}
+                  Non configurée — Renforcez la sécurité de votre compte
+                {% endif %}
+              </div>
+            </div>
+            <a href="{{ path('profile_2fa_index') }}" class="edit-2fa-btn">Configurer →</a>
+          </div>
+        </div>
+      </div>
+
+      {% if candidat is not null %}
+      <!-- Section: Documents -->
+      <div class="edit-section" id="section-docs">
+        <div class="edit-section-header">
+          <div class="edit-section-title">
+            <span class="edit-section-icon">📁</span>
+            Documents
+          </div>
+        </div>
+        <div class="edit-section-body">
+
+          <!-- CV Upload -->
+          <div class="edit-form-group">
+            <label class="edit-label">Curriculum Vitae (PDF)</label>
+
+            <label for="profile-cv-input" class="cv-dropzone" id="cv-dropzone">
+              <div class="cv-dropzone-icon">📄</div>
+              <div class="cv-dropzone-text">
+                <strong>Cliquez pour choisir</strong> ou glissez votre CV ici
+              </div>
+              <div class="cv-dropzone-hint">PDF uniquement · Max 10 MB</div>
+            </label>
+            <input id="profile-cv-input" type="file" name="cv" accept=".pdf,application/pdf" style="display:none">
+
+            <div id="cv-file-card" class="cv-file-card" style="display:none">
+              <div class="cv-file-icon">📄</div>
+              <div class="cv-file-info">
+                <div id="cv-file-name" class="cv-file-name"></div>
+                <div id="cv-file-meta" class="cv-file-meta"></div>
+              </div>
+              <button id="cv-clear-btn" type="button" class="cv-clear-btn">✕</button>
+            </div>
+
+            {% if candidat.cvPath %}
+            <div id="cv-existing-card" class="cv-existing-card">
+              <div class="cv-existing-left">
+                <div class="cv-existing-icon">📄</div>
+                <div>
+                  <div class="cv-existing-title">CV actuel</div>
+                  <div class="cv-existing-meta">{{ cvExt ? cvExt|upper : 'Document' }} · Uploadé</div>
+                </div>
+              </div>
+              <a href="{{ cvPreviewSrc }}" target="_blank" class="cv-existing-view">Voir ↗</a>
+            </div>
+            {% if cvExt == 'pdf' %}
+            <div class="cv-preview-wrap">
+              <img src="{{ cvPreviewSrc }}" alt="Aperçu du CV" class="cv-preview-img">
+              <div class="cv-preview-hint">Aperçu de la première page</div>
+            </div>
+            {% endif %}
+            {% endif %}
+          </div>
+
+          <!-- Lettre de motivation -->
+          <div class="edit-form-group">
+            <label class="edit-label">Lettre de motivation</label>
+            <textarea name="lettre_motivation" rows="7" class="edit-textarea"
+                      placeholder="Rédigez votre lettre de motivation ici...">{{ candidat.lettreMotivation ?? '' }}</textarea>
+            <div class="edit-hint">Votre lettre sera jointe automatiquement à vos candidatures.</div>
+          </div>
+
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Actions -->
+      <div class="edit-actions">
+        <button type="submit" class="edit-btn-save">
+          💾 Enregistrer les modifications
+        </button>
+        <a href="{{ path('profile_index') }}" class="edit-btn-cancel">Annuler</a>
+      </div>
+
+    </form>
+  </main>
 </div>
 </div>
+
+<style>
+.edit-layout{display:grid;grid-template-columns:260px 1fr;gap:24px;align-items:start}
+
+/* Sidebar */
+.edit-sidebar{position:sticky;top:80px;display:flex;flex-direction:column;gap:16px}
+.edit-avatar-card{
+  background:rgba(255,255,255,.03);border:.5px solid rgba(255,255,255,.08);
+  border-radius:18px;padding:24px;text-align:center;
+}
+.edit-avatar-label{cursor:pointer;display:block}
+.edit-avatar-wrap{position:relative;width:80px;height:80px;margin:0 auto 14px;display:block}
+.edit-avatar-img{width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid rgba(108,99,255,.4)}
+.edit-avatar-initials{
+  width:80px;height:80px;border-radius:50%;
+  background:linear-gradient(135deg,#6C63FF,#9D6BFF);
+  align-items:center;justify-content:center;
+  font-size:1.8rem;font-weight:700;color:#fff;
+}
+.edit-avatar-overlay{
+  position:absolute;inset:0;border-radius:50%;
+  background:rgba(0,0,0,.55);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;opacity:0;transition:opacity .2s;color:#fff;font-size:18px;
+}
+.edit-avatar-label:hover .edit-avatar-overlay{opacity:1}
+.edit-avatar-name{font-family:Sora,sans-serif;font-weight:700;font-size:15px;color:#fff;margin-bottom:3px}
+.edit-avatar-email{font-size:12px;color:rgba(232,230,240,.4);word-break:break-all}
+
+.edit-nav{
+  background:rgba(255,255,255,.03);border:.5px solid rgba(255,255,255,.08);
+  border-radius:14px;padding:8px;display:flex;flex-direction:column;gap:2px;
+}
+.edit-nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:10px;
+  color:rgba(232,230,240,.55);font-size:13.5px;text-decoration:none;
+  transition:background .15s,color .15s;
+}
+.edit-nav-item:hover,.edit-nav-item.active{
+  background:rgba(108,99,255,.15);color:#e8e6f0;
+}
+
+/* Main */
+.edit-main{display:flex;flex-direction:column;gap:20px}
+
+/* Alerts */
+.edit-alert{padding:12px 16px;border-radius:12px;font-size:13.5px;margin-bottom:4px}
+.edit-alert-error{background:rgba(239,68,68,.08);border:.5px solid rgba(239,68,68,.25);color:#f87171}
+.edit-alert-success{background:rgba(34,197,94,.08);border:.5px solid rgba(34,197,94,.25);color:#4ade80}
+
+/* Sections */
+.edit-section{
+  background:rgba(255,255,255,.03);border:.5px solid rgba(255,255,255,.08);
+  border-radius:18px;overflow:hidden;
+}
+.edit-section-header{
+  padding:18px 22px;border-bottom:.5px solid rgba(255,255,255,.06);
+  background:rgba(255,255,255,.02);
+}
+.edit-section-title{
+  display:flex;align-items:center;gap:10px;
+  font-family:Sora,sans-serif;font-size:15px;font-weight:700;color:#fff;
+}
+.edit-section-icon{font-size:17px}
+.edit-section-body{padding:22px}
+
+/* Form elements */
+.edit-form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.edit-form-group{margin-bottom:18px}
+.edit-form-group:last-child{margin-bottom:0}
+.edit-label{
+  display:block;font-size:12px;font-weight:600;
+  color:rgba(232,230,240,.5);letter-spacing:.05em;
+  text-transform:uppercase;margin-bottom:8px;
+}
+.required{color:#f87171}
+.edit-input-wrap{position:relative}
+.edit-input{
+  width:100%;padding:12px 16px;
+  background:rgba(255,255,255,.05);
+  border:.5px solid rgba(255,255,255,.1);
+  border-radius:11px;
+  color:#e8e6f0;font-size:14px;font-family:'DM Sans',sans-serif;
+  outline:none;transition:border-color .2s,background .2s,box-shadow .2s;
+}
+.edit-input::placeholder{color:rgba(232,230,240,.25)}
+.edit-input:focus{
+  border-color:rgba(108,99,255,.55);
+  background:rgba(108,99,255,.07);
+  box-shadow:0 0 0 3px rgba(108,99,255,.1);
+}
+.edit-input-disabled{opacity:.45;cursor:not-allowed}
+.input-error{border-color:rgba(239,68,68,.5) !important}
+.edit-field-error{color:#f87171;font-size:12px;margin-top:5px}
+.edit-hint{font-size:12px;color:rgba(232,230,240,.35);margin-top:5px}
+
+.edit-textarea{
+  width:100%;padding:12px 16px;
+  background:rgba(255,255,255,.05);
+  border:.5px solid rgba(255,255,255,.1);
+  border-radius:11px;
+  color:#e8e6f0;font-size:14px;font-family:'DM Sans',sans-serif;
+  outline:none;resize:vertical;
+  transition:border-color .2s,background .2s,box-shadow .2s;
+  line-height:1.6;
+}
+.edit-textarea:focus{
+  border-color:rgba(108,99,255,.55);
+  background:rgba(108,99,255,.07);
+  box-shadow:0 0 0 3px rgba(108,99,255,.1);
+}
+
+/* Password strength */
+.pw-strength-wrap{margin-top:8px;display:flex;align-items:center;gap:10px}
+.pw-strength-bars{display:flex;gap:4px;flex:1}
+.pw-bar{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.08);transition:background .3s}
+.pw-bar.weak{background:#ef4444}
+.pw-bar.medium{background:#f59e0b}
+.pw-bar.strong{background:#22c55e}
+.pw-strength-label{font-size:11.5px;color:rgba(232,230,240,.4);white-space:nowrap}
+
+/* 2FA banner */
+.edit-2fa-banner{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:16px 18px;border-radius:12px;
+  background:rgba(108,99,255,.07);border:.5px solid rgba(108,99,255,.2);
+}
+.edit-2fa-title{font-size:14px;font-weight:600;color:#e8e6f0;margin-bottom:3px}
+.edit-2fa-sub{font-size:12.5px;color:rgba(232,230,240,.45)}
+.edit-2fa-btn{
+  padding:8px 16px;border-radius:9px;
+  background:rgba(108,99,255,.2);border:.5px solid rgba(108,99,255,.35);
+  color:#a89bff;font-size:13px;font-weight:600;text-decoration:none;
+  white-space:nowrap;transition:background .15s;
+}
+.edit-2fa-btn:hover{background:rgba(108,99,255,.3)}
+
+/* CV dropzone */
+.cv-dropzone{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+  padding:28px 20px;border-radius:14px;
+  border:.5px dashed rgba(108,99,255,.35);
+  background:rgba(108,99,255,.04);
+  cursor:pointer;transition:border-color .2s,background .2s;text-align:center;
+}
+.cv-dropzone:hover{border-color:rgba(108,99,255,.6);background:rgba(108,99,255,.08)}
+.cv-dropzone-icon{font-size:28px}
+.cv-dropzone-text{font-size:13.5px;color:rgba(232,230,240,.7)}
+.cv-dropzone-text strong{color:#a89bff}
+.cv-dropzone-hint{font-size:11.5px;color:rgba(232,230,240,.35)}
+
+.cv-file-card{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 16px;border-radius:12px;
+  background:rgba(108,99,255,.08);border:.5px solid rgba(108,99,255,.25);
+  margin-top:10px;
+}
+.cv-file-icon{font-size:22px}
+.cv-file-name{font-size:13.5px;font-weight:600;color:#e8e6f0;margin-bottom:2px}
+.cv-file-meta{font-size:12px;color:rgba(232,230,240,.45)}
+.cv-clear-btn{
+  margin-left:auto;width:28px;height:28px;border-radius:8px;
+  background:rgba(239,68,68,.12);border:.5px solid rgba(239,68,68,.25);
+  color:#f87171;font-size:13px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+
+.cv-existing-card{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:14px 16px;border-radius:12px;
+  background:rgba(255,255,255,.03);border:.5px solid rgba(255,255,255,.08);
+  margin-top:10px;
+}
+.cv-existing-left{display:flex;align-items:center;gap:12px}
+.cv-existing-icon{font-size:22px}
+.cv-existing-title{font-size:13.5px;font-weight:600;color:#e8e6f0;margin-bottom:2px}
+.cv-existing-meta{font-size:12px;color:rgba(232,230,240,.4)}
+.cv-existing-view{
+  padding:6px 14px;border-radius:8px;
+  background:rgba(108,99,255,.15);border:.5px solid rgba(108,99,255,.3);
+  color:#a89bff;font-size:12.5px;font-weight:600;text-decoration:none;
+}
+
+.cv-preview-wrap{margin-top:12px;border-radius:12px;overflow:hidden;border:.5px solid rgba(255,255,255,.08)}
+.cv-preview-img{width:100%;display:block}
+.cv-preview-hint{font-size:11px;color:rgba(232,230,240,.3);padding:6px 12px;background:rgba(255,255,255,.02);text-align:center}
+
+/* Actions */
+.edit-actions{
+  display:flex;align-items:center;gap:12px;
+  padding:20px 0 8px;
+}
+.edit-btn-save{
+  padding:13px 28px;
+  background:linear-gradient(135deg,#6C63FF,#9D6BFF);
+  border:none;border-radius:12px;
+  color:#fff;font-size:14.5px;font-weight:600;font-family:'DM Sans',sans-serif;
+  cursor:pointer;transition:opacity .2s,transform .15s,box-shadow .2s;
+  box-shadow:0 6px 20px rgba(108,99,255,.35);
+}
+.edit-btn-save:hover{opacity:.92;transform:translateY(-1px);box-shadow:0 10px 28px rgba(108,99,255,.45)}
+.edit-btn-cancel{
+  padding:13px 20px;border-radius:12px;
+  background:rgba(255,255,255,.05);border:.5px solid rgba(255,255,255,.1);
+  color:rgba(232,230,240,.6);font-size:14px;font-weight:500;text-decoration:none;
+  transition:background .15s,color .15s;
+}
+.edit-btn-cancel:hover{background:rgba(255,255,255,.09);color:#e8e6f0}
+
+@media(max-width:900px){
+  .edit-layout{grid-template-columns:1fr}
+  .edit-sidebar{position:static}
+  .edit-form-row{grid-template-columns:1fr}
+}
+</style>
 {% endblock %}
 
 {% block javascripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  const input = document.getElementById('profile-photo-input');
-  const preview = document.getElementById('profile-photo-preview');
-  const fallback = document.getElementById('profile-photo-fallback');
+  // Photo preview
+  const photoInput = document.getElementById('profile-photo-input');
+  const photoPreview = document.getElementById('profile-photo-preview');
+  const photoFallback = document.getElementById('profile-photo-fallback');
+
+  if (photoInput) {
+    photoInput.addEventListener('change', function () {
+      const file = this.files && this.files[0];
+      if (!file) return;
+      photoPreview.src = URL.createObjectURL(file);
+      photoPreview.style.display = 'block';
+      photoFallback.style.display = 'none';
+    });
+  }
+
+  // CV upload
   const cvInput = document.getElementById('profile-cv-input');
   const cvFileCard = document.getElementById('cv-file-card');
   const cvFileName = document.getElementById('cv-file-name');
   const cvFileMeta = document.getElementById('cv-file-meta');
   const cvClearBtn = document.getElementById('cv-clear-btn');
   const cvExistingCard = document.getElementById('cv-existing-card');
+  const cvDropzone = document.getElementById('cv-dropzone');
 
-  if (!input || !preview || !fallback) {
-    return;
-  }
-
-  input.addEventListener('change', function () {
-    const file = input.files && input.files[0];
-    if (!file) {
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(file);
-    preview.src = objectUrl;
-    preview.style.display = 'block';
-    fallback.style.display = 'none';
-  });
-
-  if (cvInput && cvFileCard && cvFileName && cvFileMeta) {
+  if (cvInput) {
     cvInput.addEventListener('change', function () {
-      const file = cvInput.files && cvInput.files[0];
-      if (!file) {
-        cvFileCard.style.display = 'none';
-        return;
-      }
-
+      const file = this.files && this.files[0];
+      if (!file) { cvFileCard.style.display = 'none'; return; }
       const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
-      const ext = (file.name.split('.').pop() || '').toUpperCase();
       cvFileName.textContent = file.name;
-      cvFileMeta.textContent = (ext ? ext + ' - ' : '') + sizeMb + ' MB';
-      cvFileCard.style.display = 'block';
-
-      if (cvExistingCard) {
-        cvExistingCard.style.display = 'none';
-      }
+      cvFileMeta.textContent = 'PDF · ' + sizeMb + ' MB';
+      cvFileCard.style.display = 'flex';
+      if (cvExistingCard) cvExistingCard.style.display = 'none';
+      if (cvDropzone) cvDropzone.style.display = 'none';
     });
   }
 
-  if (cvClearBtn && cvInput && cvFileCard) {
+  if (cvClearBtn) {
     cvClearBtn.addEventListener('click', function () {
       cvInput.value = '';
       cvFileCard.style.display = 'none';
-      if (cvExistingCard) {
-        cvExistingCard.style.display = 'block';
-      }
+      if (cvExistingCard) cvExistingCard.style.display = 'flex';
+      if (cvDropzone) cvDropzone.style.display = 'flex';
     });
   }
+
+  // Password strength
+  const pwInput = document.getElementById('pw-new');
+  const pwWrap = document.getElementById('pw-strength-wrap');
+  const pwLabel = document.getElementById('pw-strength-label');
+  const bars = [
+    document.getElementById('pw-bar-1'),
+    document.getElementById('pw-bar-2'),
+    document.getElementById('pw-bar-3')
+  ];
+
+  if (pwInput) {
+    pwInput.addEventListener('input', function () {
+      const v = this.value;
+      if (!v) { pwWrap.style.display = 'none'; return; }
+      pwWrap.style.display = 'flex';
+
+      let strength = 0;
+      if (v.length >= 6) strength++;
+      if (v.length >= 10 && /[A-Z]/.test(v)) strength++;
+      if (/[0-9]/.test(v) && /[^A-Za-z0-9]/.test(v)) strength++;
+
+      const labels = ['', 'Faible', 'Moyen', 'Fort'];
+      const classes = ['', 'weak', 'medium', 'strong'];
+      pwLabel.textContent = labels[strength];
+      pwLabel.style.color = strength === 1 ? '#ef4444' : strength === 2 ? '#f59e0b' : '#22c55e';
+
+      bars.forEach((b, i) => {
+        b.className = 'pw-bar';
+        if (i < strength) b.classList.add(classes[strength]);
+      });
+    });
+  }
+
+  // Section nav smooth scroll
+  document.querySelectorAll('.edit-nav-item').forEach(link => {
+    link.addEventListener('click', function(e) {
+      document.querySelectorAll('.edit-nav-item').forEach(l => l.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
 });
 </script>
 {% endblock %}
