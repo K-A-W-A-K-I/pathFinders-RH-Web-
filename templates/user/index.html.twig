@@ -3,6 +3,7 @@
 {% block page_icon %}👥{% endblock %}
 {% block page_title %}Gestion des Utilisateurs{% endblock %}
 {% block topbar_actions %}
+    <a href="{{ path('user_pdf_all') }}" class="admin-tool-btn" style="margin-right:8px">📄 PDF (Tous)</a>
     <a href="{{ path('user_new') }}" class="btn btn-primary" style="background:linear-gradient(135deg,#6C63FF,#9D6BFF);border:none;border-radius:10px;padding:10px 20px;font-weight:600;text-decoration:none;color:#fff;">+ Nouvel utilisateur</a>
 {% endblock %}
 
@@ -11,7 +12,7 @@
     <div class="admin-table-header">
         <div class="admin-table-title">
             Utilisateurs
-            <span class="admin-count-badge">{{ utilisateurs|length }}</span>
+            <span class="admin-count-badge">{{ utilisateurs.getTotalItemCount }}</span>
         </div>
         <div class="admin-table-actions">
             <input type="text" id="searchInput" placeholder="Rechercher..." class="admin-search-input" oninput="filterTable(this.value)">
@@ -26,7 +27,7 @@
     </div>
     <table class="admin-table" id="userTable">
         <thead><tr>
-            <th>Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th>Téléphone</th><th style="text-align:right">Actions</th>
+            <th>Nom</th><th>Email</th><th>Rôle</th><th>Statut</th><th>Indice confiance</th><th>Téléphone</th><th style="text-align:right">Actions</th>
         </tr></thead>
         <tbody>
         {% for u in utilisateurs %}
@@ -49,9 +50,28 @@
                     ● {{ u.statut ?? 'actif' }}
                 </span>
             </td>
+            <td style="font-size:12px;max-width:240px">
+                <div style="font-weight:700;color:#1f2937">{{ u.analyticsTrustScore is not null ? u.analyticsTrustScore|number_format(1, '.', ' ') ~ '/100' : '—' }}</div>
+                {% set level = u.analyticsTrustLevel ?: 'Moyen' %}
+                <span class="admin-badge"
+                      style="margin-top:4px;background:
+                        {% if level == 'Élevé' %}rgba(34,197,94,.15)
+                        {% elseif level == 'Moyen' %}rgba(59,130,246,.12)
+                        {% else %}rgba(239,68,68,.12){% endif %};
+                      color:
+                        {% if level == 'Élevé' %}#15803d
+                        {% elseif level == 'Moyen' %}#1d4ed8
+                        {% else %}#b91c1c{% endif %}">
+                    {{ level }}
+                </span>
+                {% if u.analyticsTrustFlags %}
+                    <div class="admin-table-muted" style="font-size:11px;margin-top:2px">{{ u.analyticsTrustFlags|join(', ')|replace({'_':' '}) }}</div>
+                {% endif %}
+            </td>
             <td class="admin-table-muted">{{ u.telephone ?? '—' }}</td>
             <td>
                 <div class="admin-row-actions" style="justify-content:flex-end">
+                    <a href="{{ path('user_pdf', {id: u.id}) }}" class="admin-action-btn">📄 PDF</a>
                     <a href="{{ path('user_edit', {id: u.id}) }}" class="admin-action-btn">✏️ Modifier</a>
                     <form method="post" action="{{ path('user_delete', {id: u.id}) }}" onsubmit="return confirm('Supprimer cet utilisateur ?')" style="display:inline">
                         <button type="submit" class="admin-action-btn admin-action-delete">🗑</button>
@@ -60,10 +80,14 @@
             </td>
         </tr>
         {% else %}
-        <tr><td colspan="6" style="text-align:center;color:#9999b8;padding:2rem">Aucun utilisateur.</td></tr>
+        <tr><td colspan="7" style="text-align:center;color:#9999b8;padding:2rem">Aucun utilisateur.</td></tr>
         {% endfor %}
         </tbody>
     </table>
+
+    <div style="margin-top:1rem;display:flex;justify-content:center">
+        {{ knp_pagination_render(utilisateurs) }}
+    </div>
 </div>
 {% endblock %}
 

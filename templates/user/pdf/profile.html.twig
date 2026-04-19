@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: DejaVu Sans, Arial, sans-serif; color: #0f172a; margin: 22px; font-size: 13px; }
+    .header { border-bottom: 2px solid #334155; padding-bottom: 8px; margin-bottom: 16px; }
+    .title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+    .meta { color: #475569; font-size: 12px; }
+    .section { margin-top: 14px; }
+    .section-title { font-size: 14px; font-weight: 700; background: #e2e8f0; padding: 6px 8px; }
+    .row { margin: 8px 0; }
+    .label { font-weight: 700; }
+    .value { color: #1e293b; }
+    .footer { margin-top: 24px; font-size: 11px; color: #64748b; border-top: 1px solid #cbd5e1; padding-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title">Fiche Utilisateur</div>
+    <div class="meta">{{ company_name }} - Généré le {{ generated_at|date('d/m/Y H:i') }}</div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Informations générales</div>
+    <div class="row"><span class="label">ID:</span> <span class="value">{{ user.id }}</span></div>
+    <div class="row"><span class="label">Nom complet:</span> <span class="value">{{ user.fullName }}</span></div>
+    <div class="row"><span class="label">Email:</span> <span class="value">{{ user.email }}</span></div>
+    <div class="row"><span class="label">Téléphone:</span> <span class="value">{{ user.telephone ?: 'N/A' }}</span></div>
+    <div class="row"><span class="label">Rôle:</span> <span class="value">{{ user.role ?: 'ROLE_USER' }}</span></div>
+    <div class="row"><span class="label">Statut:</span> <span class="value">{{ user.statut ?: 'actif' }}</span></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Documents</div>
+    <div class="row"><span class="label">Image profil:</span> <span class="value">{{ user.imageUrl ?: 'Non fournie' }}</span></div>
+    <div class="row"><span class="label">CV:</span> <span class="value">{{ candidat and candidat.cvPath ? candidat.cvPath : 'Non fourni' }}</span></div>
+    <div class="row"><span class="label">Lettre motivation:</span> <span class="value">{{ candidat and candidat.lettreMotivation ? 'Oui' : 'Non' }}</span></div>
+  </div>
+
+  <div class="footer">
+    Ce document est généré automatiquement depuis la plateforme RH.
+  </div>
+</body>
+</html>

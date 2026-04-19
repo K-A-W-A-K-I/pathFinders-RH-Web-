@@ -1,6 +1,29 @@
 # This file is the entry point to configure your own services.
 parameters:
     images_categories_directory: '%kernel.project_dir%/public/uploads/categories'
+    app.recaptcha.site_key: '%env(default::RECAPTCHA_SITE_KEY)%'
+    app.recaptcha.secret_key: '%env(default::RECAPTCHA_SECRET_KEY)%'
+    app.recaptcha.enabled: '%env(bool:RECAPTCHA_ENABLED)%'
+    app.brevo.api_key: '%env(default::BREVO_API_KEY)%'
+    app.mailer.from_email: '%env(default::MAILER_FROM_EMAIL)%'
+    app.mailer.from_name: '%env(default::MAILER_FROM_NAME)%'
+    app.cloudinary.cloud_name: '%env(default::CLOUDINARY_CLOUD_NAME)%'
+    app.cloudinary.api_key: '%env(default::CLOUDINARY_API_KEY)%'
+    app.cloudinary.api_secret: '%env(default::CLOUDINARY_API_SECRET)%'
+    app.cloudinary.image_folder: '%env(default::CLOUDINARY_USER_IMAGE_FOLDER)%'
+    app.cloudinary.cv_folder: '%env(default::CLOUDINARY_USER_CV_FOLDER)%'
+    app.cloudinary.max_image_size: '%env(int:CLOUDINARY_MAX_IMAGE_SIZE)%'
+    app.cloudinary.max_cv_size: '%env(int:CLOUDINARY_MAX_CV_SIZE)%'
+    app.pdf.company_name: '%env(default::PDF_COMPANY_NAME)%'
+    app.gemini.api_key: '%env(string:default::GEMINI_API_KEY)%'
+    app.gemini.model: '%env(string:default::GEMINI_MODEL)%'
+    app.gemini.timeout: '%env(int:default::GEMINI_TIMEOUT_SECONDS)%'
+    app.reclamation.moderation_enabled: '%env(bool:RECLAMATION_GEMINI_MODERATION_ENABLED)%'
+    app.reclamation.letter_generation_enabled: '%env(bool:RECLAMATION_AI_LETTER_ENABLED)%'
+    app.geocoding.enabled: '%env(bool:RECLAMATION_GEOCODING_ENABLED)%'
+    app.geocoding.user_agent: '%env(string:default::RECLAMATION_GEOCODING_USER_AGENT)%'
+    app.geocoding.timeout: '%env(int:default::RECLAMATION_GEOCODING_TIMEOUT_SECONDS)%'
+    app.google_maps.api_key: '%env(default::GOOGLE_MAPS_API_KEY)%'
 
 services:
     _defaults:
@@ -21,6 +44,33 @@ services:
     App\Service\AiService:
         arguments:
             $apiKey: '%env(OPENROUTER_API_KEY)%'
+            $geminiApiKey: '%env(GEMINI_API_KEY)%'
+            $groqApiKey: '%env(GROQ_API_KEY)%'
+
+    App\Service\Security\RecaptchaVerifier:
+        arguments:
+            $secretKey: '%app.recaptcha.secret_key%'
+            $enabled: '%app.recaptcha.enabled%'
+
+    App\Service\Mailer\BrevoMailer:
+        arguments:
+            $apiKey: '%app.brevo.api_key%'
+            $fromEmail: '%app.mailer.from_email%'
+            $fromName: '%app.mailer.from_name%'
+
+    App\Service\CloudinaryUploader:
+        arguments:
+            $cloudName: '%app.cloudinary.cloud_name%'
+            $apiKey: '%app.cloudinary.api_key%'
+            $apiSecret: '%app.cloudinary.api_secret%'
+            $imageFolder: '%app.cloudinary.image_folder%'
+            $cvFolder: '%app.cloudinary.cv_folder%'
+            $maxImageSize: '%app.cloudinary.max_image_size%'
+            $maxCvSize: '%app.cloudinary.max_cv_size%'
+
+    App\Service\UserPdfGenerator:
+        arguments:
+            $companyName: '%app.pdf.company_name%'
 
     App\Controller\Evenement\UserEventController:
         arguments:
@@ -28,6 +78,33 @@ services:
 
     App\Service\EventMailer:
         arguments:
-            $fromEmail: '%env(MAILER_FROM_EMAIL)%'
-            $fromName:  '%env(MAILER_FROM_NAME)%'
+            $fromEmail: 'boulehmifadi95@gmail.com'
+            $fromName:  'PathFinders RH'
             $appBaseUrl: '%env(APP_BASE_URL)%'
+            $gmailDsn: '%env(MAILER_DSN_GMAIL)%'
+
+    App\Service\CandidatureMailer:
+        arguments:
+            $fromEmail: 'boulehmifadi95@gmail.com'
+            $gmailDsn: '%env(MAILER_DSN_GMAIL)%'
+
+    App\Service\Reclamation\GeminiClient:
+        arguments:
+            $apiKey: '%app.gemini.api_key%'
+            $model: '%app.gemini.model%'
+            $timeoutSeconds: '%app.gemini.timeout%'
+            $enabled: true
+
+    App\Service\Reclamation\ReclamationModerationService:
+        arguments:
+            $moderationEnabled: '%app.reclamation.moderation_enabled%'
+
+    App\Service\Reclamation\ReclamationLetterGeneratorService:
+        arguments:
+            $letterGenerationEnabled: '%app.reclamation.letter_generation_enabled%'
+
+    App\Service\Reclamation\GeocodingService:
+        arguments:
+            $enabled: '%app.geocoding.enabled%'
+            $userAgent: '%app.geocoding.user_agent%'
+            $timeoutSeconds: '%app.geocoding.timeout%'
