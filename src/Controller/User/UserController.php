@@ -6,7 +6,10 @@ use App\Entity\Candidat;
 use App\Entity\Utilisateur;
 use App\Repository\CandidatRepository;
 use App\Repository\UtilisateurRepository;
+use App\Service\Analytics\DashboardAnalyticsCoordinator;
+use App\Service\UserPdfGenerator;
 use Doctrine\ORM\EntityManagerInterface;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,10 +22,30 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 class UserController extends AbstractController
 {
     #[Route('', name: 'index')]
-    public function index(UtilisateurRepository $repo): Response
+    public function index(
+        Request $request,
+        UtilisateurRepository $repo,
+        PaginatorInterface $paginator,
+        DashboardAnalyticsCoordinator $analyticsCoordinator
+    ): Response
     {
+        $qb = $repo->createQueryBuilder('u')->orderBy('u.id', 'DESC');
+        $utilisateurs = $paginator->paginate(
+            $qb,
+            max(1, $request->query->getInt('page', 1)),
+            10
+        );
+
+        $usersPage = [];
+        foreach ($utilisateurs as $utilisateur) {
+            if ($utilisateur instanceof Utilisateur) {
+                $usersPage[] = $utilisateur;
+            }
+        }
+        $analyticsCoordinator->refreshUserTrustAnalytics($usersPage);
+
         return $this->render('user/index.html.twig', [
-            'utilisateurs' => $repo->findAll(),
+            'utilisateurs' => $utilisateurs,
         ]);
     }
 
@@ -140,6 +163,47 @@ class UserController extends AbstractController
             $this->addFlash('success', 'Utilisateur supprimé.');
         }
         return $this->redirectToRoute('user_index');
+    }
+
+    #[Route('/pdf/all', name: 'pdf_all', methods: ['GET'])]
+    public function pdfAll(UtilisateurRepository $repo, UserPdfGenerator $userPdfGenerator): Response
+    {
+        $users = $repo->findBy([], ['id' => 'DESC']);
+        $pdf = $userPdfGenerator->generateAllUsersPdf($users);
+
+        $filename = sprintf('utilisateurs_%s.pdf', date('Ymd_His'));
+
+        return new Response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
+        ]);
+    }
+
+    #[Route('/{id}/pdf', name: 'pdf', methods: ['GET'])]
+    public function pdf(
+        int $id,
+        UtilisateurRepository $repo,
+        CandidatRepository $candidatRepository,
+        UserPdfGenerator $userPdfGenerator,
+    ): Response {
+        $user = $repo->find($id);
+        if (!$user) {
+            throw $this->createNotFoundException();
+        }
+
+        $candidat = $candidatRepository->findByUserId((int) $user->getId());
+        $pdf = $userPdfGenerator->generateUserProfilePdf($user, $candidat);
+
+        $filename = sprintf(
+            'utilisateur_%d_%s.pdf',
+            (int) $user->getId(),
+            date('Ymd_His')
+        );
+
+        return new Response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
+        ]);
     }
 
     private function validateUserData(array $data, ValidatorInterface $validator, ?Utilisateur $existing = null, ?UtilisateurRepository $repo = null): array

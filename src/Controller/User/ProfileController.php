@@ -3,6 +3,8 @@
 namespace App\Controller\User;
 
 use App\Repository\CandidatRepository;
+use App\Service\CloudinaryUploader;
+use App\Service\UserPdfGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -13,16 +15,35 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/profil', name: 'profile_')]
 class ProfileController extends AbstractController
 {
-    #[Route('', name: 'index')]
-    public function index(CandidatRepository $candidatRepo): Response
+    #[Route('/pdf', name: 'pdf', methods: ['GET'])]
+    public function pdf(CandidatRepository $candidatRepo, UserPdfGenerator $userPdfGenerator): Response
     {
-        $user     = $this->getUser();
-        $candidat = $user ? $candidatRepo->findByUserId($user->getId()) : null;
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->redirectToRoute('auth_login');
+        }
 
-        return $this->render('profile/index.html.twig', [
-            'user'    => $user,
-            'candidat'=> $candidat,
+        $candidat = $candidatRepo->findByUserId((int) $user->getId());
+        $pdf = $userPdfGenerator->generateUserProfilePdf($user, $candidat);
+
+        $filename = sprintf('mon_profil_%d_%s.pdf', (int) $user->getId(), date('Ymd_His'));
+
+        return new Response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
         ]);
+    }
+
+    #[Route('', name: 'index', methods: ['GET', 'POST'])]
+    public function index(
+        Request $request,
+        EntityManagerInterface $em,
+        UserPasswordHasherInterface $hasher,
+        CandidatRepository $candidatRepo,
+        CloudinaryUploader $cloudinaryUploader,
+    ): Response
+    {
+        return $this->edit($request, $em, $hasher, $candidatRepo, $cloudinaryUploader);
     }
 
     #[Route('/edit', name: 'edit', methods: ['GET', 'POST'])]
@@ -30,7 +51,8 @@ class ProfileController extends AbstractController
         Request $request,
         EntityManagerInterface $em,
         UserPasswordHasherInterface $hasher,
-        CandidatRepository $candidatRepo
+        CandidatRepository $candidatRepo,
+        CloudinaryUploader $cloudinaryUploader,
     ): Response {
         $user     = $this->getUser();
         $candidat = $user ? $candidatRepo->findByUserId($user->getId()) : null;
@@ -57,14 +79,43 @@ class ProfileController extends AbstractController
                     $user->setPassword($hasher->hashPassword($user, $password));
                 }
 
-                // Handle CV upload
+                $photoFile = $request->files->get('photo');
                 $cvFile = $request->files->get('cv');
-                if ($cvFile && $candidat) {
-                    $cvDir  = $this->getParameter('kernel.project_dir') . '/public/uploads/cv';
-                    if (!is_dir($cvDir)) mkdir($cvDir, 0777, true);
-                    $cvName = 'cv_' . $user->getId() . '_' . time() . '.' . $cvFile->guessExtension();
-                    $cvFile->move($cvDir, $cvName);
-                    $candidat->setCvPath('uploads/cv/' . $cvName);
+
+                try {
+                    if ($photoFile) {
+                        $oldImageUrl = $user->getImageUrl();
+                        $upload = $cloudinaryUploader->uploadProfileImage($photoFile, (int) $user->getId());
+                        if ($upload['secure_url'] === '') {
+                            throw new \RuntimeException('Echec de l\'upload de l\'image de profil.');
+                        }
+                        $user->setImageUrl($upload['secure_url']);
+                        $cloudinaryUploader->deleteByUrl($oldImageUrl, 'image');
+                    }
+
+                    if ($cvFile && $candidat) {
+                        $oldCvUrl = $candidat->getCvPath();
+                        $upload = $cloudinaryUploader->uploadCv($cvFile, (int) $user->getId());
+                        if ($upload['secure_url'] === '') {
+                            throw new \RuntimeException('Echec de l\'upload du CV.');
+                        }
+                        $candidat->setCvPath($upload['secure_url']);
+                        $cloudinaryUploader->deleteByUrl($oldCvUrl, 'image');
+                    }
+                } catch (\InvalidArgumentException $exception) {
+                    $this->addFlash('error', $exception->getMessage());
+                    return $this->render('profile/edit.html.twig', [
+                        'user'    => $user,
+                        'candidat'=> $candidat,
+                        'errors'  => $errors,
+                    ]);
+                } catch (\Throwable) {
+                    $this->addFlash('error', 'Upload CV/image refusé par le service cloud. Vérifiez le format, la taille, puis réessayez.');
+                    return $this->render('profile/edit.html.twig', [
+                        'user'    => $user,
+                        'candidat'=> $candidat,
+                        'errors'  => $errors,
+                    ]);
                 }
 
                 if ($candidat && !empty($lettre)) {

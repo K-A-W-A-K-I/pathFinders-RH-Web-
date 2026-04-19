@@ -126,6 +126,10 @@ input:focus{border-color:rgba(108,99,255,.6);background:rgba(108,99,255,.08)}
     <button type="submit" class="btn-auth">🔐 Se connecter</button>
   </form>
 
+  <div style="text-align:right;margin-top:10px">
+    <a href="{{ path('auth_forgot_password') }}" style="font-size:13px;color:#9D6BFF;text-decoration:none">Mot de passe oublié ?</a>
+  </div>
+
   <div class="auth-footer">
     Pas encore de compte ? <a href="{{ path('auth_register') }}">S'inscrire</a>
   </div>

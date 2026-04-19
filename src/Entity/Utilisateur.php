@@ -4,6 +4,9 @@ namespace App\Entity;
 
 use App\Repository\UtilisateurRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Scheb\TwoFactorBundle\Model\Totp\TotpConfiguration;
+use Scheb\TwoFactorBundle\Model\Totp\TotpConfigurationInterface;
+use Scheb\TwoFactorBundle\Model\Totp\TwoFactorInterface as TotpTwoFactorInterface;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -12,7 +15,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: UtilisateurRepository::class)]
 #[ORM\Table(name: 'utilisateurs')]
 #[UniqueEntity(fields: ['email'], message: 'Cette adresse email est déjà utilisée.')]
-class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
+class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface, TotpTwoFactorInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -68,6 +71,18 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(name: 'reset_expiry', type: 'datetime', nullable: true)]
     private ?\DateTimeInterface $resetExpiry = null;
 
+    #[ORM\Column(name: 'analytics_trust_score', type: 'float', nullable: true)]
+    private ?float $analyticsTrustScore = null;
+
+    #[ORM\Column(name: 'analytics_trust_level', length: 20, nullable: true)]
+    private ?string $analyticsTrustLevel = null;
+
+    #[ORM\Column(name: 'analytics_trust_flags', type: 'json', nullable: true)]
+    private ?array $analyticsTrustFlags = null;
+
+    #[ORM\Column(name: 'analytics_last_calculated_at', type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $analyticsLastCalculatedAt = null;
+
     // Non mappé — utilisé uniquement pendant l'inscription
     private ?string $plainPassword = null;
 
@@ -88,7 +103,44 @@ class Utilisateur implements UserInterface, PasswordAuthenticatedUserInterface
     public function setStatut(?string $statut): static { $this->statut = $statut; return $this; }
     public function getTelephone(): ?string { return $this->telephone; }
     public function setTelephone(?string $telephone): static { $this->telephone = $telephone; return $this; }
+    public function getImageUrl(): ?string { return $this->imageUrl; }
+    public function setImageUrl(?string $imageUrl): static { $this->imageUrl = $imageUrl; return $this; }
+    public function getTotpSecret(): ?string { return $this->totpSecret; }
+    public function setTotpSecret(?string $totpSecret): static { $this->totpSecret = $totpSecret; return $this; }
+    public function isTwoFactorEnabled(): bool { return (bool) $this->twoFactorEnabled; }
+    public function setTwoFactorEnabled(bool $twoFactorEnabled): static { $this->twoFactorEnabled = $twoFactorEnabled; return $this; }
+    public function getResetToken(): ?string { return $this->resetToken; }
+    public function setResetToken(?string $resetToken): static { $this->resetToken = $resetToken; return $this; }
+    public function getResetExpiry(): ?\DateTimeInterface { return $this->resetExpiry; }
+    public function setResetExpiry(?\DateTimeInterface $resetExpiry): static { $this->resetExpiry = $resetExpiry; return $this; }
+    public function getAnalyticsTrustScore(): ?float { return $this->analyticsTrustScore; }
+    public function setAnalyticsTrustScore(?float $analyticsTrustScore): static { $this->analyticsTrustScore = $analyticsTrustScore; return $this; }
+    public function getAnalyticsTrustLevel(): ?string { return $this->analyticsTrustLevel; }
+    public function setAnalyticsTrustLevel(?string $analyticsTrustLevel): static { $this->analyticsTrustLevel = $analyticsTrustLevel; return $this; }
+    public function getAnalyticsTrustFlags(): ?array { return $this->analyticsTrustFlags; }
+    public function setAnalyticsTrustFlags(?array $analyticsTrustFlags): static { $this->analyticsTrustFlags = $analyticsTrustFlags; return $this; }
+    public function getAnalyticsLastCalculatedAt(): ?\DateTimeInterface { return $this->analyticsLastCalculatedAt; }
+    public function setAnalyticsLastCalculatedAt(?\DateTimeInterface $analyticsLastCalculatedAt): static { $this->analyticsLastCalculatedAt = $analyticsLastCalculatedAt; return $this; }
     public function getFullName(): string { return trim(($this->prenom ?? '') . ' ' . ($this->nom ?? '')); }
+
+    public function isTotpAuthenticationEnabled(): bool
+    {
+        return $this->isTwoFactorEnabled() && !empty($this->totpSecret);
+    }
+
+    public function getTotpAuthenticationUsername(): string
+    {
+        return (string) $this->email;
+    }
+
+    public function getTotpAuthenticationConfiguration(): ?TotpConfigurationInterface
+    {
+        if (empty($this->totpSecret)) {
+            return null;
+        }
+
+        return new TotpConfiguration($this->totpSecret, TotpConfiguration::ALGORITHM_SHA1, 30, 6);
+    }
 
     // UserInterface
     public function getRoles(): array { return array_unique([$this->role ?? 'ROLE_USER', 'ROLE_USER']); }

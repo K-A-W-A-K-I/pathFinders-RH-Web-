@@ -26,6 +26,11 @@
   {% set inp = 'width:100%;padding:11px 16px;border:.5px solid var(--border);border-radius:10px;font-size:14px;font-family:DM Sans,sans-serif;background:var(--surface);color:var(--text);outline:none;transition:border-color .2s;' %}
 
   <form method="post" id="reclamation-form" novalidate>
+    <input type="hidden" name="_token" value="{{ csrf_token('reclamation_new') }}">
+
+    {% if errors.global is defined %}
+      <div style="color:#E24B4A;font-size:12px;margin-bottom:10px">{{ errors.global }}</div>
+    {% endif %}
 
     <div style="margin-bottom:1rem">
       <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Titre *</label>
@@ -46,6 +51,41 @@
         {{ errors.description ?? '' }}
       </div>
     </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem">
+      <div>
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Date de l'incident</label>
+        <input type="date" name="date_incident" id="f-date-incident" value="{{ data.date_incident ?? '' }}" style="{{ inp }}{{ errors.date_incident is defined ? 'border-color:#E24B4A;' : '' }}">
+        <div style="color:#E24B4A;font-size:12px;margin-top:4px;display:{{ errors.date_incident is defined ? 'block' : 'none' }}">{{ errors.date_incident ?? '' }}</div>
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Détails complémentaires (optionnel)</label>
+        <input type="text" name="details" id="f-details" value="{{ data.details ?? '' }}" maxlength="255" placeholder="N° dossier, référence, contact..." style="{{ inp }}">
+      </div>
+    </div>
+
+    <div style="margin-bottom:1rem">
+      <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Lieu de l'incident (optionnel)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input type="text" name="lieu" id="f-lieu" value="{{ data.lieu ?? '' }}" maxlength="255" placeholder="Adresse ou lieu" style="{{ inp }}flex:1;min-width:220px;{{ errors.lieu is defined ? 'border-color:#E24B4A;' : '' }}">
+        <button type="button" id="btn-geo-search" class="pf-btn-ghost" style="padding:8px 14px;border-radius:10px">📍 Localiser</button>
+        <button type="button" id="btn-current-position" class="pf-btn-ghost" style="padding:8px 14px;border-radius:10px">🧭 Ma position</button>
+      </div>
+      <div id="geo-message" style="font-size:12px;margin-top:6px;color:var(--text-muted)"></div>
+      <div style="color:#E24B4A;font-size:12px;margin-top:4px;display:{{ errors.lieu is defined ? 'block' : 'none' }}">{{ errors.lieu ?? '' }}</div>
+    </div>
+
+    <input type="hidden" name="latitude" id="f-latitude" value="{{ data.latitude ?? '' }}">
+    <input type="hidden" name="longitude" id="f-longitude" value="{{ data.longitude ?? '' }}">
+
+    <div id="map-preview" style="height:250px;border:.5px solid var(--border);border-radius:12px;margin-bottom:1rem;display:none"></div>
+
+    {% if recaptcha_site_key is not empty %}
+      <div style="margin-bottom:1rem">
+        <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
+        <div style="color:#E24B4A;font-size:12px;margin-top:4px;display:{{ errors.recaptcha is defined ? 'block' : 'none' }}">{{ errors.recaptcha ?? '' }}</div>
+      </div>
+    {% endif %}
 
     <div style="display:flex;gap:10px">
       <button type="submit" class="pf-btn-details">📤 Envoyer la réclamation</button>
@@ -87,5 +127,182 @@ document.getElementById('reclamation-form').addEventListener('submit', function(
     const ok = validateTitre() & validateDesc();
     if (!ok) e.preventDefault();
 });
+
+const mapContainer = document.getElementById('map-preview');
+const geoMessage = document.getElementById('geo-message');
+const locationInput = document.getElementById('f-lieu');
+const latitudeInput = document.getElementById('f-latitude');
+const longitudeInput = document.getElementById('f-longitude');
+
+let gMap = null;
+let gMarker = null;
+let gGeocoder = null;
+let gAutocomplete = null;
+
+function setCoordinates(lat, lng) {
+  latitudeInput.value = String(lat);
+  longitudeInput.value = String(lng);
+}
+
+function showOnMap(lat, lng, message) {
+  if (!window.google || !window.google.maps) {
+    return;
+  }
+
+  const position = { lat: lat, lng: lng };
+  mapContainer.style.display = 'block';
+
+  if (!gMap) {
+    gMap = new google.maps.Map(mapContainer, {
+      center: position,
+      zoom: 14,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false
+    });
+  } else {
+    gMap.setCenter(position);
+    gMap.setZoom(14);
+  }
+
+  if (!gMarker) {
+    gMarker = new google.maps.Marker({
+      map: gMap,
+      position: position
+    });
+  } else {
+    gMarker.setPosition(position);
+  }
+
+  if (message) {
+    geoMessage.textContent = message;
+    geoMessage.style.color = '#16a34a';
+  }
+}
+
+window.initReclamationGoogleMap = function () {
+  if (!window.google || !window.google.maps) {
+    return;
+  }
+
+  gGeocoder = new google.maps.Geocoder();
+  gMap = new google.maps.Map(mapContainer, {
+    center: { lat: 36.8065, lng: 10.1815 },
+    zoom: 6,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false
+  });
+  mapContainer.style.display = 'block';
+
+  const initialLat = parseFloat(latitudeInput.value || '');
+  const initialLng = parseFloat(longitudeInput.value || '');
+  if (!Number.isNaN(initialLat) && !Number.isNaN(initialLng)) {
+    showOnMap(initialLat, initialLng, locationInput.value || 'Lieu enregistré');
+  }
+
+  gAutocomplete = new google.maps.places.Autocomplete(locationInput, {
+    fields: ['formatted_address', 'geometry', 'name'],
+    types: ['geocode']
+  });
+
+  gAutocomplete.addListener('place_changed', function () {
+    const place = gAutocomplete.getPlace();
+    if (!place || !place.geometry || !place.geometry.location) {
+      geoMessage.textContent = 'Adresse non reconnue.';
+      geoMessage.style.color = '#E24B4A';
+      return;
+    }
+
+    const lat = place.geometry.location.lat();
+    const lng = place.geometry.location.lng();
+    const label = place.formatted_address || place.name || 'Lieu localisé';
+
+    setCoordinates(lat, lng);
+    locationInput.value = label;
+    showOnMap(lat, lng, 'Lieu localisé avec succès.');
+  });
+};
+
+document.getElementById('btn-current-position')?.addEventListener('click', function () {
+  if (!navigator.geolocation) {
+    geoMessage.textContent = 'La géolocalisation n\'est pas supportée par votre navigateur.';
+    geoMessage.style.color = '#E24B4A';
+    return;
+  }
+
+  geoMessage.textContent = 'Localisation en cours...';
+  geoMessage.style.color = 'var(--text-muted)';
+
+  navigator.geolocation.getCurrentPosition(function (position) {
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+    setCoordinates(lat, lng);
+
+    if (gGeocoder) {
+      gGeocoder.geocode({ location: { lat: lat, lng: lng } }, function (results, status) {
+        if (status === 'OK' && results && results[0]) {
+          locationInput.value = results[0].formatted_address;
+        }
+        showOnMap(lat, lng, 'Position détectée avec succès.');
+      });
+    } else {
+      showOnMap(lat, lng, 'Position détectée avec succès.');
+    }
+  }, function () {
+    geoMessage.textContent = 'Impossible d\'obtenir votre position.';
+    geoMessage.style.color = '#E24B4A';
+  }, { enableHighAccuracy: true, timeout: 10000 });
+});
+
+document.getElementById('btn-geo-search')?.addEventListener('click', function () {
+  const query = (locationInput.value || '').trim();
+  if (!query) {
+    geoMessage.textContent = 'Veuillez saisir un lieu avant de localiser.';
+    geoMessage.style.color = '#E24B4A';
+    return;
+  }
+
+  if (!gGeocoder) {
+    geoMessage.textContent = 'Google Maps n\'est pas disponible. Vérifiez la clé API.';
+    geoMessage.style.color = '#E24B4A';
+    return;
+  }
+
+  geoMessage.textContent = 'Recherche de la localisation...';
+  geoMessage.style.color = 'var(--text-muted)';
+
+  gGeocoder.geocode({ address: query }, function (results, status) {
+    if (status !== 'OK' || !results || !results[0] || !results[0].geometry || !results[0].geometry.location) {
+      geoMessage.textContent = 'Lieu introuvable.';
+      geoMessage.style.color = '#E24B4A';
+      return;
+    }
+
+    const loc = results[0].geometry.location;
+    const lat = loc.lat();
+    const lng = loc.lng();
+
+    setCoordinates(lat, lng);
+    locationInput.value = results[0].formatted_address || query;
+    showOnMap(lat, lng, 'Lieu localisé avec succès.');
+  });
+});
 </script>
+{% if google_maps_api_key is not empty %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key|url_encode }}&libraries=places&callback=initReclamationGoogleMap&loading=async" async defer></script>
+{% else %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const geoMessage = document.getElementById('geo-message');
+  if (geoMessage) {
+    geoMessage.textContent = 'Google Maps API key manquante. Ajoutez GOOGLE_MAPS_API_KEY dans .env.';
+    geoMessage.style.color = '#E24B4A';
+  }
+});
+</script>
+{% endif %}
+{% if recaptcha_site_key is not empty %}
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+{% endif %}
 {% endblock %}

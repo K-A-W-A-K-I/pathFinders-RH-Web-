@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: DejaVu Sans, Arial, sans-serif; color: #0f172a; margin: 18px; font-size: 11px; }
+    .header { border-bottom: 2px solid #334155; padding-bottom: 8px; margin-bottom: 12px; }
+    .title { font-size: 18px; font-weight: 700; margin-bottom: 2px; }
+    .meta { color: #475569; font-size: 11px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #cbd5e1; padding: 6px 7px; text-align: left; vertical-align: top; }
+    th { background: #e2e8f0; font-size: 11px; }
+    tr:nth-child(even) td { background: #f8fafc; }
+    .footer { margin-top: 14px; font-size: 10px; color: #64748b; border-top: 1px solid #cbd5e1; padding-top: 6px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="title">Liste des Utilisateurs</div>
+    <div class="meta">{{ company_name }} - Généré le {{ generated_at|date('d/m/Y H:i') }}</div>
+    <div class="meta">Total: {{ users|length }} utilisateur(s)</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nom complet</th>
+        <th>Email</th>
+        <th>Téléphone</th>
+        <th>Rôle</th>
+        <th>Statut</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ user.id }}</td>
+        <td>{{ user.fullName }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.telephone ?: 'N/A' }}</td>
+        <td>{{ user.role ?: 'ROLE_USER' }}</td>
+        <td>{{ user.statut ?: 'actif' }}</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="6">Aucun utilisateur.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="footer">
+    Ce document est généré automatiquement depuis la plateforme RH.
+  </div>
+</body>
+</html>

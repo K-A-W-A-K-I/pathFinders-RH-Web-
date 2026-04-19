@@ -127,6 +127,16 @@ input.is-invalid{border-color:rgba(226,75,74,.6)}
   </div>
   {% for e in form.plainPassword.vars.errors %}<div class="field-error" style="margin-top:-8px;margin-bottom:10px">{{ e.message }}</div>{% endfor %}
 
+  {% for message in app.flashes('error') %}
+    <div class="field-error" style="margin-bottom:10px">{{ message }}</div>
+  {% endfor %}
+
+  {% if recaptcha_site_key is not empty %}
+    <div style="margin:10px 0 14px;display:flex;justify-content:center">
+      <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
+    </div>
+  {% endif %}
+
   <button type="submit" class="btn-auth">✨ Créer mon compte</button>
 
   {{ form_end(form) }}
@@ -135,5 +145,9 @@ input.is-invalid{border-color:rgba(226,75,74,.6)}
     Déjà un compte ? <a href="{{ path('auth_login') }}">Se connecter</a>
   </div>
 </div>
+
+{% if recaptcha_site_key is not empty %}
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+{% endif %}
 </body>
 </html>

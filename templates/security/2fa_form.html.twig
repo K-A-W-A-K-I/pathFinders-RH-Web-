@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vérification 2FA</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#09090f;color:#e8e6f0;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0}
+    .card{width:100%;max-width:420px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);padding:24px;border-radius:16px}
+    .input{width:100%;padding:12px;border-radius:10px;border:1px solid #3b3b57;background:#161624;color:#fff;margin-bottom:10px;box-sizing:border-box}
+    .btn{width:100%;padding:12px;border-radius:10px;border:0;background:#6C63FF;color:#fff;font-weight:700;cursor:pointer}
+    .err{font-size:13px;color:#f87171;margin-bottom:10px}
+    .sub{font-size:13px;color:#b6b2c9;margin-bottom:14px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Vérification 2FA</h2>
+    <p class="sub">Entrez le code à 6 chiffres de Microsoft Authenticator.</p>
+
+    {% if authenticationError %}
+      <div class="err">{{ authenticationError|trans(authenticationErrorData, 'SchebTwoFactorBundle') }}</div>
+    {% endif %}
+
+    <form class="form" action="{{ checkPathUrl ? checkPathUrl : path(checkPathRoute) }}" method="post">
+      <input
+        id="_auth_code"
+        class="input"
+        type="text"
+        name="{{ authCodeParameterName }}"
+        autocomplete="one-time-code"
+        inputmode="numeric"
+        pattern="[0-9]*"
+        autofocus
+        required
+      >
+
+      {% if isCsrfProtectionEnabled %}
+        <input type="hidden" name="{{ csrfParameterName }}" value="{{ csrf_token(csrfTokenId) }}">
+      {% endif %}
+
+      <button class="btn" type="submit">Valider</button>
+    </form>
+
+    <p style="margin-top:12px;font-size:12px"><a href="{{ logoutPath }}" style="color:#c6c3ff">Annuler</a></p>
+  </div>
+</body>
+</html>

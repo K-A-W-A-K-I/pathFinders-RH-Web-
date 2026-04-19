@@ -14,7 +14,43 @@
 <div class="pf-content">
 <div class="pf-section" style="max-width:700px">
 {% set inp = 'width:100%;padding:10px 14px;border:.5px solid var(--border);border-radius:9px;font-size:14px;font-family:DM Sans,sans-serif;background:var(--surface);color:var(--text);outline:none;' %}
+{% set profileImageSrc = user.imageUrl ? (user.imageUrl starts with 'http' ? user.imageUrl : asset(user.imageUrl)) : '' %}
+{% set cvSrc = (candidat is not null and candidat.cvPath) ? (candidat.cvPath starts with 'http' ? candidat.cvPath : asset(candidat.cvPath)) : '' %}
+{% set cvExt = cvSrc ? (cvSrc|split('.')|last|lower|split('?')|first) : '' %}
+{% set cvPreviewSrc = (cvSrc and cvExt == 'pdf') ? cvSrc|replace({'/image/upload/':'/image/upload/pg_1,f_jpg/'}) : cvSrc %}
+
+{% for message in app.flashes('error') %}
+<div style="margin-bottom:10px;padding:10px 12px;border-radius:10px;background:rgba(226,75,74,.12);border:.5px solid rgba(226,75,74,.35);color:#f87171;font-size:13px">
+  {{ message }}
+</div>
+{% endfor %}
+
+{% for message in app.flashes('success') %}
+<div style="margin-bottom:10px;padding:10px 12px;border-radius:10px;background:rgba(29,158,117,.12);border:.5px solid rgba(29,158,117,.35);color:#34d399;font-size:13px">
+  {{ message }}
+</div>
+{% endfor %}
+
 <form method="post" enctype="multipart/form-data" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+
+  <div style="grid-column:1/-1;display:flex;justify-content:center;margin-bottom:.25rem">
+    <label for="profile-photo-input" style="cursor:pointer;text-align:center;display:block">
+      <img
+        id="profile-photo-preview"
+        src="{{ profileImageSrc }}"
+        alt="Photo de profil"
+        style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:.5px solid var(--border);display:{{ user.imageUrl ? 'block' : 'none' }};margin:0 auto .55rem"
+      >
+      <div
+        id="profile-photo-fallback"
+        style="width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,#6C63FF,#9D6BFF);display:{{ user.imageUrl ? 'none' : 'flex' }};align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#fff;margin:0 auto .55rem"
+      >
+        {{ user.fullName|slice(0,1)|upper }}
+      </div>
+      <div style="font-size:12px;color:var(--text-muted)">Cliquez pour changer la photo</div>
+    </label>
+    <input id="profile-photo-input" type="file" name="photo" accept="image/*" style="display:none">
+  </div>
 
   <div>
     <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:5px">Nom *</label>
@@ -48,9 +84,47 @@
   {% if candidat is not null %}
   <div style="grid-column:1/-1">
     <label style="display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:5px">CV (PDF)</label>
-    <input type="file" name="cv" accept=".pdf,.doc,.docx" style="{{ inp }}padding:8px;">
+    <input id="profile-cv-input" type="file" name="cv" accept=".pdf,application/pdf" style="display:none">
+
+    <label for="profile-cv-input" style="display:block;cursor:pointer;border:.5px dashed var(--border);border-radius:12px;background:var(--surface);padding:14px 16px;transition:border-color .2s,background .2s">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#6C63FF,#9D6BFF);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px">📄</div>
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text)">Choisir un CV</div>
+            <div style="font-size:11px;color:var(--text-muted)">Format: PDF uniquement - Taille max: 10MB</div>
+          </div>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:#6C63FF">Parcourir</div>
+      </div>
+    </label>
+
+    <div id="cv-file-card" style="margin-top:10px;display:none;border:.5px solid var(--border);border-radius:12px;background:var(--surface);padding:12px 14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div>
+          <div id="cv-file-name" style="font-size:13px;font-weight:700;color:var(--text)"></div>
+          <div id="cv-file-meta" style="font-size:11px;color:var(--text-muted)"></div>
+        </div>
+        <button id="cv-clear-btn" type="button" class="pf-btn-ghost" style="padding:6px 12px;border-radius:8px">Retirer</button>
+      </div>
+    </div>
+
     {% if candidat.cvPath %}
-      <div style="font-size:12px;color:var(--text-muted);margin-top:4px">CV actuel: <a href="{{ asset(candidat.cvPath) }}" target="_blank" style="color:#6C63FF">Voir</a></div>
+    <div id="cv-existing-card" style="margin-top:10px;border:.5px solid var(--border);border-radius:12px;background:var(--surface);padding:12px 14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text)">CV actuel</div>
+          <div style="font-size:11px;color:var(--text-muted)">{{ cvExt ? cvExt|upper : 'Document' }}</div>
+        </div>
+        <a href="{{ cvPreviewSrc }}" target="_blank" class="pf-btn-ghost" style="padding:6px 12px;border-radius:8px;text-decoration:none">Voir</a>
+      </div>
+      {% if cvExt == 'pdf' %}
+        <div style="margin-top:10px;height:425px;overflow:auto;border:.5px solid var(--border);border-radius:10px;background:#fff;padding:6px">
+          <img src="{{ cvPreviewSrc }}" alt="Aperçu du CV" style="width:100%;height:auto;display:block">
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Aperçu de la première page affiché (restriction Cloudinary sur l'original PDF).</div>
+      {% endif %}
+    </div>
     {% endif %}
   </div>
 
@@ -62,9 +136,72 @@
 
   <div style="grid-column:1/-1;display:flex;gap:10px;margin-top:8px;padding-top:16px;border-top:.5px solid var(--border)">
     <button type="submit" class="pf-btn-details">💾 Enregistrer</button>
+    <a href="{{ path('profile_2fa_index') }}" class="pf-btn-ghost" style="padding:8px 18px;border-radius:10px;text-decoration:none">Configurer 2FA</a>
     <a href="{{ path('profile_index') }}" class="pf-btn-ghost" style="padding:8px 18px;border-radius:10px;text-decoration:none">Annuler</a>
   </div>
 </form>
 </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const input = document.getElementById('profile-photo-input');
+  const preview = document.getElementById('profile-photo-preview');
+  const fallback = document.getElementById('profile-photo-fallback');
+  const cvInput = document.getElementById('profile-cv-input');
+  const cvFileCard = document.getElementById('cv-file-card');
+  const cvFileName = document.getElementById('cv-file-name');
+  const cvFileMeta = document.getElementById('cv-file-meta');
+  const cvClearBtn = document.getElementById('cv-clear-btn');
+  const cvExistingCard = document.getElementById('cv-existing-card');
+
+  if (!input || !preview || !fallback) {
+    return;
+  }
+
+  input.addEventListener('change', function () {
+    const file = input.files && input.files[0];
+    if (!file) {
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    preview.src = objectUrl;
+    preview.style.display = 'block';
+    fallback.style.display = 'none';
+  });
+
+  if (cvInput && cvFileCard && cvFileName && cvFileMeta) {
+    cvInput.addEventListener('change', function () {
+      const file = cvInput.files && cvInput.files[0];
+      if (!file) {
+        cvFileCard.style.display = 'none';
+        return;
+      }
+
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+      const ext = (file.name.split('.').pop() || '').toUpperCase();
+      cvFileName.textContent = file.name;
+      cvFileMeta.textContent = (ext ? ext + ' - ' : '') + sizeMb + ' MB';
+      cvFileCard.style.display = 'block';
+
+      if (cvExistingCard) {
+        cvExistingCard.style.display = 'none';
+      }
+    });
+  }
+
+  if (cvClearBtn && cvInput && cvFileCard) {
+    cvClearBtn.addEventListener('click', function () {
+      cvInput.value = '';
+      cvFileCard.style.display = 'none';
+      if (cvExistingCard) {
+        cvExistingCard.style.display = 'block';
+      }
+    });
+  }
+});
+</script>
 {% endblock %}

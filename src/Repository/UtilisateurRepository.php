@@ -24,4 +24,30 @@ class UtilisateurRepository extends ServiceEntityRepository implements PasswordU
         $user->setPassword($newHashedPassword);
         $this->getEntityManager()->flush();
     }
+
+    /**
+     * @param array<int,int> $ids
+     * @return array<int,Utilisateur>
+     */
+    public function findIndexedByIds(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        $users = $this->createQueryBuilder('u')
+            ->where('u.id IN (:ids)')
+            ->setParameter('ids', array_values($ids))
+            ->getQuery()
+            ->getResult();
+
+        $indexed = [];
+        foreach ($users as $user) {
+            if ($user instanceof Utilisateur && $user->getId() !== null) {
+                $indexed[$user->getId()] = $user;
+            }
+        }
+
+        return $indexed;
+    }
 }

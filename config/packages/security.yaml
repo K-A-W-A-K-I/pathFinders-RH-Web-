@@ -17,6 +17,21 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+        api_login:
+            pattern: ^/api/login_check$
+            stateless: true
+            provider: app_user_provider
+            json_login:
+                check_path: /api/login_check
+                username_path: email
+                password_path: password
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+        api:
+            pattern: ^/api
+            stateless: true
+            provider: app_user_provider
+            jwt: ~
         main:
             lazy: true
             provider: app_user_provider
@@ -34,8 +49,19 @@ security:
             remember_me:
                 secret: '%kernel.secret%'
                 lifetime: 604800
+            two_factor:
+                auth_form_path: 2fa_login
+                check_path: 2fa_login_check
 
     access_control:
+        - { path: ^/api/login_check$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/face-detection, roles: PUBLIC_ACCESS }
+        - { path: ^/api/stats, roles: PUBLIC_ACCESS }
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/redirect-after-login$, roles: IS_AUTHENTICATED_FULLY }
+        - { path: ^/2fa, roles: IS_AUTHENTICATED_2FA_IN_PROGRESS }
         - { path: ^/connexion, roles: PUBLIC_ACCESS }
         - { path: ^/inscription, roles: PUBLIC_ACCESS }
+        - { path: ^/mot-de-passe/oubli, roles: PUBLIC_ACCESS }
+        - { path: ^/mot-de-passe/reset, roles: PUBLIC_ACCESS }
         - { path: ^/formations/inscrire, roles: ROLE_USER }

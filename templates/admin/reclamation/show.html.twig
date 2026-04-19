@@ -1,0 +1,118 @@
+{% extends 'admin_base.html.twig' %}
+{% block title %}Détail Réclamation{% endblock %}
+{% block page_icon %}🧾{% endblock %}
+{% block page_title %}Réclamation #{{ reclamation.id }}{% endblock %}
+
+{% block body %}
+<div class="admin-table-section" style="display:grid;gap:1rem">
+    <div class="admin-table-header" style="justify-content:space-between">
+        <div class="admin-table-title">{{ reclamation.titre }}</div>
+        <a href="{{ path('admin_reclamation_index') }}" class="admin-action-btn">← Retour</a>
+    </div>
+
+    <div style="background:#fff;border:1px solid #eef0f5;border-radius:12px;padding:14px">
+        <div style="font-size:13px;color:#6b7280;margin-bottom:8px">
+            Utilisateur: <strong style="color:#111827">{{ user ? user.fullName : 'Utilisateur #' ~ reclamation.idUtilisateur }}</strong>
+            {% if user and user.email %} - {{ user.email }}{% endif %}
+        </div>
+        <div style="font-size:13px;color:#374151;line-height:1.7;white-space:pre-line">{{ reclamation.description }}</div>
+        <hr style="margin:12px 0;border:none;border-top:1px solid #eef0f5">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;font-size:12px;color:#6b7280">
+            <div>Statut actuel: <strong style="color:#111827">{{ reclamation.statut }}</strong></div>
+            <div>Décision modération: <strong style="color:#111827">{{ reclamation.moderationDecision ?: 'N/A' }}</strong></div>
+            <div>Risque: <strong style="color:#111827">{{ reclamation.moderationScore is not null ? (reclamation.moderationScore * 100)|round ~ '%' : 'N/A' }}</strong></div>
+            <div>Urgence IA: <strong style="color:#111827">{{ reclamation.moderationUrgency ?: 'N/A' }}</strong></div>
+            <div>Sentiment IA: <strong style="color:#111827">{{ reclamation.moderationSentiment ?: 'N/A' }}</strong></div>
+            <div>Date création: <strong style="color:#111827">{{ reclamation.dateCreation|date('d/m/Y H:i') }}</strong></div>
+        </div>
+        {% if reclamation.moderationReason %}
+            <div style="margin-top:10px;font-size:12px;color:#92400e;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);padding:8px 10px;border-radius:8px">
+                Motif modération: {{ reclamation.moderationReason }}
+            </div>
+        {% endif %}
+        {% if reclamation.moderationSummary %}
+            <div style="margin-top:8px;font-size:12px;color:#374151;background:#f8fafc;border:1px solid #e2e8f0;padding:8px 10px;border-radius:8px">
+                Résumé IA: {{ reclamation.moderationSummary }}
+            </div>
+        {% endif %}
+        {% if reclamation.moderationFlags is not empty %}
+            <div style="margin-top:8px;font-size:12px;color:#374151">Flags détectés: {{ reclamation.moderationFlags|join(', ') }}</div>
+        {% endif %}
+    </div>
+
+    <div style="background:#fff;border:1px solid #eef0f5;border-radius:12px;padding:14px">
+        <h3 style="margin:0 0 12px 0;font-size:16px">Réponse admin</h3>
+
+        <form method="post" action="{{ path('admin_reclamation_statut', {id: reclamation.id}) }}" style="margin-bottom:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <input type="hidden" name="redirect" value="show">
+            <label style="font-size:12px;color:#6b7280">Changer le statut:</label>
+            <select name="statut" style="padding:7px 10px;border-radius:8px;border:1px solid #d1d5db">
+                {% for s in ['En attente','En cours','Résolu','Répondu','Fermé'] %}
+                    <option value="{{ s }}" {{ reclamation.statut == s ? 'selected' : '' }}>{{ s }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="admin-action-btn">Mettre à jour</button>
+        </form>
+
+        <form method="post" id="reply-form" action="{{ path('admin_reclamation_reply_send', {id: reclamation.id}) }}">
+            <input type="hidden" name="_token" id="reply-csrf" value="{{ csrf_token('admin_reclamation_reply_' ~ reclamation.id) }}">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+                <button type="button" id="btn-ai-reply" class="admin-action-btn">✨ Generate AI reply</button>
+            </div>
+            <textarea name="admin_reply" id="admin-reply-text" rows="8" style="width:100%;padding:10px;border-radius:10px;border:1px solid #d1d5db;resize:vertical" placeholder="Rédigez la réponse au candidat...">{{ reclamation.adminReply ?: '' }}</textarea>
+            <div id="ai-reply-msg" style="font-size:12px;color:#6b7280;margin-top:6px"></div>
+            <div style="display:flex;justify-content:flex-end;margin-top:10px">
+                <button type="submit" class="admin-action-btn" style="background:#2563eb;color:#fff;border-color:#2563eb">Send response</button>
+            </div>
+        </form>
+
+        {% if reclamation.adminReplyEmailStatus %}
+            <div style="margin-top:10px;font-size:12px;color:{{ reclamation.adminReplyEmailStatus == 'sent' ? '#166534' : '#991b1b' }}">
+                Email status: {{ reclamation.adminReplyEmailStatus }}
+                {% if reclamation.adminReplyEmailError %} - {{ reclamation.adminReplyEmailError }}{% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+document.getElementById('btn-ai-reply')?.addEventListener('click', function () {
+    const msg = document.getElementById('ai-reply-msg');
+    const textarea = document.getElementById('admin-reply-text');
+    const csrf = document.getElementById('reply-csrf').value;
+
+    msg.textContent = 'Génération IA en cours...';
+    msg.style.color = '#6b7280';
+
+    const form = new URLSearchParams();
+    form.append('_token', csrf);
+
+    fetch('{{ path('admin_reclamation_ai_reply', {id: reclamation.id}) }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: form.toString()
+    })
+    .then(async function (response) {
+        const body = await response.json();
+        if (!response.ok || !body.ok) {
+            throw new Error(body.message || 'Échec de génération.');
+        }
+        return body.reply;
+    })
+    .then(function (reply) {
+        textarea.value = reply;
+        msg.textContent = 'Réponse IA générée. Vous pouvez la modifier avant envoi.';
+        msg.style.color = '#166534';
+    })
+    .catch(function (error) {
+        msg.textContent = error.message || 'Service IA indisponible.';
+        msg.style.color = '#991b1b';
+    });
+});
+</script>
+{% endblock %}

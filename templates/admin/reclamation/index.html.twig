@@ -8,7 +8,7 @@
     <div class="admin-table-header">
         <div class="admin-table-title">
             Réclamations
-            <span class="admin-count-badge">{{ reclamations|length }}</span>
+            <span class="admin-count-badge">{{ reclamations.getTotalItemCount }}</span>
         </div>
         <div class="admin-table-actions">
             <input type="text" id="searchInput" placeholder="Rechercher..." class="admin-search-input" oninput="filterTable(this.value)">
@@ -17,6 +17,7 @@
                 <option value="En attente">En attente</option>
                 <option value="En cours">En cours</option>
                 <option value="Résolu">Résolu</option>
+                <option value="Répondu">Répondu</option>
                 <option value="Fermé">Fermé</option>
             </select>
         </div>
@@ -27,7 +28,7 @@
     {% else %}
     <table class="admin-table" id="reclTable">
         <thead><tr>
-            <th>Utilisateur</th><th>Titre</th><th>Description</th><th>Statut</th><th>Date</th><th style="text-align:right">Actions</th>
+            <th>Utilisateur</th><th>Titre</th><th>Description</th><th>Statut</th><th>Priorité IA</th><th>Anomalie</th><th>Incident / Lieu</th><th>Date</th><th style="text-align:right">Actions</th>
         </tr></thead>
         <tbody>
         {% for r in reclamations %}
@@ -42,15 +43,58 @@
                             style="padding:4px 10px;border-radius:8px;font-size:12px;font-weight:600;border:1.5px solid #e2e5ea;cursor:pointer;
                             background:{% if r.statut == 'En attente' %}rgba(245,158,11,.1){% elseif r.statut == 'En cours' %}rgba(75,139,245,.1){% elseif r.statut == 'Résolu' %}rgba(34,197,94,.1){% else %}rgba(100,116,139,.1){% endif %};
                             color:{% if r.statut == 'En attente' %}#d97706{% elseif r.statut == 'En cours' %}#2563eb{% elseif r.statut == 'Résolu' %}#16a34a{% else %}#64748b{% endif %}">
-                        {% for s in ['En attente','En cours','Résolu','Fermé'] %}
+                        {% for s in ['En attente','En cours','Résolu','Répondu','Fermé'] %}
                             <option value="{{ s }}" {{ r.statut == s ? 'selected' : '' }}>{{ s }}</option>
                         {% endfor %}
                     </select>
                 </form>
             </td>
+            <td style="font-size:12px;white-space:nowrap">
+                {% set p = r.analyticsPriorityLevel ?: 'Basse' %}
+                <div style="font-weight:700;color:#1f2937">{{ r.analyticsUrgencyScore is not null ? r.analyticsUrgencyScore|number_format(1, '.', ' ') ~ '/100' : '—' }}</div>
+                <span class="admin-badge"
+                    style="margin-top:4px;background:
+                        {% if p == 'Critique' %}rgba(239,68,68,.12)
+                        {% elseif p == 'Haute' %}rgba(245,158,11,.16)
+                        {% elseif p == 'Moyenne' %}rgba(59,130,246,.14)
+                        {% else %}rgba(148,163,184,.15){% endif %};
+                    color:
+                        {% if p == 'Critique' %}#b91c1c
+                        {% elseif p == 'Haute' %}#b45309
+                        {% elseif p == 'Moyenne' %}#1d4ed8
+                        {% else %}#475569{% endif %}">
+                    {{ p }}
+                </span>
+            </td>
+            <td style="font-size:12px;max-width:220px">
+                <div style="font-weight:700;color:#1f2937">{{ r.analyticsAnomalyScore is not null ? r.analyticsAnomalyScore|number_format(1, '.', ' ') ~ '/100' : '—' }}</div>
+                {% if r.analyticsAnomalyFlag %}
+                    <div style="color:#dc2626;font-weight:600;margin-top:2px">⚠️ Anomalie détectée</div>
+                {% else %}
+                    <div style="color:#16a34a;font-weight:600;margin-top:2px">✓ Normal</div>
+                {% endif %}
+                {% if r.analyticsAnomalyReasons %}
+                    <div class="admin-table-muted" style="font-size:11px;margin-top:2px">{{ r.analyticsAnomalyReasons|join(', ')|replace({'_':' '}) }}</div>
+                {% endif %}
+            </td>
+            <td class="admin-table-muted" style="font-size:12px;max-width:240px">
+                {% if r.dateIncident %}
+                    <div>🗓️ {{ r.dateIncident|date('d/m/Y') }}</div>
+                {% endif %}
+                {% if r.lieu %}
+                    <div>📍 {{ r.lieu }}</div>
+                {% endif %}
+                {% if r.latitude and r.longitude %}
+                    <a href="https://www.openstreetmap.org/?mlat={{ r.latitude }}&mlon={{ r.longitude }}#map=15/{{ r.latitude }}/{{ r.longitude }}" target="_blank" rel="noopener" style="color:#6C63FF;text-decoration:none">Voir carte</a>
+                {% endif %}
+                {% if r.moderationDecision and r.moderationDecision not in ['accepted', 'approved'] %}
+                    <div style="color:#b45309;margin-top:4px">⚠️ Modération: {{ r.moderationReason ?: 'Contenu signalé' }}</div>
+                {% endif %}
+            </td>
             <td class="admin-table-muted" style="font-size:12px;white-space:nowrap">{{ r.dateCreation|date('d/m/Y H:i') }}</td>
             <td>
                 <div class="admin-row-actions" style="justify-content:flex-end">
+                    <a href="{{ path('admin_reclamation_show', {id: r.id}) }}" class="admin-action-btn">👁 Voir</a>
                     <form method="post" action="{{ path('admin_reclamation_delete', {id: r.id}) }}" onsubmit="return confirm('Supprimer ?')" style="display:inline">
                         <button type="submit" class="admin-action-btn admin-action-delete">🗑</button>
                     </form>
@@ -60,6 +104,10 @@
         {% endfor %}
         </tbody>
     </table>
+
+    <div style="margin-top:1rem;display:flex;justify-content:center">
+        {{ knp_pagination_render(reclamations) }}
+    </div>
     {% endif %}
 </div>
 {% endblock %}
