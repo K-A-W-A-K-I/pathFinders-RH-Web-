@@ -404,33 +404,80 @@ class OffreController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'Aucun CV disponible pour ce candidat'], 400);
         }
 
-        $fullPath = $this->getParameter('kernel.project_dir') . '/public/uploads/cv/' . basename($cvPath);
-        if (!file_exists($fullPath)) {
-            return new JsonResponse(['success' => false, 'error' => 'Fichier CV introuvable sur le serveur'], 404);
-        }
-
         try {
+            // Check if CV is a Cloudinary URL or local file
+            if (str_contains($cvPath, 'res.cloudinary.com') || str_starts_with($cvPath, 'http')) {
+                // Download CV from Cloudinary to temporary file
+                $cvContent = @file_get_contents($cvPath);
+                if ($cvContent === false) {
+                    return new JsonResponse(['success' => false, 'error' => 'Impossible de télécharger le CV depuis Cloudinary'], 500);
+                }
+                
+                $tempFile = sys_get_temp_dir() . '/cv_' . $candidature->getId() . '_' . time() . '.pdf';
+                if (file_put_contents($tempFile, $cvContent) === false) {
+                    return new JsonResponse(['success' => false, 'error' => 'Impossible de sauvegarder le CV temporairement'], 500);
+                }
+                
+                $fullPath = $tempFile;
+                $isTemp = true;
+            } else {
+                // Local file path
+                $fullPath = $this->getParameter('kernel.project_dir') . '/public/' . $cvPath;
+                if (!file_exists($fullPath)) {
+                    return new JsonResponse(['success' => false, 'error' => 'Fichier CV introuvable: ' . basename($cvPath)], 404);
+                }
+                $isTemp = false;
+            }
+
             // Extract text from PDF using smalot/pdfparser
             $parser  = new \Smalot\PdfParser\Parser();
             $pdf     = $parser->parseFile($fullPath);
             $cvText  = $pdf->getText();
 
+            // Clean up temporary file if created
+            if ($isTemp && file_exists($fullPath)) {
+                @unlink($fullPath);
+            }
+
             if (empty(trim($cvText))) {
-                return new JsonResponse(['success' => false, 'error' => 'Impossible d\'extraire le texte du CV (PDF scanné ?)'], 400);
+                return new JsonResponse(['success' => false, 'error' => 'Impossible d\'extraire le texte du CV (PDF scanné ou vide ?)'], 400);
             }
 
             $offre  = $candidature->getOffre();
+            
+            // Call AI service to analyze CV
             $result = $ai->analyseCv($cvText, $offre->getTitre(), $offre->getDescription(), $offre->getDomaine());
 
+            // Save results to database
             $candidature->getCandidat()->setCvScoreIa($result['score']);
             $candidature->getCandidat()->setCvScoreDetails($result['details']);
             $candidature->getCandidat()->setCvAnalyseDate(new \DateTime());
             $candidature->setCvScoreIa($result['score']);
             $em->flush();
 
-            return new JsonResponse(['success' => true, 'score' => $result['score'], 'details' => $result['details']]);
+            return new JsonResponse([
+                'success' => true, 
+                'score' => $result['score'], 
+                'details' => $result['details']
+            ]);
+        } catch (\Smalot\PdfParser\Exception $e) {
+            // Clean up temporary file on error
+            if (isset($isTemp) && $isTemp && isset($fullPath) && file_exists($fullPath)) {
+                @unlink($fullPath);
+            }
+            return new JsonResponse(['success' => false, 'error' => 'Erreur lors de la lecture du PDF: ' . $e->getMessage()], 500);
+        } catch (\RuntimeException $e) {
+            // Clean up temporary file on error
+            if (isset($isTemp) && $isTemp && isset($fullPath) && file_exists($fullPath)) {
+                @unlink($fullPath);
+            }
+            return new JsonResponse(['success' => false, 'error' => 'Erreur AI: ' . $e->getMessage()], 500);
         } catch (\Throwable $e) {
-            return new JsonResponse(['success' => false, 'error' => $e->getMessage()], 500);
+            // Clean up temporary file on error
+            if (isset($isTemp) && $isTemp && isset($fullPath) && file_exists($fullPath)) {
+                @unlink($fullPath);
+            }
+            return new JsonResponse(['success' => false, 'error' => 'Erreur inattendue: ' . $e->getMessage()], 500);
         }
     }
 }

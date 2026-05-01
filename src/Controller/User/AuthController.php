@@ -185,7 +185,11 @@ class AuthController extends AbstractController
     }
 
     #[Route('/redirect-after-login', name: 'auth_redirect')]
-    public function redirectAfterLogin(SessionInterface $session, TokenStorageInterface $tokenStorage): Response
+    public function redirectAfterLogin(
+        SessionInterface $session, 
+        TokenStorageInterface $tokenStorage,
+        EntityManagerInterface $em
+    ): Response
     {
         $token = $tokenStorage->getToken();
         if ($token instanceof TwoFactorTokenInterface) {
@@ -198,6 +202,17 @@ class AuthController extends AbstractController
         }
 
         $session->set('user_id', method_exists($user, 'getId') ? $user->getId() : null);
+
+        // Auto-create Candidat record for ROLE_CANDIDAT users if it doesn't exist
+        if (in_array('ROLE_CANDIDAT', $user->getRoles())) {
+            $candidat = $em->getRepository(Candidat::class)->findOneBy(['idUtilisateur' => $user->getId()]);
+            if (!$candidat) {
+                $candidat = new Candidat();
+                $candidat->setIdUtilisateur($user->getId());
+                $em->persist($candidat);
+                $em->flush();
+            }
+        }
 
         $targetUrl = $session->get('_security.main.target_path');
         if ($targetUrl) {

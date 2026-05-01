@@ -47,6 +47,16 @@
   </div>
   {% endif %} {# ← close employee stats here #}
 
+  {% if not employee %}
+  <div class="pf-section" style="text-align:center;padding:60px 20px">
+    <div style="font-size:48px;margin-bottom:16px;opacity:.4">📋</div>
+    <div style="font-family:Sora,sans-serif;font-size:18px;font-weight:600;color:var(--text-muted);margin-bottom:8px">Aucun dossier employé trouvé</div>
+    <div style="font-size:14px;color:var(--text-dim);max-width:400px;margin:0 auto">
+      Votre compte n'est pas encore lié à un dossier employé. Contactez votre responsable RH pour qu'il configure votre profil.
+    </div>
+  </div>
+  {% else %}
+
   <div class="pf-section">
     <div class="pf-section-label">{{ isHistory ? 'Historique complet' : 'Mois en cours' }}</div>
     <div class="pf-divider"></div>
@@ -116,6 +126,8 @@
       </tbody>
     </table>
   </div>
+
+  {% endif %}{# end employee check #}
 
 </div>
 {% endblock %}

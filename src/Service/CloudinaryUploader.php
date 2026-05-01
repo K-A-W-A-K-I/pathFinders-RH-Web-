@@ -68,13 +68,11 @@ class CloudinaryUploader
         $this->validateCv($file);
 
         $result = $this->client()->uploadApi()->upload($file->getPathname(), [
-            // Store CV as PDF image resource to avoid raw original delivery restrictions.
-            'resource_type' => 'image',
+            'resource_type' => 'auto',  // Let Cloudinary auto-detect the resource type
             'folder' => $this->cvFolder,
             'public_id' => sprintf('cv_%d_%d', $userId, time()),
-            'filename_override' => $file->getClientOriginalName(),
             'overwrite' => true,
-            'format' => 'pdf',
+            'type' => 'upload',  // Explicitly set type to 'upload' for public access
         ]);
 
         return [
@@ -95,12 +93,21 @@ class CloudinaryUploader
         }
 
         try {
+            // Try to delete with the specified resource type first
             $this->client()->uploadApi()->destroy($publicId, [
                 'resource_type' => $resourceType,
                 'invalidate' => true,
             ]);
-        } catch (\Throwable) {
-            // Old files cleanup should never block profile updates.
+        } catch (\Throwable $e) {
+            // If it fails, try with 'raw' resource type (for CVs)
+            try {
+                $this->client()->uploadApi()->destroy($publicId, [
+                    'resource_type' => 'raw',
+                    'invalidate' => true,
+                ]);
+            } catch (\Throwable) {
+                // Old files cleanup should never block profile updates.
+            }
         }
     }
 

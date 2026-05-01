@@ -76,7 +76,7 @@
             {% if f.dureeHeures %}
               <div class="mi-meta">⏱ {{ f.dureeHeures }}h</div>
             {% endif %}
-            {% if f.categorie %}
+            {% if f.categorie is not null %}
               <div class="mi-meta">📁 {{ f.categorie.nomCategorie }}</div>
             {% endif %}
             <div class="mi-date-insc">Inscrit le {{ ins.dateInscrit|date('d/m/Y') }}</div>

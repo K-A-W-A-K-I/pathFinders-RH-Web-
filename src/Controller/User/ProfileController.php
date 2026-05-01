@@ -43,7 +43,21 @@ class ProfileController extends AbstractController
         CloudinaryUploader $cloudinaryUploader,
     ): Response
     {
-        return $this->edit($request, $em, $hasher, $candidatRepo, $cloudinaryUploader);
+        $user = $this->getUser();
+        $candidat = $user ? $candidatRepo->findByUserId($user->getId()) : null;
+        
+        // Auto-create candidat record if user is ROLE_CANDIDAT and doesn't have one
+        if ($user && in_array('ROLE_CANDIDAT', $user->getRoles()) && !$candidat) {
+            $candidat = new \App\Entity\Candidat();
+            $candidat->setIdUtilisateur((int) $user->getId());
+            $em->persist($candidat);
+            $em->flush();
+        }
+        
+        return $this->render('profile/index.html.twig', [
+            'user' => $user,
+            'candidat' => $candidat,
+        ]);
     }
 
     #[Route('/edit', name: 'edit', methods: ['GET', 'POST'])]
@@ -56,6 +70,15 @@ class ProfileController extends AbstractController
     ): Response {
         $user     = $this->getUser();
         $candidat = $user ? $candidatRepo->findByUserId($user->getId()) : null;
+        
+        // Auto-create candidat record if user is ROLE_CANDIDAT and doesn't have one
+        if ($user && in_array('ROLE_CANDIDAT', $user->getRoles()) && !$candidat) {
+            $candidat = new \App\Entity\Candidat();
+            $candidat->setIdUtilisateur((int) $user->getId());
+            $em->persist($candidat);
+            $em->flush();
+        }
+        
         $errors   = [];
 
         if ($request->isMethod('POST')) {
@@ -93,14 +116,38 @@ class ProfileController extends AbstractController
                         $cloudinaryUploader->deleteByUrl($oldImageUrl, 'image');
                     }
 
-                    if ($cvFile && $candidat) {
-                        $oldCvUrl = $candidat->getCvPath();
-                        $upload = $cloudinaryUploader->uploadCv($cvFile, (int) $user->getId());
-                        if ($upload['secure_url'] === '') {
-                            throw new \RuntimeException('Echec de l\'upload du CV.');
+                    if ($cvFile) {
+                        // Create candidat if doesn't exist
+                        if (!$candidat) {
+                            $candidat = new \App\Entity\Candidat();
+                            $candidat->setIdUtilisateur((int) $user->getId());
+                            $em->persist($candidat);
+                            $em->flush(); // Flush to get the candidat ID
                         }
-                        $candidat->setCvPath($upload['secure_url']);
-                        $cloudinaryUploader->deleteByUrl($oldCvUrl, 'image');
+                        
+                        // Save CV locally instead of Cloudinary
+                        $uploadsDir = $this->getParameter('kernel.project_dir') . '/public/uploads/cv';
+                        if (!is_dir($uploadsDir)) {
+                            mkdir($uploadsDir, 0777, true);
+                        }
+                        
+                        // Generate unique filename
+                        $newFilename = 'cv_' . $user->getId() . '_' . time() . '.pdf';
+                        
+                        // Delete old CV file if exists
+                        $oldCvPath = $candidat->getCvPath();
+                        if ($oldCvPath && !str_contains($oldCvPath, 'cloudinary')) {
+                            $oldFile = $this->getParameter('kernel.project_dir') . '/public/uploads/cv/' . basename($oldCvPath);
+                            if (file_exists($oldFile)) {
+                                @unlink($oldFile);
+                            }
+                        }
+                        
+                        // Move uploaded file to uploads directory
+                        $cvFile->move($uploadsDir, $newFilename);
+                        
+                        // Save relative path in database
+                        $candidat->setCvPath('uploads/cv/' . $newFilename);
                     }
                 } catch (\InvalidArgumentException $exception) {
                     $this->addFlash('error', $exception->getMessage());
@@ -109,8 +156,8 @@ class ProfileController extends AbstractController
                         'candidat'=> $candidat,
                         'errors'  => $errors,
                     ]);
-                } catch (\Throwable) {
-                    $this->addFlash('error', 'Upload CV/image refusé par le service cloud. Vérifiez le format, la taille, puis réessayez.');
+                } catch (\Throwable $e) {
+                    $this->addFlash('error', 'Upload CV/image échoué. Erreur: ' . $e->getMessage());
                     return $this->render('profile/edit.html.twig', [
                         'user'    => $user,
                         'candidat'=> $candidat,
@@ -123,7 +170,7 @@ class ProfileController extends AbstractController
                 }
 
                 $em->flush();
-                $this->addFlash('success', 'Profil mis à jour.');
+                $this->addFlash('success', 'Profil mis à jour avec succès.');
                 return $this->redirectToRoute('profile_index');
             }
         }

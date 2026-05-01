@@ -13,7 +13,8 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mailer\Mailer;
+use Symfony\Component\Mailer\Transport;
 use Symfony\Component\Mime\Email;
 
 class FichesPaiementController extends AbstractController
@@ -29,7 +30,7 @@ class FichesPaiementController extends AbstractController
 
     // ── 2. NEW ────────────────────────────────────────
     #[Route('/fiches/new', name: 'fiche_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $em, FichesPaiementRepository $repo, MailerInterface $mailer): Response
+    public function new(Request $request, EntityManagerInterface $em, FichesPaiementRepository $repo): Response
     {
         $fiche = new FichesPaiement();
         $form  = $this->createForm(FichesPaiementType::class, $fiche);
@@ -61,22 +62,70 @@ class FichesPaiementController extends AbstractController
             $em->persist($fiche);
             $em->flush();
 
-            // Send email notification
+            // Send confirmation email via Gmail
             $emailAddress = $employee->getUtilisateur()?->getEmail();
+            $fullName     = $employee->getUtilisateur()?->getFullName() ?? 'Employé';
+            $mois         = $fiche->getDatePaiement()?->format('F Y') ?? '';
+            $salaireNet   = $fiche->getSalaireNet();
+            $salaireBrut  = $salaireMensuel;
+            $montantTaxe  = $fiche->getMontantTaxe();
+            $montantDed   = $fiche->getMontantDeduction();
+
             if ($emailAddress) {
                 try {
+                    $gmailDsn = $_ENV['MAILER_DSN_GMAIL'] ?? '';
+                    $transport = Transport::fromDsn($gmailDsn);
+                    $mailer    = new Mailer($transport);
+
+                    $html = "
+                    <div style='font-family:sans-serif;max-width:580px;margin:0 auto;background:#f9f9ff;border-radius:14px;overflow:hidden'>
+                        <div style='background:linear-gradient(135deg,#6C63FF,#9D6BFF);padding:28px 32px'>
+                            <h1 style='color:#fff;margin:0;font-size:22px;font-weight:700'>💰 Fiche de paie disponible</h1>
+                            <p style='color:rgba(255,255,255,.8);margin:6px 0 0;font-size:14px'>{$mois}</p>
+                        </div>
+                        <div style='padding:28px 32px;background:#fff'>
+                            <p style='color:#333;font-size:15px'>Bonjour <strong>{$fullName}</strong>,</p>
+                            <p style='color:#555;font-size:14px'>Votre fiche de paie pour le mois de <strong>{$mois}</strong> a été générée par le service RH.</p>
+
+                            <div style='background:#f8f7ff;border:1px solid rgba(108,99,255,.15);border-radius:10px;padding:20px;margin:20px 0'>
+                                <table style='width:100%;border-collapse:collapse'>
+                                    <tr>
+                                        <td style='padding:8px 0;color:#666;font-size:13px'>Salaire brut</td>
+                                        <td style='padding:8px 0;text-align:right;font-weight:600;color:#333'>{$salaireBrut} DT</td>
+                                    </tr>
+                                    <tr style='border-top:1px solid rgba(108,99,255,.1)'>
+                                        <td style='padding:8px 0;color:#e24b4a;font-size:13px'>Taxe</td>
+                                        <td style='padding:8px 0;text-align:right;font-weight:600;color:#e24b4a'>- {$montantTaxe} DT</td>
+                                    </tr>
+                                    <tr style='border-top:1px solid rgba(108,99,255,.1)'>
+                                        <td style='padding:8px 0;color:#e24b4a;font-size:13px'>Déduction</td>
+                                        <td style='padding:8px 0;text-align:right;font-weight:600;color:#e24b4a'>- {$montantDed} DT</td>
+                                    </tr>
+                                    <tr style='border-top:2px solid rgba(108,99,255,.2)'>
+                                        <td style='padding:12px 0;color:#6C63FF;font-size:15px;font-weight:700'>Salaire net</td>
+                                        <td style='padding:12px 0;text-align:right;font-size:18px;font-weight:800;color:#6C63FF'>{$salaireNet} DT</td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <p style='color:#555;font-size:13px'>Connectez-vous à votre espace PathFinder pour consulter le détail complet et télécharger votre fiche en PDF.</p>
+                            <p style='color:#999;font-size:12px;margin-top:24px;border-top:1px solid #eee;padding-top:16px'>PathFinders RH — Service de paie</p>
+                        </div>
+                    </div>";
+
                     $email = (new Email())
-                        ->from('no-reply@pathfinders.tn')
+                        ->from('boulehmifadi95@gmail.com')
                         ->to($emailAddress)
-                        ->subject('Nouvelle fiche de paie')
-                        ->text("Bonjour {$employee->getUtilisateur()?->getFullName()},\n\nVotre fiche de paie pour {$fiche->getDatePaiement()?->format('F Y')} a été ajoutée.\nSalaire net: {$fiche->getSalaireNet()} DT.\n\nCordialement,\nService RH");
+                        ->subject("💰 Fiche de paie {$mois} — PathFinders RH")
+                        ->html($html);
+
                     $mailer->send($email);
                 } catch (\Throwable) {
                     // Don't block if email fails
                 }
             }
 
-            $this->addFlash('success', 'Fiche créée avec succès !');
+            $this->addFlash('success', 'Fiche créée avec succès ! Un email de confirmation a été envoyé à l\'employé.');
             return $this->redirectToRoute('fiche_index');
         }
 
@@ -123,12 +172,9 @@ class FichesPaiementController extends AbstractController
         }
 
         $employee = $employeeRepo->findOneBy(['utilisateur' => $utilisateur]);
-        if (!$employee) {
-            throw $this->createNotFoundException('Aucun employé lié à ce compte.');
-        }
 
         return $this->render('worker/fiches.html.twig', [
-            'fiches'    => $repo->findCurrentMonthByEmployee($employee->getIdEmployee()),
+            'fiches'    => $employee ? $repo->findCurrentMonthByEmployee($employee->getIdEmployee()) : [],
             'employee'  => $employee,
             'isHistory' => false,
         ]);
@@ -144,12 +190,9 @@ class FichesPaiementController extends AbstractController
         }
 
         $employee = $employeeRepo->findOneBy(['utilisateur' => $utilisateur]);
-        if (!$employee) {
-            throw $this->createNotFoundException('Aucun employé lié à ce compte.');
-        }
 
         return $this->render('worker/fiches.html.twig', [
-            'fiches'    => $repo->findAllByEmployee($employee->getIdEmployee()),
+            'fiches'    => $employee ? $repo->findAllByEmployee($employee->getIdEmployee()) : [],
             'employee'  => $employee,
             'isHistory' => true,
         ]);

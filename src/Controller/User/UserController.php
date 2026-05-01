@@ -3,8 +3,10 @@
 namespace App\Controller\User;
 
 use App\Entity\Candidat;
+use App\Entity\Employee;
 use App\Entity\Utilisateur;
 use App\Repository\CandidatRepository;
+use App\Repository\EmployeeRepository;
 use App\Repository\UtilisateurRepository;
 use App\Service\Analytics\DashboardAnalyticsCoordinator;
 use App\Service\UserPdfGenerator;
@@ -84,6 +86,16 @@ class UserController extends AbstractController
                     $em->flush();
                 }
 
+                // If worker, create Employee profile
+                if ($data['role'] === 'ROLE_WORKER') {
+                    $employee = new Employee();
+                    $employee->setUtilisateur($user);
+                    $employee->setScore(100);
+                    $employee->setSalaire(0);
+                    $em->persist($employee);
+                    $em->flush();
+                }
+
                 $this->addFlash('success', 'Utilisateur créé avec succès.');
                 return $this->redirectToRoute('user_index');
             }
@@ -105,7 +117,8 @@ class UserController extends AbstractController
         EntityManagerInterface $em,
         UserPasswordHasherInterface $hasher,
         ValidatorInterface $validator,
-        CandidatRepository $candidatRepo
+        CandidatRepository $candidatRepo,
+        EmployeeRepository $employeeRepo
     ): Response {
         $user = $repo->find($id);
         if (!$user) throw $this->createNotFoundException();
@@ -137,6 +150,15 @@ class UserController extends AbstractController
                         $candidat->setIdUtilisateur($user->getId());
                         $em->persist($candidat);
                     }
+                }
+
+                // Create Employee if role changed to ROLE_WORKER
+                if ($data['role'] === 'ROLE_WORKER' && !$employeeRepo->findOneBy(['utilisateur' => $user])) {
+                    $employee = new Employee();
+                    $employee->setUtilisateur($user);
+                    $employee->setScore(100);
+                    $employee->setSalaire(0);
+                    $em->persist($employee);
                 }
 
                 $em->flush();

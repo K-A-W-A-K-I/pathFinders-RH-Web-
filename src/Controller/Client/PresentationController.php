@@ -21,7 +21,7 @@ class PresentationController extends AbstractController
         return $_ENV['GROQ_API_KEY'] ?? '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';
     }
 
-    private const DID_API_KEY   = 'cHJvamV0emVmdEBnbWFpbC5jb20:NiW6U_0F1uojAjcCXI4Pb';
+    private const DID_API_KEY   = 'eW91c3NlZmhhZ2d1aTcyM0BnbWFpbC5jb20:4rAoSFkHQncuLVLfm52yC';
     private const DID_API_URL   = 'https://api.d-id.com';
     private const DID_PRESENTER = 'https://d-id-public-bucket.s3.us-east-1.amazonaws.com/alice.jpg';
 
