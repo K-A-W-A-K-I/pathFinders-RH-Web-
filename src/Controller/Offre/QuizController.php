@@ -83,22 +83,33 @@ class QuizController extends AbstractController
         CandidatureMailer $mailer
     ): Response {
         $offre     = $offreRepo->find($id);
+        
+        // PHPStan Fix: Vérification de nullité de $offre
+        if (!$offre) {
+            throw $this->createNotFoundException('Offre introuvable.');
+        }
+        
         $questions = $questionRepo->findByOffre($id);
 
-        if (!$offre || empty($questions)) {
+        if (empty($questions)) {
+            $this->addFlash('warning', 'Aucune question disponible pour cette offre.');
             return $this->redirectToRoute('offre_list');
         }
 
-        // Calcul du score
+        // Calcul du score - PHPStan Fix: Typage explicite du tableau $answers
+        /** @var array<int, mixed> $answers */
         $answers   = $request->request->all('answers') ?? [];
         $total     = 0;
         $maxScore  = 0;
 
         foreach ($questions as $q) {
             $maxScore += $q->getPoints();
-            $userAnswer = (int) ($answers[$q->getId()] ?? 0);
-            if ($userAnswer === $q->getBonneReponse()) {
-                $total += $q->getPoints();
+            $questionId = $q->getId();
+            if ($questionId !== null && isset($answers[$questionId])) {
+                $userAnswer = (int) $answers[$questionId];
+                if ($userAnswer === $q->getBonneReponse()) {
+                    $total += $q->getPoints();
+                }
             }
         }
 
@@ -159,6 +170,12 @@ class QuizController extends AbstractController
         OffreRepository $offreRepo
     ): Response {
         $offre = $offreRepo->find($id);
+        
+        // PHPStan Fix: Vérification de nullité de $offre
+        if (!$offre) {
+            throw $this->createNotFoundException('Offre introuvable.');
+        }
+        
         $score = (int) $request->query->get('score', 0);
         $cid   = (int) $request->query->get('cid', 0);
         $admis = $score >= $offre->getScoreMinimum();

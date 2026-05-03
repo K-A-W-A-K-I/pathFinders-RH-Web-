@@ -71,13 +71,22 @@ class Question
     public function getPoints(): int { return $this->points; }
     public function setPoints(int $points): static { $this->points = $points; return $this; }
 
+    /**
+     * Retourne les choix disponibles pour cette question.
+     * PHPStan Fix: Type explicite array<int, string>
+     * 
+     * @return array<int, string>
+     */
     public function getChoices(): array
     {
-        return array_filter([
+        $choices = [
             1 => $this->choix1,
             2 => $this->choix2,
             3 => $this->choix3,
             4 => $this->choix4,
-        ]);
+        ];
+        
+        // Filtrer les valeurs null et retourner array<int, string>
+        return array_filter($choices, fn($value) => $value !== null);
     }
 }

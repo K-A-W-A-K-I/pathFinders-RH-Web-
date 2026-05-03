@@ -1,0 +1,10 @@
+parameters:
+    level: 5
+    paths:
+        - src
+    excludePaths:
+        - src/Kernel.php
+    symfony:
+        container_xml_path: var/cache/dev/App_KiroDevDebugContainer.xml
+    ignoreErrors:
+        - '#Call to an undefined method Symfony\\Component\\Security\\Core\\User\\UserInterface::#'

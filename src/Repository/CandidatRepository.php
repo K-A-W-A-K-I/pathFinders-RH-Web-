@@ -20,13 +20,22 @@ class CandidatRepository extends ServiceEntityRepository
 
     /**
      * Hydrate nom/prenom/email on Candidat objects from the utilisateurs table.
+     * OPTIMISATION N+1: Utilise une seule requête batch pour charger tous les utilisateurs.
+     * Au lieu de faire N requêtes (une par candidat), fait 1 seule requête avec IN().
+     * 
      * @param Candidat[] $candidats
+     * @return void
      */
     public function hydrateNames(array $candidats): void
     {
-        if (empty($candidats)) return;
+        if (empty($candidats)) {
+            return;
+        }
 
+        // Récupère tous les IDs utilisateurs
         $ids = array_unique(array_map(fn($c) => $c->getIdUtilisateur(), $candidats));
+        
+        // OPTIMISATION: Une seule requête SQL pour tous les utilisateurs
         $conn = $this->getEntityManager()->getConnection();
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
         $rows = $conn->fetchAllAssociative(
@@ -34,11 +43,13 @@ class CandidatRepository extends ServiceEntityRepository
             array_values($ids)
         );
 
+        // Créer un map pour accès rapide
         $map = [];
         foreach ($rows as $row) {
-            $map[$row['id_utilisateur']] = $row;
+            $map[(int)$row['id_utilisateur']] = $row;
         }
 
+        // Hydrater tous les candidats
         foreach ($candidats as $c) {
             $data = $map[$c->getIdUtilisateur()] ?? null;
             if ($data) {
